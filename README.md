@@ -4,7 +4,7 @@ stringfish
 <!-- <img src="hex.png" width = "130" height = "150" align="right" style="border:0px;padding:15px"> -->
 
 [![Build
-Status](https://travis-ci.org/traversc/qs.svg)](https://travis-ci.org/traversc/stringfish)
+Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/traversc/stringfish)
 
 *Work in progress*
 
