@@ -8,7 +8,7 @@
 #ifndef HAVE_CONFIG_H
 #define HAVE_CONFIG_H
 #endif
-#include "pcre2.h"
+#include "PCRE2/pcre2.h"
 
 #include "sf_altrep.h"
 #include <fstream> // ifstream, ofstream
