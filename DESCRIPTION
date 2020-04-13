@@ -1,0 +1,16 @@
+Package: stringfish
+Title: Alt String implementation
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre"))
+  )
+Description: Alt String implementation backed by C++ std::vectors and std::strings
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+SystemRequirements: C++11
+LinkingTo: 
+    Rcpp (>= 0.12.18.3)
+Imports: 
+    Rcpp
+RoxygenNote: 6.1.1
