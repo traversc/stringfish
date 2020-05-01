@@ -122,8 +122,8 @@ export settings are needed, and are set in pcre2posix.c before including this
 file. */
 
 #if defined(_WIN32) && !defined(PCRE2_STATIC) && !defined(PCRE2POSIX_EXP_DECL)
-#  define PCRE2POSIX_EXP_DECL  extern __declspec(dllimport)
-#  define PCRE2POSIX_EXP_DEFN  __declspec(dllimport)
+#  define PCRE2POSIX_EXP_DECL  extern // __declspec(dllimport) TC: remove declspec (see pcre2_internal line 87)
+#  define PCRE2POSIX_EXP_DEFN  // __declspec(dllimport) TC: remove declspec (see pcre2_internal line 87)
 #endif
 
 /* By default, we use the standard "extern" declarations. */

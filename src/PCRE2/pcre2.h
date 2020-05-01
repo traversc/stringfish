@@ -53,7 +53,7 @@ don't change existing definitions of PCRE2_EXP_DECL. */
 
 #if defined(_WIN32) && !defined(PCRE2_STATIC)
 #  ifndef PCRE2_EXP_DECL
-#    define PCRE2_EXP_DECL  extern __declspec(dllimport)
+#    define PCRE2_EXP_DECL  extern // __declspec(dllimport) TC: remove declspec (see pcre2_internal line 87)
 #  endif
 #endif
 

@@ -108,8 +108,8 @@ only if it is not already set. */
 #ifndef PCRE2_EXP_DECL
 #  ifdef _WIN32
 #    ifndef PCRE2_STATIC
-#      define PCRE2_EXP_DECL       extern __declspec(dllexport)
-#      define PCRE2_EXP_DEFN       __declspec(dllexport)
+#      define PCRE2_EXP_DECL       extern // __declspec(dllexport) TC: remove declspec because of above description
+#      define PCRE2_EXP_DEFN       // __declspec(dllexport) TC: remove declspec because of above description
 #    else
 #      define PCRE2_EXP_DECL       extern
 #      define PCRE2_EXP_DEFN

@@ -123,7 +123,7 @@ for(. in 1:ntests) {
 
 catn("sf_readLines")
 for(. in 1:ntests) {
-  writeLines(i500_utf8, con=myfile)
+  writeLines(i500_utf8, con=myfile, useBytes=T)
   x <- sf_readLines(myfile, encoding = "UTF-8")
   y <- readLines(myfile); Encoding(y) <- "UTF-8"
   stopifnot(str_identical(x, y))
@@ -162,3 +162,4 @@ for(. in 1:ntests) {
   x <- c("hello world", "HELLO WORLD")
   str_identical(sf_alternate_case(x), c("hElLo wOrLd", "hElLo wOrLd"))
 }
+

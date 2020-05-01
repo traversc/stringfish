@@ -173,10 +173,14 @@ public:
     case rstring_type::OTHER_ALT_REP:
       dptr = DATAPTR(obj); // should materialize the object if not already
       len = Rf_xlength(reinterpret_cast<SEXP>(dptr));
+      break;
     case rstring_type::SF_VEC:
-      sf_vec_data * ptr = reinterpret_cast<sf_vec_data*>( R_ExternalPtrAddr(R_altrep_data1(obj)) );
-      dptr = ptr;
-      len = ptr->size();
+      // sf_vec_data * ptr = reinterpret_cast<sf_vec_data*>(  );
+      dptr = R_ExternalPtrAddr(R_altrep_data1(obj));
+      len = reinterpret_cast<sf_vec_data*>(dptr)->size();
+      break;
+    default:
+      throw std::runtime_error("incorrect RStringIndexer constructor");
     }
   }
   rstring_info getCharLenCE(size_t i) const {

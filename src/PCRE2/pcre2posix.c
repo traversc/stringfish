@@ -59,8 +59,8 @@ they are set for an application (using these functions) if they have not
 previously been set. */
 
 #if defined(_WIN32) && !defined(PCRE2_STATIC)
-#  define PCRE2POSIX_EXP_DECL extern __declspec(dllexport)
-#  define PCRE2POSIX_EXP_DEFN __declspec(dllexport)
+#  define PCRE2POSIX_EXP_DECL extern // __declspec(dllexport) TC: remove declspec (see pcre2_internal line 87)
+#  define PCRE2POSIX_EXP_DEFN // __declspec(dllexport) TC: remove declspec (see pcre2_internal line 87)
 #endif
 
 /* Older versions of MSVC lack snprintf(). This define allows for
