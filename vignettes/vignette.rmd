@@ -71,7 +71,6 @@ Utility functions:
 * `convert_to_sf` -- converts a character vector to a `stringfish` vector
 * `get_string_type` -- determines string type (whether `alt-rep` or normal)
 * `materialize` -- converts any `alt-rep` object into a normal R object
-* `inspect` -- performs inspection on an object (`.Internal(inspect(x))`)
 * `new_sf_vec` -- creates a new and empty `stringfish` vector
 * `sf_random_strings` -- creates a random strings as either a `stringfish` or normal R vector
 
