@@ -4,7 +4,8 @@
 \alias{random_strings}
 \title{random_strings}
 \usage{
-random_strings(N, string_size = 50, charset = "abcdefghijklmnopqrstuvwxyz", vector_mode = "stringfish")
+random_strings(N, string_size = 50, charset = "abcdefghijklmnopqrstuvwxyz", 
+                      vector_mode = "stringfish")
 }
 \arguments{
 \item{N}{The number of strings to generate}

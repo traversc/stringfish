@@ -20,6 +20,6 @@ sf_paste <- function(..., sep="") {
   c_sf_paste(dots, sep)
 }
 
-inspect <- function(x) {
-  .Internal(inspect(x))
-}
+# inspect <- function(x) {
+#   .Internal(inspect(x))
+# }

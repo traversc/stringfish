@@ -676,4 +676,5 @@ void sf_export_functions(DllInfo* dll) {
   R_RegisterCCallable("stringfish", "random_strings", (DL_FUNC) &random_strings);
 }
 
-// END OF SF_FUNCTIONS.CPPEND OF SF_FUNCTIONS.CPP
+// END OF SF_FUNCTIONS.CPP
+

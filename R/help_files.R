@@ -29,7 +29,8 @@
 #' The vector type is "sfstring", which is a simple C++ class containing a "std::string" and a single byte (uint8_t) representing the encoding. 
 #' @examples 
 #' x <- sf_vector(10)
-#' sf_assign(x, i, "hello world")
+#' sf_assign(x, 1, "hello world")
+#' sf_assign(x, 2, "another string")
 #' @name sf_vector
 NULL
 
@@ -44,7 +45,8 @@ NULL
 #' A function to assign a new element to an existing character vector. If the the vector is a stringfish vector, it does so without materialization. 
 #' @examples 
 #' x <- sf_vector(10)
-#' sf_assign(x, i, "hello world")
+#' sf_assign(x, 1, "hello world")
+#' sf_assign(x, 2, "another string")
 #' @name sf_assign
 NULL
 
@@ -64,20 +66,6 @@ NULL
 #' @name get_string_type
 NULL
 
-#' inspect
-#' 
-#' A simple utility function that calls R's internal inspect function
-#' @usage inspect(x)
-#' @param x An R object
-#' @return Returns x invisibly
-#' @details 
-#' The function prints out the call to the internal inspect function. I.e. `.Internal(inspect(x))`.
-#' @examples 
-#' x <- sf_vector(10)
-#' inspect(x)
-#' @name inspect
-NULL
-
 #' materialize
 #' 
 #' Materializes an alt-rep object
@@ -89,7 +77,8 @@ NULL
 #' Note: the object is materialized regardless of whether the return value is assigned to a variable. 
 #' @examples 
 #' x <- sf_vector(10)
-#' sf_assign(x, i, "hello world")
+#' sf_assign(x, 1, "hello world")
+#' sf_assign(x, 2, "another string")
 #' x <- materialize(x)
 #' @name materialize
 NULL
@@ -211,7 +200,7 @@ NULL
 #' @seealso readLines
 #' @examples 
 #' file <- tempfile()
-#' writeLines(file, letters)
+#' writeLines(letters, file)
 #' sf_readLines(file)
 #' @name sf_readLines
 NULL
@@ -227,6 +216,7 @@ NULL
 #' @return A logical vector with the same length as subject
 #' @details 
 #' The function uses the PCRE2 library, which is also used internally by R. 
+#' The encoding is based on the pattern string (or forced via the encode_mode parameter). 
 #' Note: the order of paramters is switched compared to the `grepl` base R function, with subject being first. 
 #' See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax. 
 #' @seealso grepl
@@ -234,7 +224,7 @@ NULL
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
 #' pattern <- "^hello"
-#' sf_grepl(subj, pattern)
+#' sf_grepl(x, pattern)
 #' @name sf_grepl
 NULL
 
@@ -266,7 +256,8 @@ NULL
 #' random_strings
 #' 
 #' A function that generates random strings
-#' @usage random_strings(N, string_size = 50, charset = "abcdefghijklmnopqrstuvwxyz", vector_mode = "stringfish")
+#' @usage random_strings(N, string_size = 50, charset = "abcdefghijklmnopqrstuvwxyz", 
+#'                       vector_mode = "stringfish")
 #' @param N The number of strings to generate
 #' @param string_size The length of the strings
 #' @param charset The characters used to generate the random strings (default: abcdefghijklmnopqrstuvwxyz)

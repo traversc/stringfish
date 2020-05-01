@@ -21,5 +21,6 @@ The vector type is "sfstring", which is a simple C++ class containing a "std::st
 }
 \examples{
 x <- sf_vector(10)
-sf_assign(x, i, "hello world")
+sf_assign(x, 1, "hello world")
+sf_assign(x, 2, "another string")
 }

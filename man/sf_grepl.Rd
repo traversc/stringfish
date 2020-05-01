@@ -21,6 +21,7 @@ A function that matches patterns and returns a logical vector
 }
 \details{
 The function uses the PCRE2 library, which is also used internally by R. 
+The encoding is based on the pattern string (or forced via the encode_mode parameter). 
 Note: the order of paramters is switched compared to the `grepl` base R function, with subject being first. 
 See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax.
 }
@@ -28,7 +29,7 @@ See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documenta
 x <- sf_vector(10)
 sf_assign(x, 1, "hello world")
 pattern <- "^hello"
-sf_grepl(subj, pattern)
+sf_grepl(x, pattern)
 }
 \seealso{
 grepl

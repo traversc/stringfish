@@ -21,5 +21,6 @@ A function to assign a new element to an existing character vector. If the the v
 }
 \examples{
 x <- sf_vector(10)
-sf_assign(x, i, "hello world")
+sf_assign(x, 1, "hello world")
+sf_assign(x, 2, "another string")
 }
