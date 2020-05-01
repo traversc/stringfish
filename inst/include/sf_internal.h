@@ -72,7 +72,7 @@ struct sfstring {
   std::string sdata;
   cetype_t_ext encoding;
   sfstring(std::string x, cetype_t enc) : sdata(x) {
-    if(checkAscii(sdata.c_str(), sdata.size())) {
+    if((enc == CE_NATIVE) || checkAscii(sdata.c_str(), sdata.size())) {
       encoding = cetype_t_ext::CE_NATIVE; // to keep the same as R
     } else {
       encoding = static_cast<cetype_t_ext>(enc);
@@ -81,7 +81,7 @@ struct sfstring {
   sfstring(const char * ptr, cetype_t enc) {
     size_t len = strlen(ptr);
     sdata = std::string(ptr);
-    if(checkAscii(ptr, len)) {
+    if((enc == CE_NATIVE) || checkAscii(ptr, len)) {
       encoding = cetype_t_ext::CE_NATIVE; // to keep the same as R
     } else {
       encoding = static_cast<cetype_t_ext>(enc);

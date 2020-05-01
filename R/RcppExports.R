@@ -9,8 +9,12 @@ materialize <- function(x) {
     .Call(`_stringfish_materialize`, x)
 }
 
-new_sf_vec <- function(len) {
-    .Call(`_stringfish_new_sf_vec`, len)
+sf_vector <- function(len) {
+    .Call(`_stringfish_sf_vector`, len)
+}
+
+sf_assign <- function(x, i, e) {
+    invisible(.Call(`_stringfish_sf_assign`, x, i, e))
 }
 
 sf_iconv <- function(x, from, to) {
@@ -49,7 +53,7 @@ sf_gsub <- function(subject, pattern, replacement, encode_mode = "auto") {
     .Call(`_stringfish_sf_gsub`, subject, pattern, replacement, encode_mode)
 }
 
-sf_random_strings <- function(N, string_size = 50L, charset = "abcdefghijklmnopqrstuvwxyz", mode = "stringfish") {
-    .Call(`_stringfish_sf_random_strings`, N, string_size, charset, mode)
+random_strings <- function(N, string_size = 50L, charset = "abcdefghijklmnopqrstuvwxyz", vector_mode = "stringfish") {
+    .Call(`_stringfish_random_strings`, N, string_size, charset, vector_mode)
 }
 

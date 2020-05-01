@@ -3,7 +3,8 @@ useDynLib(stringfish, .registration=TRUE)
 export(
 "inspect",
 "materialize",
-"new_sf_vec",
+"sf_vector",
+"sf_assign",
 "get_string_type",
 "sf_iconv",
 "convert_to_sf",
@@ -14,4 +15,4 @@ export(
 "sf_readLines",
 "sf_grepl",
 "sf_gsub",
-"sf_random_strings")
+"random_strings")

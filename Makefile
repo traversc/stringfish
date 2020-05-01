@@ -56,3 +56,6 @@ vignette:
 	Rscript -e "rmarkdown::render(input='vignettes/vignette.rmd', output_format='all')"
 	mv vignettes/vignette.md README.md
 	sed -r -i 's/\((.+)\.png/\(vignettes\/\1\.png/' README.md
+
+test:
+	Rscript tests/tests.r

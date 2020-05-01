@@ -25,14 +25,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// new_sf_vec
-SEXP new_sf_vec(size_t len);
-RcppExport SEXP _stringfish_new_sf_vec(SEXP lenSEXP) {
+// sf_vector
+SEXP sf_vector(size_t len);
+RcppExport SEXP _stringfish_sf_vector(SEXP lenSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< size_t >::type len(lenSEXP);
-    rcpp_result_gen = Rcpp::wrap(new_sf_vec(len));
+    rcpp_result_gen = Rcpp::wrap(sf_vector(len));
     return rcpp_result_gen;
+END_RCPP
+}
+// sf_assign
+void sf_assign(SEXP x, size_t i, SEXP e);
+RcppExport SEXP _stringfish_sf_assign(SEXP xSEXP, SEXP iSEXP, SEXP eSEXP) {
+BEGIN_RCPP
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< size_t >::type i(iSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type e(eSEXP);
+    sf_assign(x, i, e);
+    return R_NilValue;
 END_RCPP
 }
 // sf_iconv
@@ -138,17 +149,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sf_random_strings
-SEXP sf_random_strings(const int N, const int string_size, std::string charset, std::string mode);
-RcppExport SEXP _stringfish_sf_random_strings(SEXP NSEXP, SEXP string_sizeSEXP, SEXP charsetSEXP, SEXP modeSEXP) {
+// random_strings
+SEXP random_strings(const int N, const int string_size, std::string charset, std::string vector_mode);
+RcppExport SEXP _stringfish_random_strings(SEXP NSEXP, SEXP string_sizeSEXP, SEXP charsetSEXP, SEXP vector_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const int >::type N(NSEXP);
     Rcpp::traits::input_parameter< const int >::type string_size(string_sizeSEXP);
     Rcpp::traits::input_parameter< std::string >::type charset(charsetSEXP);
-    Rcpp::traits::input_parameter< std::string >::type mode(modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_random_strings(N, string_size, charset, mode));
+    Rcpp::traits::input_parameter< std::string >::type vector_mode(vector_modeSEXP);
+    rcpp_result_gen = Rcpp::wrap(random_strings(N, string_size, charset, vector_mode));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -156,7 +167,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_get_string_type", (DL_FUNC) &_stringfish_get_string_type, 1},
     {"_stringfish_materialize", (DL_FUNC) &_stringfish_materialize, 1},
-    {"_stringfish_new_sf_vec", (DL_FUNC) &_stringfish_new_sf_vec, 1},
+    {"_stringfish_sf_vector", (DL_FUNC) &_stringfish_sf_vector, 1},
+    {"_stringfish_sf_assign", (DL_FUNC) &_stringfish_sf_assign, 3},
     {"_stringfish_sf_iconv", (DL_FUNC) &_stringfish_sf_iconv, 3},
     {"_stringfish_convert_to_sf", (DL_FUNC) &_stringfish_convert_to_sf, 1},
     {"_stringfish_sf_nchar", (DL_FUNC) &_stringfish_sf_nchar, 2},
@@ -166,7 +178,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_sf_readLines", (DL_FUNC) &_stringfish_sf_readLines, 2},
     {"_stringfish_sf_grepl", (DL_FUNC) &_stringfish_sf_grepl, 3},
     {"_stringfish_sf_gsub", (DL_FUNC) &_stringfish_sf_gsub, 4},
-    {"_stringfish_sf_random_strings", (DL_FUNC) &_stringfish_sf_random_strings, 4},
+    {"_stringfish_random_strings", (DL_FUNC) &_stringfish_random_strings, 4},
     {NULL, NULL, 0}
 };
 

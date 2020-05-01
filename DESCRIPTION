@@ -1,16 +1,18 @@
 Package: stringfish
 Title: Alt String implementation
-Version: 0.0.0.9000
+Version: 0.1
 Authors@R: c(
-    person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre"))
-  )
-Description: Alt String implementation backed by C++ std::vectors and std::strings
+    person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre")),
+    person("Phillip", "Hazel", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"),
+    person("Zoltan", "Herczeg", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"))
+Description: Alt String implementation backed by C++ std::vector and std::string
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+Depends: R (>= 3.6.0)
 SystemRequirements: C++11
 LinkingTo: 
     Rcpp (>= 0.12.18.3)
 Imports: 
     Rcpp
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
+Copyright: This package includes bundled code from the 'PCRE2' library created by Philip Hazel. 

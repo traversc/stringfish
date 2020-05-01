@@ -62,6 +62,10 @@ Each substring ends with \0 to insert a null character. This includes the final
 substring, so that the whole string ends with \0\0, which can be detected when
 counting through. */
 
+
+// TC: gcc complains about compile_error_texts being too long, so I split it up into two strings instead
+// compile_error_texts = first 50
+// compile_error_texts2 = the rest
 static const unsigned char compile_error_texts[] =
   "no error\0"
   "\\ at end of pattern\0"
@@ -122,6 +126,8 @@ static const unsigned char compile_error_texts[] =
   "unknown property name after \\P or \\p\0"
   "subpattern name is too long (maximum " XSTRING(MAX_NAME_SIZE) " code units)\0"
   "too many named subpatterns (maximum " XSTRING(MAX_NAME_COUNT) ")\0"
+  ;
+static const unsigned char compile_error_texts2[] =
   /* 50 */
   "invalid range in character class\0"
   "octal value is greater than \\377 in 8-bit non-UTF-8 mode\0"
@@ -293,48 +299,46 @@ Returns:        length of message if all is well
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_get_error_message(int enumber, PCRE2_UCHAR *buffer, PCRE2_SIZE size)
-{
-const unsigned char *message;
-PCRE2_SIZE i;
-int n;
-
-if (size == 0) return PCRE2_ERROR_NOMEMORY;
-
-if (enumber >= COMPILE_ERROR_BASE)  /* Compile error */
-  {
-  message = compile_error_texts;
-  n = enumber - COMPILE_ERROR_BASE;
-  }
-else if (enumber < 0)               /* Match or UTF error */
-  {
-  message = match_error_texts;
-  n = -enumber;
-  }
-else                                /* Invalid error number */
-  {
-  message = (unsigned char *)"\0";  /* Empty message list */
-  n = 1;
-  }
-
-for (; n > 0; n--)
-  {
-  while (*message++ != CHAR_NUL) {};
-  if (*message == CHAR_NUL) return PCRE2_ERROR_BADDATA;
-  }
-
-for (i = 0; *message != 0; i++)
-  {
-  if (i >= size - 1)
-    {
-    buffer[i] = 0;     /* Terminate partial message */
-    return PCRE2_ERROR_NOMEMORY;
+pcre2_get_error_message(int enumber, PCRE2_UCHAR * buffer, PCRE2_SIZE size) {
+  const unsigned char * message;
+  PCRE2_SIZE i;
+  int n;
+  
+  if (size == 0) return PCRE2_ERROR_NOMEMORY;
+  
+  if (enumber >= COMPILE_ERROR_BASE) /* Compile error */ {
+    // TC: Modified to accomodae two compile_error_texts
+    // message = compile_error_texts;
+    // n = enumber - COMPILE_ERROR_BASE;
+    n = enumber - COMPILE_ERROR_BASE;
+    if (n >= 50) {
+      n = n - 50;
+      message = compile_error_texts2;
+    } else {
+      message = compile_error_texts;
     }
-  buffer[i] = *message++;
+  } else if (enumber < 0) /* Match or UTF error */ {
+    message = match_error_texts;
+    n = -enumber;
+  } else /* Invalid error number */ {
+    message = (unsigned char * ) "\0"; /* Empty message list */
+    n = 1;
   }
-
-buffer[i] = 0;
-return (int)i;
+  
+  for (; n > 0; n--) {
+    while ( * message++ != CHAR_NUL) {};
+    if ( * message == CHAR_NUL) return PCRE2_ERROR_BADDATA;
+  }
+  
+  for (i = 0;* message != 0; i++) {
+    if (i >= size - 1) {
+      buffer[i] = 0; /* Terminate partial message */
+return PCRE2_ERROR_NOMEMORY;
+    }
+    buffer[i] = * message++;
+  }
+  
+  buffer[i] = 0;
+  return (int) i;
 }
-
 /* End of pcre2_error.c */

@@ -21,13 +21,13 @@ std::string get_string_type(SEXP x) {
   rstring_type rx = get_rstring_type_internal(x);
   switch(rx) {
   case rstring_type::NORMAL:
-    return "normal";
+    return "normal vector";
   case rstring_type::SF_VEC:
-    return "sf vector";
+    return "stringfish vector";
   case rstring_type::SF_VEC_MATERIALIZED:
-    return "sf vector (materialized)";
+    return "stringfish vector (materialized)";
   case rstring_type::OTHER_ALT_REP:
-    return "other alt rep";
+    return "other alt-rep vector";
   default:
     throw std::runtime_error("get_string_type error");
   }
@@ -41,19 +41,49 @@ SEXP materialize(SEXP x) {
   return x;
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // [[Rcpp::export(rng = false)]]
-SEXP new_sf_vec(size_t len) {
+SEXP sf_vector(size_t len) {
   auto ret = new sf_vec_data(len);
   return sf_vec::Make(ret, true);
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // C only export manually - no checking of valid object is done here
 sf_vec_data & sf_vec_data_ref(SEXP x) {
   return *reinterpret_cast<sf_vec_data*>(R_ExternalPtrAddr(R_altrep_data1(x)));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// [[Rcpp::export(rng = false)]]
+void sf_assign(SEXP x, size_t i, SEXP e) {
+  if(TYPEOF(e) != STRSXP || Rf_xlength(e) != 1) {
+    throw std::runtime_error("e must be a string of length 1");
+  }
+  if(i == 0) {
+    throw std::runtime_error("i must be > 0");
+  }
+  i--;
+  rstring_type rx = get_rstring_type_internal(x);
+  switch(rx) {
+  case rstring_type::SF_VEC:
+  {
+    sf_vec_data & ref = sf_vec_data_ref(x);
+    ref[i] = sfstring(STRING_ELT(e,0));
+  }
+    break;
+  case rstring_type::NORMAL:
+  case rstring_type::SF_VEC_MATERIALIZED:
+  case rstring_type::OTHER_ALT_REP:
+  default:
+    SET_STRING_ELT(x, i, STRING_ELT(e,0));
+    break;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +105,8 @@ struct iconv_wrapper {
     if(res == (size_t)(-1)) throw std::runtime_error("invalid input sequence");
     //reset state -- not needed?
     // Riconv(cd, nullptr, nullptr, nullptr, nullptr);
-    output.resize(res);
+    size_t bytes_written = output.size() - outlen;
+    output.resize(bytes_written);
     return output.c_str();
   }
   iconv_wrapper(const iconv_wrapper&) = delete;
@@ -97,7 +128,7 @@ SEXP sf_iconv(SEXP x, std::string from, std::string to) {
   iconv_wrapper iw(to.c_str(), from.c_str());
   RStringIndexer rsi(x);
   size_t len = rsi.size();
-  SEXP ret = PROTECT(new_sf_vec(len));
+  SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
   for(size_t i=0; i<len; i++) {
     auto q = rsi.getCharLenCE(i);
@@ -107,6 +138,7 @@ SEXP sf_iconv(SEXP x, std::string from, std::string to) {
       ref[i] = sfstring(iw.convert(q.ptr, q.len), encoding);
     }
   }
+  UNPROTECT(1);
   return ret;
 }
 
@@ -115,11 +147,12 @@ SEXP sf_iconv(SEXP x, std::string from, std::string to) {
 // [[Rcpp::export(rng = false)]]
 SEXP convert_to_sf(SEXP x) {
   size_t len = Rf_xlength(x);
-  SEXP ret = PROTECT(new_sf_vec(len));
+  SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
   for(size_t i=0; i<len; i++) {
     ref[i] = sfstring(STRING_ELT(x,i));
   }
+  UNPROTECT(1);
   return ret;
 }
 
@@ -161,13 +194,16 @@ IntegerVector sf_nchar(SEXP x, std::string type = "chars") {
 
 inline sfstring sf_substr_internal(const char * x, const int len, const cetype_t type, int start, int stop) {
   if(x == nullptr) return sfstring(NA_STRING);
+  if(len == 0) return sfstring("", CE_NATIVE);
+  if(start > len) return sfstring("", CE_NATIVE);
   
   if(type == CE_UTF8) {
+    int clen = code_points(x);
+    if(start > clen) return sfstring("", CE_NATIVE);
     // for utf-8, stop is one-based
     // we want the end of the last byte for the last character so we overshoot 
     // by one byte to find the boundary
     if(start < 0 || stop < 0) {
-      int clen = code_points(x);
       start = start < 0 ? (clen+start) : (start-1);
       stop = stop < 0 ? (clen+stop+1) : (stop); // zero based
     } else {
@@ -181,7 +217,7 @@ inline sfstring sf_substr_internal(const char * x, const int len, const cetype_t
     
     const char * p = x;
     int start_byte = 0;
-    int len = 0;
+    int outlen = 0;
     int count = 0;
     while(count <= start) {
       if(*p == 0) return sfstring("", type);
@@ -190,19 +226,20 @@ inline sfstring sf_substr_internal(const char * x, const int len, const cetype_t
       start_byte++;
     }
     while(count <= stop) {
-      count += ((*p & 0xc0) != 0x80); // b11000000, b10000000
-      p++;
-      len++;
       if(*p == 0) {
-        len++;
+        outlen++;
         break;
       }
+      count += ((*p & 0xc0) != 0x80); // b11000000, b10000000
+      p++;
+      outlen++;
     }
-    return sfstring(std::string(x + start_byte - 1, len), type);
+    return sfstring(std::string(x + start_byte - 1, outlen), type);
   } else {
     start = start < 0 ? (len+start) : (start-1); // zero based
     stop = stop < 0 ? (len+stop) : (stop-1); // zero based
     if(stop < start) return sfstring("", CE_NATIVE);
+    if(stop >= len) stop = len - 1;
     if(stop < 0) return sfstring("", CE_NATIVE);
     if(start < 0) start = 0;
     return sfstring(std::string(x + start, stop - start + 1), type);
@@ -211,13 +248,22 @@ inline sfstring sf_substr_internal(const char * x, const int len, const cetype_t
 
 // [[Rcpp::export(rng = false)]]
 SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop) {
-  RStringIndexer rsi(x);
-  size_t len = rsi.size();
   size_t start_size = Rf_xlength(start);
   size_t stop_size = Rf_xlength(stop);
+  
+  for(size_t i=0; i<start_size; i++) {
+    if(start[i] == NA_INTEGER) throw std::runtime_error("no NA start values allowed");
+  }
+  
+  for(size_t i=0; i<start_size; i++) {
+    if(stop[i] == NA_INTEGER) throw std::runtime_error("no NA stop values allowed");
+  }
+  
+  RStringIndexer rsi(x);
+  size_t len = rsi.size();
   if(start_size != len && start_size != 1) throw std::runtime_error("length of start must be 1 or the same as x");
   if(stop_size != len && stop_size != 1) throw std::runtime_error("length of stop must be 1 or the same as x");
-  SEXP ret = PROTECT(new_sf_vec(len));
+  SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
   for(size_t i=0; i<len; i++) {
     auto q = rsi.getCharLenCE(i);
@@ -233,6 +279,12 @@ SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop) {
 // [[Rcpp::export(rng = false)]]
 SEXP c_sf_paste(List dots, SEXP sep) {
   size_t maxlen = 1;
+
+  RStringIndexer sr(sep);
+  if(sr.size() != 1) throw std::runtime_error("sep should be a character vector of length 1");
+  auto sr_element = sr.getCharLenCE(0);
+  std::string sep_string(sr_element.ptr, sr_element.len);
+  
   size_t dotlen = Rf_xlength(dots);
   std::vector<RStringIndexer> rs;
   std::vector<size_t> lens(dotlen);
@@ -251,7 +303,7 @@ SEXP c_sf_paste(List dots, SEXP sep) {
   
   // i indexes return element
   // j index input vector
-  SEXP ret = PROTECT(new_sf_vec(maxlen));
+  SEXP ret = PROTECT(sf_vector(maxlen));
   sf_vec_data & ref = sf_vec_data_ref(ret);
   for(size_t i=0; i<maxlen; i++) {
     std::string temp;
@@ -265,6 +317,7 @@ SEXP c_sf_paste(List dots, SEXP sep) {
       } else {
         enc = choose_enc(enc, q.enc);
         temp += std::string(q.ptr, q.len);
+        if(j < (dotlen-1)) temp += sep_string;
       }
     }
     if(is_na) {
@@ -284,6 +337,8 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
   RStringIndexer cr(collapse);
   if(cr.size() != 1) throw std::runtime_error("collapse should be a character vector of length 1");
   auto cr_element = cr.getCharLenCE(0);
+  std::string collapse_string(cr_element.ptr, cr_element.len);
+  
   RStringIndexer xr(x);
   size_t len = xr.size();
   std::string temp;
@@ -293,6 +348,7 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
     if(q.ptr == nullptr) return NA_STRING;
     enc = choose_enc(enc, q.enc);
     temp += std::string(q.ptr, q.len);
+    if(i < (len-1)) temp += collapse_string;
   }
   // since the return length is 1, there's no point using ALT-REP
   SEXP ret = PROTECT(Rf_allocVector(STRSXP, 1));
@@ -304,17 +360,30 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
 ////////////////////////////////////////////////////////////////////////////////
 // [[Rcpp::export(rng = false)]]
 SEXP sf_readLines(std::string file, std::string encoding = "UTF-8") {
-  SEXP ret = PROTECT(new_sf_vec(0));
+  SEXP ret = PROTECT(sf_vector(0));
   sf_vec_data & ref = sf_vec_data_ref(ret);
+  cetype_t enc;
+  if(encoding == "UTF-8") {
+    enc = CE_UTF8;
+  } else if(encoding == "latin1") {
+    enc = CE_LATIN1;
+  } else if(encoding == "bytes") {
+    enc = CE_BYTES;
+  } else {
+    enc = CE_NATIVE;
+  }
   std::ifstream myFile(R_ExpandFileName(file.c_str()), std::ios::in);
   if(!myFile) {
     throw std::runtime_error("Failed to open " + file + ". Check file path.");
   }
 
-  // possibly better way of handling lines: https://stackoverflow.com/q/6089231/2723734
+  // possibly better way of handling line endings: https://stackoverflow.com/q/6089231/2723734
   std::string str;
   while(std::getline(myFile, str)) {
-    ref.push_back(sfstring(str, CE_UTF8));
+    if(str.size() > 0 && str.back() == '\r') {
+      str.resize(str.size() - 1);
+    }
+    ref.push_back(sfstring(str, enc));
   }
   UNPROTECT(1);
   return ret;
@@ -348,7 +417,6 @@ struct pcre2_match_wrapper {
   pcre2_match_wrapper & operator=(pcre2_match_wrapper && other) { // move assignment
     if(&other == this) return *this;
     if(re != nullptr) pcre2_code_free(re);
-    if(match_data != nullptr) pcre2_match_data_free(match_data);
     re = other.re;
     match_data = other.match_data;
     other.re = nullptr;
@@ -384,18 +452,21 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, std::string encode_mode = "au
   SEXP pattern_element = STRING_ELT(pattern, 0);
   const char * pattern_ptr = CHAR(pattern_element);
   cetype_t pattern_enc = Rf_getCharCE(pattern_element);
-  pcre2_match_wrapper pbyte, putf8;
-  uint8_t encode_mode_byte; // 0 = byte, 1 = utf8, 2 = auto
-  if(encode_mode == "byte") {
-    encode_mode_byte = 0;
-    pbyte = pcre2_match_wrapper(pattern_ptr, false);
-  } else if((encode_mode == "UTF-8") || (encode_mode == "utf8")) {
-    encode_mode_byte = 1;
-    putf8 = pcre2_match_wrapper(pattern_ptr, true);
-  } else if(encode_mode == "auto") {
-    encode_mode_byte = 2;
-    putf8 = pcre2_match_wrapper(pattern_ptr, true);
-    pbyte = pcre2_match_wrapper(pattern_ptr, false);
+  pcre2_match_wrapper p;
+  if(encode_mode == "auto") {
+    if(pattern_enc == CE_UTF8) {
+      p = pcre2_match_wrapper(pattern_ptr,  true);
+    } else {
+      p = pcre2_match_wrapper(pattern_ptr,  false);
+    }
+  } else if(encode_mode == "UTF-8") {
+    p = pcre2_match_wrapper(pattern_ptr,  true);
+  } else if(encode_mode == "latin1") {
+    p = pcre2_match_wrapper(pattern_ptr,  false);
+  } else if(encode_mode == "native") {
+    p = pcre2_match_wrapper(pattern_ptr,  false);
+  } else if(encode_mode == "bytes") {
+    p = pcre2_match_wrapper(pattern_ptr,  false);
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
@@ -406,35 +477,21 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, std::string encode_mode = "au
   int * outptr = LOGICAL(ret);
   for(size_t i=0; i<len; i++) {
     auto q = cr.getCharLenCE(i);
-    switch(encode_mode_byte) {
-    case 0:
-      outptr[i] = pbyte.grepl(q.ptr);
-      break;
-    case 1:
-      outptr[i] = putf8.grepl(q.ptr);
-      break;
-    case 2:
-      {
-        cetype_t new_enc = choose_enc(q.enc, pattern_enc);
-        if(new_enc == CE_UTF8) {
-          outptr[i] = putf8.grepl(q.ptr);
-        } else {
-          outptr[i] = pbyte.grepl(q.ptr);
-        }
-      }
-      break;
+    if(q.ptr == nullptr) {
+      outptr[i] = NA_LOGICAL;
+      continue;
     }
+    outptr[i] = p.grepl(q.ptr);
   }
   return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
 struct pcre2_sub_wrapper {
   pcre2_code * re;
   PCRE2_SPTR replacement;
-  std::string output;
-  pcre2_sub_wrapper(const char * pattern_ptr, const char * replacement_ptr, bool utf8) {
+  std::vector<char> output;
+  pcre2_sub_wrapper(const char * pattern_ptr, const char * replacement_ptr, bool utf8) : output(std::vector<char>(20)) {
     int errorcode;
     PCRE2_SIZE erroroffset;
     re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
@@ -450,14 +507,14 @@ struct pcre2_sub_wrapper {
       throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
     }
     replacement = (PCRE2_SPTR)replacement_ptr;
-    output.resize(strlen(replacement_ptr));
   }
   pcre2_sub_wrapper() : re(nullptr) {}
   pcre2_sub_wrapper & operator=(const pcre2_sub_wrapper &) = delete; // copy assignment
   pcre2_sub_wrapper & operator=(pcre2_sub_wrapper && other) { // move assignment
     if(&other == this) return *this;
-    if(re != nullptr) pcre2_code_free(re);
     re = other.re;
+    replacement = other.replacement;
+    output = std::move(other.output);
     other.re = nullptr;
     return *this;
   }
@@ -466,7 +523,7 @@ struct pcre2_sub_wrapper {
     if(re != nullptr) pcre2_code_free(re);
   }
   const char * gsub(const char * subject_ptr) {
-    PCRE2_SIZE output_len = (PCRE2_SIZE)output.size();
+    PCRE2_SIZE output_len = (PCRE2_SIZE)(output.size() - 1);
     int rc = pcre2_substitute(
       re,                       // Points to the compiled pattern
       (PCRE2_SPTR)subject_ptr,  // Points to the subject string
@@ -480,8 +537,8 @@ struct pcre2_sub_wrapper {
       (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
       &output_len
     );
-    if(PCRE2_ERROR_NOMEMORY) {
-      output.resize(output_len);
+    if(rc == PCRE2_ERROR_NOMEMORY) {
+      output.resize(output_len + 1);
       rc = pcre2_substitute(
         re,                       // Points to the compiled pattern
         (PCRE2_SPTR)subject_ptr,  // Points to the subject string
@@ -497,10 +554,9 @@ struct pcre2_sub_wrapper {
       );
     }
     if(rc < 0) {
-      throw std::runtime_error("error matching string");
+      throw std::runtime_error("error matching string: check for matching encoding and proper regex syntax");
     }
-    output.resize(output_len);
-    return output.c_str();
+    return output.data();
   }
 };
 
@@ -513,52 +569,44 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, std::string encode_mo
   
   SEXP replacement_element = STRING_ELT(replacement, 0);
   const char * replacement_ptr = CHAR(replacement_element);
-  cetype_t replacement_enc = Rf_getCharCE(replacement_element);
+  // cetype_t replacement_enc = Rf_getCharCE(replacement_element);
   
-  pcre2_sub_wrapper pbyte, putf8;
-  uint8_t encode_mode_byte; // 0 = byte, 1 = utf8, 2 = auto
-  if(encode_mode == "byte") {
-    encode_mode_byte = 0;
-    pbyte = pcre2_sub_wrapper(pattern_ptr, replacement_ptr, false);
-  } else if((encode_mode == "UTF-8") || (encode_mode == "utf8")) {
-    encode_mode_byte = 1;
-    putf8 = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  true);
-  } else if(encode_mode == "auto") {
-    encode_mode_byte = 2;
-    putf8 = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  true);
-    pbyte = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
+  pcre2_sub_wrapper p;
+  cetype_t output_enc;
+  if(encode_mode == "auto") {
+    output_enc = pattern_enc;
+    if(pattern_enc == CE_UTF8) {
+      p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  true);
+    } else {
+      p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
+    }
+  } else if(encode_mode == "UTF-8") {
+    output_enc = CE_UTF8;
+    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  true);
+  } else if(encode_mode == "latin1") {
+    output_enc = CE_LATIN1;
+    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
+  } else if(encode_mode == "native") {
+    output_enc = CE_NATIVE;
+    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
+  } else if(encode_mode == "bytes") {
+    output_enc = CE_BYTES;
+    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
   
   RStringIndexer cr(subject);
   size_t len = cr.size();
-  SEXP ret = PROTECT(new_sf_vec(len));
+  SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
-  cetype_t new_enc = choose_enc(pattern_enc, replacement_enc);
   for(size_t i=0; i<len; i++) {
     auto q = cr.getCharLenCE(i);
-    switch(encode_mode_byte) {
-    case 0:
-      if(choose_enc(new_enc, q.enc) == CE_BYTES) {
-        ref[i] = sfstring(pbyte.gsub(q.ptr), CE_BYTES);
-      } else {
-        ref[i] = sfstring(pbyte.gsub(q.ptr), CE_NATIVE);
-      }
-      break;
-    case 1:
-      ref[i] = sfstring(putf8.gsub(q.ptr), CE_UTF8);
-      break;
-    case 2:
-      {
-        if(choose_enc(new_enc, q.enc) == CE_UTF8) {
-          ref[i] = sfstring(putf8.gsub(q.ptr), CE_UTF8);
-        } else {
-          ref[i] = sfstring(pbyte.gsub(q.ptr), choose_enc(new_enc, q.enc));
-        }
-      }
-      break;
+    if(q.ptr == nullptr) {
+      ref[i] = sfstring(NA_STRING);
+      continue;
     }
+    ref[i] = sfstring(p.gsub(q.ptr), output_enc);
   }
   UNPROTECT(1);
   return ret;
@@ -566,11 +614,11 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, std::string encode_mo
 
 ////////////////////////////////////////////////////////////////////////////////
 // [[Rcpp::export]] // RNG needed
-SEXP sf_random_strings(const int N, const int string_size = 50, 
+SEXP random_strings(const int N, const int string_size = 50, 
                        std::string charset = "abcdefghijklmnopqrstuvwxyz", 
-                       std::string mode = "stringfish") {
-  if(mode == "stringfish") {
-    SEXP ret = PROTECT(new_sf_vec(N));
+                       std::string vector_mode = "stringfish") {
+  if(vector_mode == "stringfish") {
+    SEXP ret = PROTECT(sf_vector(N));
     sf_vec_data & ref = sf_vec_data_ref(ret);
     std::string str;
     str.resize(string_size);
@@ -581,7 +629,7 @@ SEXP sf_random_strings(const int N, const int string_size = 50,
     }
     UNPROTECT(1);
     return ret;
-  } else if(mode == "normal") {
+  } else if(vector_mode == "normal") {
     CharacterVector ret(N);
     std::string str;
     str.resize(string_size);
@@ -592,7 +640,7 @@ SEXP sf_random_strings(const int N, const int string_size = 50,
     }
     return ret;
   } else {
-    throw std::runtime_error("String return mode must be normal or stringfish");
+    throw std::runtime_error("String vector_mode must be 'normal' or 'stringfish'");
   }
 }
   
@@ -612,8 +660,9 @@ SEXP sf_random_strings(const int N, const int string_size = 50,
 void sf_export_functions(DllInfo* dll) {
   R_RegisterCCallable("stringfish", "get_string_type", (DL_FUNC) &get_string_type);
   R_RegisterCCallable("stringfish", "materialize", (DL_FUNC) &materialize);
-  R_RegisterCCallable("stringfish", "new_sf_vec", (DL_FUNC) &new_sf_vec);
+  R_RegisterCCallable("stringfish", "sf_vector", (DL_FUNC) &sf_vector);
   R_RegisterCCallable("stringfish", "sf_vec_data_ref", (DL_FUNC) &sf_vec_data_ref);
+  R_RegisterCCallable("stringfish", "sf_assign", (DL_FUNC) &sf_assign);
   R_RegisterCCallable("stringfish", "sf_iconv", (DL_FUNC) &sf_iconv);
   R_RegisterCCallable("stringfish", "convert_to_sf", (DL_FUNC) &convert_to_sf);
   R_RegisterCCallable("stringfish", "sf_nchar", (DL_FUNC) &sf_nchar);
@@ -624,7 +673,7 @@ void sf_export_functions(DllInfo* dll) {
   R_RegisterCCallable("stringfish", "sf_readLines", (DL_FUNC) &sf_readLines);
   R_RegisterCCallable("stringfish", "sf_grepl", (DL_FUNC) &sf_grepl);
   R_RegisterCCallable("stringfish", "sf_gsub", (DL_FUNC) &sf_gsub);
-  R_RegisterCCallable("stringfish", "sf_random_strings", (DL_FUNC) &sf_random_strings);
+  R_RegisterCCallable("stringfish", "random_strings", (DL_FUNC) &random_strings);
 }
 
-// END OF SF_FUNCTIONS.CPP
+// END OF SF_FUNCTIONS.CPPEND OF SF_FUNCTIONS.CPP
