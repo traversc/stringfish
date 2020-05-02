@@ -10,7 +10,7 @@ Description: Provides an extendable and performant alt string implementation bac
 License: GPL-3 | file LICENSE
 Biarch: true
 Encoding: UTF-8
-Depends: R (>= 3.6.0)
+Depends: R (>= 3.5.0)
 SystemRequirements: C++11
 LinkingTo: 
     Rcpp (>= 0.12.18.3)
