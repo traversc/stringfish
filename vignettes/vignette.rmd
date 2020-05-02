@@ -14,15 +14,13 @@ vignette: >
  
 [![Build Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/traversc/stringfish) 
 
-*Work in progress*
+`stringfish` is a framework for performing string and sequence operations using the `alt-rep` system to speed up the comptuation of common string operations. 
 
-`stringfish` is a fast framework for performing string and sequence operations. At a basic level, it uses the `alt-rep` system to speed up the comptuation of common string operations. 
+The ultimate goal of the package is to unify `alt-rep` string implementations under a common framework. 
 
-However, the goal of the package is more ambitious: to unify `alt-rep` string implementations under a common framework. 
+The `alt-rep` system (new as of R 3.5.0) allows package developers to represent R objects using their own custom memory layout, completely invisible to the user. `stringfish` represents string data as a simple C++/STL vector, which is very fast andlightweight. 
 
-To understand `stringfish`, some explanation of the `alt-rep` system is required. The `alt-rep` system (new as of R 3.5.0) allows package developers to represent R objects using their own custom memory layout, completely invisible to the user. `stringfish` represents string data as a simple C++/STL vector, which is very fast lightweight. 
-
-However, using normal R functions to process string data (e.g. `substr`, `gsub`, `paste`, etc.) causes "materialization" of `alt-rep` vectors to normal R data, which can be a slow process. Therefore, a new framework that can recognize `alt-rep` vectors and process them without materialization is needed. That is the purpose `stringfish` attempts to fill. 
+Using normal R functions to process string data (e.g. `substr`, `gsub`, `paste`, etc.) causes "materialization" of `alt-rep` vectors to normal R data, which can be a slow process. Therefore, in order to take full advantage of the `alt-rep` framework, string processing functions need to be re-written to be `alt-rep` aware. This package hopes to fulfill that purpose. 
 
 ## Example
 
