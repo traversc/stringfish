@@ -41,6 +41,7 @@ NULL
 #' @param x the vector
 #' @param i the index to assign to
 #' @param e the new string to replace at i in x
+#' @return No return value, the function assigns an element to an existing stringfish vector
 #' @details 
 #' A function to assign a new element to an existing character vector. If the the vector is a stringfish vector, it does so without materialization. 
 #' @examples 
