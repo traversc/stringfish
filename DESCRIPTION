@@ -4,8 +4,8 @@ Version: 0.1
 Authors@R: c(
     person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre")),
     person("Phillip", "Hazel", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"),
-    person("Zoltan", "Herczeg", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"))
-    person("Tilera Corporation", role = "cph", comment = "Stack-less Just-In-Time compiler bundled with PCRE2")
+    person("Zoltan", "Herczeg", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"),
+    person("Tilera Corporation", role = "cph", comment = "Stack-less Just-In-Time compiler bundled with PCRE2"))
 Maintainer: Travers Ching <traversc@gmail.com>
 Description: Provides an extendable and performant 'alt-string' implementation backed by 'C++' vectors and strings.
 License: GPL-3
