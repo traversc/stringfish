@@ -13,6 +13,9 @@ sf_assign(x, i, e)
 
 \item{e}{the new string to replace at i in x}
 }
+\value{
+No return value, the function assigns an element to an existing stringfish vector
+}
 \description{
 Assigns a new string to a stringfish vector or any other character vector
 }
