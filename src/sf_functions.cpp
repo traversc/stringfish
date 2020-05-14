@@ -208,7 +208,7 @@ inline sfstring sf_substr_internal(const char * x, const int len, const cetype_t
       stop = stop < 0 ? (clen+stop+1) : (stop); // zero based
     } else {
       start = start-1;
-      stop = stop;
+      // stop = stop;
     }
     
     if((stop-1) < start) return sfstring("", type);
