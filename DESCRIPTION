@@ -1,12 +1,12 @@
 Package: stringfish
 Title: Alt String Implementation
-Version: 0.1
+Version: 0.11
 Authors@R: c(
     person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre", "cph")),
-    person("Phillip", "Hazel", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"),
+    person("Phillip", "Hazel", role = c("ctb"), comment = "Bundled PCRE2 code"),
     person("Zoltan", "Herczeg", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"),
     person("University of Cambridge", role = c("cph"), comment = "Bundled PCRE2 code"),
-    person("Tilera Corporation", role = "cph", comment = "Stack-less Just-In-Time compiler bundled with PCRE2"))
+    person("Tilera Corporation", role = c("cph"), comment = "Stack-less Just-In-Time compiler bundled with PCRE2"))
 Maintainer: Travers Ching <traversc@gmail.com>
 Description: Provides an extendable and performant 'alt-string' implementation backed by 'C++' vectors and strings.
 License: GPL-3
@@ -22,6 +22,6 @@ Suggests:
     qs, knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
-Copyright: This package includes bundled code from the 'PCRE2' library created by Philip Hazel. 
+Copyright: Copyright for the bundled 'PCRE2' library is held by University of Cambridge, Zoltan Herczeg and Tilera Coporation (Stack-less Just-In-Time compiler). 
 URL: https://github.com/traversc/stringfish
 BugReports: https://github.com/traversc/stringfish/issues

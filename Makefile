@@ -22,13 +22,13 @@ compile:
 	find . -iname "*.so" -exec rm {} \;
 
 build:
-	# autoconf
-	# chmod 755 cleanup
-	# chmod 755 configure
+	autoconf
+	chmod 755 cleanup
+	chmod 755 configure
 	find src/ -type f -exec chmod 644 {} \;
-	# chmod 644 ChangeLog DESCRIPTION Makefile NAMESPACE README.md
-	# ./configure
-	# ./cleanup
+	chmod 644 ChangeLog DESCRIPTION Makefile NAMESPACE README.md
+	./configure
+	./cleanup
 	Rscript -e "library(Rcpp); compileAttributes('.');"
 	Rscript -e "devtools::load_all(); roxygen2::roxygenise('.');"
 	find . -iname "*.a" -exec rm {} \;
@@ -37,13 +37,13 @@ build:
 	R CMD build .
 
 install:
-	# autoconf
-	# chmod 755 cleanup
-	# chmod 755 configure
+	autoconf
+	chmod 755 cleanup
+	chmod 755 configure
 	find src/ -type f -exec chmod 644 {} \;
-	# chmod 644 ChangeLog DESCRIPTION Makefile NAMESPACE README.md
-	# ./configure
-	# ./cleanup
+	chmod 644 ChangeLog DESCRIPTION Makefile NAMESPACE README.md
+	./configure
+	./cleanup
 	Rscript -e "library(Rcpp); compileAttributes('.');"
 	Rscript -e "devtools::load_all(); roxygen2::roxygenise('.');"
 	find . -iname "*.a" -exec rm {} \;

@@ -7,7 +7,7 @@ and semantics are as close as possible to those of the Perl 5 language.
 
                        Written by Philip Hazel
      Original API code Copyright (c) 1997-2012 University of Cambridge
-          New API code Copyright (c) 2016-2019 University of Cambridge
+          New API code Copyright (c) 2016-2020 University of Cambridge
 
 -----------------------------------------------------------------------------
 Redistribution and use in source and binary forms, with or without
@@ -76,6 +76,17 @@ typedef int BOOL;
 #include <valgrind/memcheck.h>
 #endif
 
+/* -ftrivial-auto-var-init support supports initializing all local variables
+to avoid some classes of bug, but this can cause an unacceptable slowdown
+for large on-stack arrays in hot functions. This macro lets us annotate
+such arrays. */
+
+#ifdef HAVE_ATTRIBUTE_UNINITIALIZED
+#define PCRE2_KEEP_UNINITIALIZED __attribute__((uninitialized))
+#else
+#define PCRE2_KEEP_UNINITIALIZED
+#endif
+
 /* Older versions of MSVC lack snprintf(). This define allows for
 warning/error-free compilation and testing with MSVC compilers back to at least
 MSVC 10/2010. Except for VC6 (which is missing some fundamentals and fails). */
@@ -108,8 +119,8 @@ only if it is not already set. */
 #ifndef PCRE2_EXP_DECL
 #  ifdef _WIN32
 #    ifndef PCRE2_STATIC
-#      define PCRE2_EXP_DECL       extern // __declspec(dllexport) TC: remove declspec because of above description
-#      define PCRE2_EXP_DEFN       // __declspec(dllexport) TC: remove declspec because of above description
+#      define PCRE2_EXP_DECL       extern // __declspec(dllexport)
+#      define PCRE2_EXP_DEFN       // __declspec(dllexport)
 #    else
 #      define PCRE2_EXP_DECL       extern
 #      define PCRE2_EXP_DEFN
@@ -579,7 +590,7 @@ total length of the tables. */
 #define fcc_offset    256                           /* Flip case */
 #define cbits_offset  512                           /* Character classes */
 #define ctypes_offset (cbits_offset + cbit_length)  /* Character types */
-#define tables_length (ctypes_offset + 256)
+#define TABLES_LENGTH (ctypes_offset + 256)
 
 
 /* -------------------- Character and string names ------------------------ */
@@ -1759,13 +1770,11 @@ typedef struct pcre2_memctl {
 
 /* Structure for building a chain of open capturing subpatterns during
 compiling, so that instructions to close them can be compiled when (*ACCEPT) is
-encountered. This is also used to identify subpatterns that contain recursive
-back references to themselves, so that they can be made atomic. */
+encountered. */
 
 typedef struct open_capitem {
   struct open_capitem *next;    /* Chain link */
   uint16_t number;              /* Capture number */
-  uint16_t flag;                /* Set TRUE if recursive back ref */
   uint16_t assert_depth;        /* Assertion depth when opened */
 } open_capitem;
 
@@ -1954,7 +1963,7 @@ is available. */
 #define _pcre2_was_newline           PCRE2_SUFFIX(_pcre2_was_newline_)
 #define _pcre2_xclass                PCRE2_SUFFIX(_pcre2_xclass_)
 
-extern int          _pcre2_auto_possessify(PCRE2_UCHAR *, BOOL,
+extern int          _pcre2_auto_possessify(PCRE2_UCHAR *,
                       const compile_block *);
 extern int          _pcre2_check_escape(PCRE2_SPTR *, PCRE2_SPTR, uint32_t *,
                       int *, uint32_t, uint32_t, BOOL, compile_block *);
