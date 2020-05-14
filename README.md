@@ -16,7 +16,7 @@ implementations under a common framework.
 The `alt-rep` system (new as of R 3.5.0) allows package developers to
 represent R objects using their own custom memory layout, completely
 invisible to the user. `stringfish` represents string data as a simple
-C++/STL vector, which is very fast andlightweight.
+C++/STL vector, which is very fast and lightweight.
 
 Using normal R functions to process string data (e.g. `substr`, `gsub`,
 `paste`, etc.) causes “materialization” of `alt-rep` vectors to normal R
