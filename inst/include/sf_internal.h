@@ -87,6 +87,11 @@ struct sfstring {
       encoding = static_cast<cetype_t_ext>(enc);
     }
   }
+  sfstring(size_t size, cetype_t enc) {
+    sdata = std::string();
+    sdata.resize(size);
+    encoding = static_cast<cetype_t_ext>(enc);
+  }
   sfstring(SEXP x) {
     if(x == NA_STRING) {
       encoding = cetype_t_ext::CE_NA;
