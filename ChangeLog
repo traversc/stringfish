@@ -1,7 +1,11 @@
-Version 0.11 (2020-05-14)
+Version 0.11.2 (2020-6-1)
+   * Fixed a bug in alt-rep set_string_elt method
+   * Added additional sfstring constructor `sfstring(size_t, cetype_t)`
+
+Version 0.11 (2020-5-14)
    * Check for PCRE2 system installation and updated bundled version to latest (10.35)
    * Fix to copyright statements in DESCRIPTION file
 
-Version 0.1 (2020-05-11)
+Version 0.1 (2020-5-11)
    * Initial CRAN release
    * An alt-rep string framework for fast and extensible processing of string data

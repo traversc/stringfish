@@ -83,7 +83,7 @@ struct sf_vec {
     R_xlen_t n = Length(vec);
     data2 = PROTECT(Rf_allocVector(STRSXP, n));
     
-    auto data1 = Get(vec);
+    auto & data1 = Get(vec);
     for (R_xlen_t i = 0; i < n; i++) {
       if(data1[i].encoding == cetype_t_ext::CE_NA) {
         SET_STRING_ELT(data2, i, NA_STRING);
@@ -162,7 +162,7 @@ struct sf_vec {
       SET_STRING_ELT(new_val, i, data2);
       return;
     }
-    auto data1 = Get(vec);
+    auto & data1 = Get(vec);
     data1[i] = sfstring(new_val);
   }
   
@@ -176,7 +176,7 @@ struct sf_vec {
       return 1;
     }
     
-    auto data1 = Get(vec);
+    auto & data1 = Get(vec);
     for(size_t i=0; i<data1.size(); i++) {
       if(data1[i].encoding == cetype_t_ext::CE_NA) return 0;
     }
