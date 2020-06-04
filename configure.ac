@@ -83,8 +83,9 @@ echo $(($MAJOR*1000+$MINOR))
 #### Check for GCC version and add -mshstk cflags for GCC 8+
 
 echo "Testing for C compiler version"
-
-R_HOME=`R RHOME`
+echo "R_HOME: $R_HOME"
+: ${R_HOME=`R RHOME`}
+echo "R_HOME: $R_HOME"
 if test -z "${R_HOME}"; then
   echo "could not determine R_HOME"
   exit 1
