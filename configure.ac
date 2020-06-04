@@ -1,4 +1,4 @@
-AC_INIT(stringfish, 0.112 traversc@gmail.com)
+AC_INIT(stringfish, 0.12 traversc@gmail.com)
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin:/opt/bin:/opt/local/bin])
 
 ########################################################
