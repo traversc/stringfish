@@ -1,4 +1,5 @@
 Version 0.11.2 (2020-6-1)
+   * Fixed compilation error on Fedora (adding -mshstk flag compile flag in configure file)
    * Fixed a bug in alt-rep set_string_elt method
    * Added additional sfstring constructor `sfstring(size_t, cetype_t)`
 

@@ -1,11 +1,13 @@
-AC_INIT(stringfish, 0.11, traversc@gmail.com)
+AC_INIT(stringfish, 0.112 traversc@gmail.com)
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin:/opt/bin:/opt/local/bin])
 
 ########################################################
 ### Predefined compile strings for different cases
 
-LIBS="-L."
+ADD_LIBS="-L."
 INCLUDE_PATHS=""
+CFLAGS=""
+
 PCRE2_COMPILE_STRING='LIBPCRE2 = PCRE2/pcre2_chartables.o \
 	PCRE2/pcre2_auto_possess.o \
 	PCRE2/pcre2_compile.o \
@@ -78,14 +80,43 @@ echo $(($MAJOR*1000+$MINOR))
 }
 
 ########################################################
-#### Compile PCRE2 checks
+#### Check for GCC version and add -mshstk cflags for GCC 8+
+
+echo "Testing for C compiler version"
+
+R_HOME=`R RHOME`
+if test -z "${R_HOME}"; then
+  echo "could not determine R_HOME"
+  exit 1
+fi
+CC=`"${R_HOME}/bin/R" CMD config CC | cut -f 1 -d " "`
+
+echo "C compiler command: $CC"
+
+if test xx$CC = "xxgcc"; then
+  CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
+  echo "gcc dumpversion: $CCVER"
+  if test "${CCVER}" -ge 8; then
+    CFLAGS="${CFLAGS} -mshstk"
+  fi
+elif test xx$CC == "xxclang"; then
+    CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
+  echo "clang dumpversion: $CCVER"
+  if test "${CCVER}" -ge 9; then
+    CFLAGS="${CFLAGS} -mshstk"
+  fi
+fi
+
+
+########################################################
+#### PCRE2 library paths
 
 if test xx$pcre2_force_compile = "xxtrue"; then
   echo "Compiling PCRE2 from source due to --with-pcre2-force-compile"
   COMPILE_PCRE2="true"
 elif test "xx$pcre2_include_path" != "xx"; then
   echo "Using user-defined pcre2 install paths"
-    LIBS="${LIBS} -L${pcre2_lib_path}"
+    ADD_LIBS="${ADD_LIBS} -L${pcre2_lib_path}"
     INCLUDE_PATHS="${INCLUDE_PATHS} -I${pcre2_include_path}"
     COMPILE_PCRE2="false"
 elif test "xx$PKGCONF" != "xx"; then
@@ -96,7 +127,7 @@ elif test "xx$PKGCONF" != "xx"; then
       echo "PCRE2 ${VERSION_STRING} dynamic library detected -- skipping PCRE2 compilation"
       pcre2_lib_path=`"${PKGCONF}" --libs libpcre2-8`
       pcre2_include_path=`"${PKGCONF}" --cflags-only-I libpcre2-8`
-      LIBS="${LIBS} ${pcre2_lib_path}"
+      ADD_LIBS="${ADD_LIBS} ${pcre2_lib_path}"
       INCLUDE_PATHS="${INCLUDE_PATHS} ${pcre2_include_path}"
       COMPILE_PCRE2="false"
     else
@@ -115,7 +146,7 @@ fi
 if test xx$COMPILE_PCRE2 = "xxtrue"; then
   INCLUDE_PATHS="${INCLUDE_PATHS} -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -IPCRE2"
   COMPILE_STRING=$PCRE2_COMPILE_STRING
-  LIBS="${LIBS} -lSFPCRE2"
+  ADD_LIBS="${ADD_LIBS} -lSFPCRE2"
 else
   COMPILE_STRING=""
 fi
@@ -128,12 +159,14 @@ elif test xx$with_simd = "xxSSE2"; then
   INCLUDE_PATHS="$INCLUDE_PATHS -msse2"
 fi
 
-echo $LIBS
+echo $ADD_LIBS
 echo $INCLUDE_PATHS
 echo $COMPILE_STRING
+echo $CFLAGS
 
+AC_SUBST([ADD_CFLAGS], $ADD_CFLAGS)
+AC_SUBST([ADD_LIBS], $ADD_LIBS)
 AC_SUBST([COMPILE_STRING], $COMPILE_STRING)
 AC_SUBST([INCLUDE_PATHS], $INCLUDE_PATHS)
-
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT

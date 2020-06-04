@@ -1,3 +1,4 @@
+PKG_CFLAGS=
 CXX_STD=CXX11
 PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -I.  -I/usr/local/include
 PKG_LIBS=-lpthread -L. -L/usr/local/lib -lpcre2-8
