@@ -6,7 +6,7 @@ AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin
 
 ADD_LIBS="-L."
 INCLUDE_PATHS=""
-CFLAGS=""
+ADD_CFLAGS=""
 
 PCRE2_COMPILE_STRING='LIBPCRE2 = PCRE2/pcre2_chartables.o \
 	PCRE2/pcre2_auto_possess.o \
@@ -97,13 +97,13 @@ if test xx$CC = "xxgcc"; then
   CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
   echo "gcc dumpversion: $CCVER"
   if test "${CCVER}" -ge 8; then
-    CFLAGS="${CFLAGS} -mshstk"
+    ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
   fi
 elif test xx$CC == "xxclang"; then
     CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
   echo "clang dumpversion: $CCVER"
   if test "${CCVER}" -ge 9; then
-    CFLAGS="${CFLAGS} -mshstk"
+    ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
   fi
 fi
 
@@ -162,7 +162,7 @@ fi
 echo $ADD_LIBS
 echo $INCLUDE_PATHS
 echo $COMPILE_STRING
-echo $CFLAGS
+echo $ADD_CFLAGS
 
 AC_SUBST([ADD_CFLAGS], $ADD_CFLAGS)
 AC_SUBST([ADD_LIBS], $ADD_LIBS)
