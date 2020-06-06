@@ -1,6 +1,6 @@
 Package: stringfish
 Title: Alt String Implementation
-Version: 0.12.1
+Version: 0.12.2
 Date: 2020-6-4
 Authors@R: c(
     person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre", "cph")),

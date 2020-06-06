@@ -90,23 +90,35 @@ if test -z "${R_HOME}"; then
   echo "could not determine R_HOME"
   exit 1
 fi
-CC=`"${R_HOME}/bin/R" CMD config CC | cut -f 1 -d " "`
-
+CC=`"${R_HOME}/bin/R" CMD config CC`
 echo "C compiler command: $CC"
 
-if test xx$CC = "xxgcc"; then
-  CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
-  echo "gcc dumpversion: $CCVER"
-  if test "${CCVER}" -ge 8; then
-    ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
-  fi
-elif test xx$CC == "xxclang"; then
-    CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
-  echo "clang dumpversion: $CCVER"
-  if test "${CCVER}" -ge 9; then
-    ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
-  fi
+AC_LANG(C)
+AX_CHECK_COMPILE_FLAG([-mshstk],[MSHSTK_FLAG_AVAIL=yes])
+
+if test xx$MSHSTK_FLAG_AVAIL = "xxyes"; then
+   ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
 fi
+
+# AC_LANG(C)
+# AX_COMPILER_VENDOR
+# AX_COMPILER_VERSION
+# echo "C compiler vendor: $ax_cv_c_compiler_vendor"
+# echo "C compiler version: $ax_cv_c_compiler_version" # note: The version is completely wrong for Mac LLVM
+
+# if test xx$ax_cv_c_compiler_vendor = "xxgnu"; then
+#   CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
+#   echo "gcc dumpversion: $CCVER"
+#   if test "${CCVER}" -ge 8; then
+#     ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
+#   fi
+# elif test xx$ax_cv_c_compiler_vendor == "xxclang"; then
+#     CCVER=`${CC} -dumpversion | cut -f 1 -d "."`
+#   echo "clang dumpversion: $CCVER"
+#   if test "${CCVER}" -ge 9; then
+#     ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
+#   fi
+# fi
 
 
 ########################################################
