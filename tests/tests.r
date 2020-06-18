@@ -157,9 +157,29 @@ for(. in 1:ntests) {
   stopifnot(all(sf_gsub(i500_latin1, p2, "$1") == gsub(p2, "\\1", i500_latin1)))
 }
 
+catn("sf_toupper and sf_tolower")
+for(. in 1:ntests) {
+  x1 <- sf_toupper(i500_latin1)
+  x2 <- sf_toupper(i500_utf8)
+  y1 <- sf_tolower(i500_latin1)
+  y2 <- sf_tolower(i500_utf8)
+  z1 <- sf_tolower(x1)
+  z2 <- sf_tolower(x2)
+  stopifnot(str_identical(z1, i500_latin1))
+  stopifnot(str_identical(z2, i500_utf8))
+  stopifnot(str_identical(y1, i500_latin1))
+  stopifnot(str_identical(y2, i500_utf8))
+  # base R functions also convert Unicode characters to upper
+  # stopifnot(str_identical(x1, iconv(toupper(i500_latin1),"UTF-8", "latin1")))
+  # stopifnot(str_identical(x2, toupper(i500_utf8)))
+}
+
 catn("Rcpp test with sf_alternate_case")
 for(. in 1:ntests) {
   x <- c("hello world", "HELLO WORLD")
   str_identical(sf_alternate_case(x), c("hElLo wOrLd", "hElLo wOrLd"))
 }
+
+
+
 

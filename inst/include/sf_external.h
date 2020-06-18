@@ -22,7 +22,8 @@ SEXP sf_readLines(std::string filename, std::string encoding = "UTF-8") {static 
 LogicalVector sf_grepl(SEXP subject, SEXP pattern, std::string encode_mode = "auto") {static LogicalVector(*fun)(SEXP, SEXP, std::string) = (LogicalVector(*)(SEXP, SEXP, std::string)) R_GetCCallable("stringfish", "sf_grepl");return fun(subject, pattern, encode_mode);}
 SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, std::string encode_mode = "auto") {static SEXP(*fun)(SEXP, SEXP, SEXP, std::string) = (SEXP(*)(SEXP, SEXP, SEXP, std::string)) R_GetCCallable("stringfish", "sf_gsub");return fun(subject, pattern, replacement, encode_mode);}
 SEXP random_strings(const int N, const int string_size = 50, std::string charset = "abcdefghijklmnopqrstuvwxyz", std::string vector_mode = "stringfish") {static SEXP(*fun)(const int, const int, std::string, std::string) = (SEXP(*)(const int, const int, std::string, std::string)) R_GetCCallable("stringfish", "sf_random_strings");return fun(N, string_size, charset, vector_mode);}
-
+SEXP sf_toupper(SEXP x) {static SEXP(*fun)(SEXP) = (SEXP(*)(SEXP)) R_GetCCallable("stringfish", "sf_toupper");return fun(x);}
+SEXP sf_tolower(SEXP x) {static SEXP(*fun)(SEXP) = (SEXP(*)(SEXP)) R_GetCCallable("stringfish", "sf_tolower");return fun(x);}
 
 
 #endif // include guard

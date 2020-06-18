@@ -57,3 +57,11 @@ random_strings <- function(N, string_size = 50L, charset = "abcdefghijklmnopqrst
     .Call(`_stringfish_random_strings`, N, string_size, charset, vector_mode)
 }
 
+sf_tolower <- function(x) {
+    .Call(`_stringfish_sf_tolower`, x)
+}
+
+sf_toupper <- function(x) {
+    .Call(`_stringfish_sf_toupper`, x)
+}
+

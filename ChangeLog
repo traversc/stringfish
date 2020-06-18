@@ -1,3 +1,11 @@
+Version 0.13.1 (2020-6-18)
+   * Additional functions: `sf_toupper` and `sf_tolower`
+
+Version 0.11.2 (2020-6-1)
+   * Fixed compilation error on Fedora (adding -mshstk flag compile flag in configure file)
+   * Fixed a bug in alt-rep set_string_elt method
+   * Added additional sfstring constructor `sfstring(size_t, cetype_t)`
+
 Version 0.11.2 (2020-6-1)
    * Fixed compilation error on Fedora (adding -mshstk flag compile flag in configure file)
    * Fixed a bug in alt-rep set_string_elt method

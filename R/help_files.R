@@ -275,6 +275,37 @@ NULL
 #' @name random_strings
 NULL
 
+#' sf_toupper
+#' 
+#' A function converting a string to all uppercase
+#' @usage sf_toupper(x)
+#' @param x A character vector
+#' @return A stringfish vector where all lowercase is converted to uppercase
+#' @details 
+#' Note: the function only converts ASCII characters. 
+#' @seealso toupper
+#' @examples 
+#' x <- letters
+#' sf_toupper(x)
+#' @name sf_toupper
+NULL
+
+#' sf_tolower
+#' 
+#' A function converting a string to all lowercase
+#' @usage sf_tolower(x)
+#' @param x A character vector
+#' @return A stringfish vector where all uppercase is converted to lowercase
+#' @details 
+#' Note: the function only converts ASCII characters. 
+#' @seealso tolower
+#' @examples 
+#' x <- LETTERS
+#' sf_tolower(x)
+#' @name sf_tolower
+NULL
+
+
 # not yet implemented:
 # sf_grep
 # sf_writeLines

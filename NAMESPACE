@@ -14,4 +14,6 @@ export(
 "sf_readLines",
 "sf_grepl",
 "sf_gsub",
-"random_strings")
+"random_strings",
+"sf_toupper",
+"sf_tolower")

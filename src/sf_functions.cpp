@@ -643,7 +643,56 @@ SEXP random_strings(const int N, const int string_size = 50,
     throw std::runtime_error("String vector_mode must be 'normal' or 'stringfish'");
   }
 }
-  
+
+////////////////////////////////////////////////////////////////////////////////
+
+// [[Rcpp::export(rng = false)]]
+SEXP sf_tolower(SEXP x) {
+  RStringIndexer xr(x);
+  size_t len = xr.size();
+  SEXP ret = PROTECT(sf_vector(len));
+  sf_vec_data & ref = sf_vec_data_ref(ret);
+  std::string temp;
+  for(size_t i=0; i<len; i++) {
+    auto q = xr.getCharLenCE(i);
+    temp.resize(q.len);
+    for(int j=0; j<q.len; j++) {
+      if((q.ptr[j] >= 65) & (q.ptr[j] <= 90)) { // char j is upper case
+        temp[j] = q.ptr[j] + 32;
+      } else {
+        temp[j] = q.ptr[j];
+      }
+    }
+    ref[i] = sfstring(temp, q.enc);
+  }
+  UNPROTECT(1);
+  return ret;
+}
+
+// [[Rcpp::export(rng = false)]]
+SEXP sf_toupper(SEXP x) {
+  RStringIndexer xr(x);
+  size_t len = xr.size();
+  SEXP ret = PROTECT(sf_vector(len));
+  sf_vec_data & ref = sf_vec_data_ref(ret);
+  std::string temp;
+  for(size_t i=0; i<len; i++) {
+    auto q = xr.getCharLenCE(i);
+    temp.resize(q.len);
+    for(int j=0; j<q.len; j++) {
+      if((q.ptr[j] >= 97) & (q.ptr[j] <= 122)) { // char j is lower case
+        temp[j] = q.ptr[j] - 32;
+      } else {
+        temp[j] = q.ptr[j];
+      }
+    }
+    ref[i] = sfstring(temp, q.enc);
+  }
+  UNPROTECT(1);
+  return ret;
+}
+
+
 // to do:
 // sf_sprintf
 // sf_assign
@@ -674,6 +723,8 @@ void sf_export_functions(DllInfo* dll) {
   R_RegisterCCallable("stringfish", "sf_grepl", (DL_FUNC) &sf_grepl);
   R_RegisterCCallable("stringfish", "sf_gsub", (DL_FUNC) &sf_gsub);
   R_RegisterCCallable("stringfish", "random_strings", (DL_FUNC) &random_strings);
+  R_RegisterCCallable("stringfish", "sf_toupper", (DL_FUNC) &sf_toupper);
+  R_RegisterCCallable("stringfish", "sf_tolower", (DL_FUNC) &sf_tolower);
 }
 
 // END OF SF_FUNCTIONS.CPP

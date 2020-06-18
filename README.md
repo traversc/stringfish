@@ -5,25 +5,28 @@ stringfish
 
 [![Build
 Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/traversc/stringfish)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN\_Downloads\_Badge](https://cranlogs.r-pkg.org/badges/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN\_Downloads\_Total\_Badge](https://cranlogs.r-pkg.org/badges/grand-total/stringfish)](https://cran.r-project.org/package=stringfish)
 
 `stringfish` is a framework for performing string and sequence
-operations using the `alt-rep` system to speed up the comptuation of
-common string operations.
+operations using the ALTREP system to speed up the comptuation of common
+string operations.
 
-The ultimate goal of the package is to unify `alt-rep` string
+The ultimate goal of the package is to unify ALTREP string
 implementations under a common framework.
 
-The `alt-rep` system (new as of R 3.5.0) allows package developers to
+The ALTREP system (new as of R 3.5.0) allows package developers to
 represent R objects using their own custom memory layout, completely
 invisible to the user. `stringfish` represents string data as a simple
-C++/STL vector, which is very fast and lightweight.
+C++/STL vector, which is very fast andlightweight.
 
 Using normal R functions to process string data (e.g. `substr`, `gsub`,
-`paste`, etc.) causes “materialization” of `alt-rep` vectors to normal R
+`paste`, etc.) causes “materialization” of ALTREP vectors to normal R
 data, which can be a slow process. Therefore, in order to take full
-advantage of the `alt-rep` framework, string processing functions need
-to be re-written to be `alt-rep` aware. This package hopes to fulfill
-that purpose.
+advantage of the ALTREP framework, string processing functions need to
+be re-written to be ALTREP aware. This package hopes to fulfill that
+purpose.
 
 ## Example
 
@@ -76,14 +79,16 @@ function:
   - `sf_readLines` (`readLines`)
   - `sf_grepl` (`grepl`)
   - `sf_gsub` (`gsub`)
+  - `sf_toupper` (`toupper`)
+  - `sf_tolower` (`tolower`)
 
 Utility functions:
 
   - `convert_to_sf` – converts a character vector to a `stringfish`
     vector
-  - `get_string_type` – determines string type (whether `alt-rep` or
+  - `get_string_type` – determines string type (whether ALTREP or
     normal)
-  - `materialize` – converts any `alt-rep` object into a normal R object
+  - `materialize` – converts any ALTREP object into a normal R object
   - `new_sf_vec` – creates a new and empty `stringfish` vector
   - `sf_random_strings` – creates a random strings as either a
     `stringfish` or normal R vector
@@ -94,7 +99,7 @@ encoding checks and no re-encoding. Therefore, to combine `latin1` and
 `UTF-8` encoded strings, first use `sf_iconv`. Another difference is
 that `subject` parameters are always the first argument, to be easier to
 use in pipes (`%>%`). E.g., `gsub(pattern, replacement, subject)`
-becomes `gsub(subject ,pattern, replacement)`.
+becomes `sf_gsub(subject ,pattern, replacement)`.
 
 ## Extensibility
 
@@ -103,7 +108,7 @@ Stringfish vectors can be worked into `Rcpp` scripts or even into other
 packages (see the `qs` package for an example).
 
 Below is a detailed `Rcpp` script example that creates a function to
-altnerate upper and lower case of strings.
+alternate upper and lower case of strings.
 
 ``` c
 // [[Rcpp::plugins(cpp11)]]

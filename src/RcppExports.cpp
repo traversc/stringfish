@@ -163,6 +163,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sf_tolower
+SEXP sf_tolower(SEXP x);
+RcppExport SEXP _stringfish_sf_tolower(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_tolower(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sf_toupper
+SEXP sf_toupper(SEXP x);
+RcppExport SEXP _stringfish_sf_toupper(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_toupper(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_get_string_type", (DL_FUNC) &_stringfish_get_string_type, 1},
@@ -179,6 +199,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_sf_grepl", (DL_FUNC) &_stringfish_sf_grepl, 3},
     {"_stringfish_sf_gsub", (DL_FUNC) &_stringfish_sf_gsub, 4},
     {"_stringfish_random_strings", (DL_FUNC) &_stringfish_random_strings, 4},
+    {"_stringfish_sf_tolower", (DL_FUNC) &_stringfish_sf_tolower, 1},
+    {"_stringfish_sf_toupper", (DL_FUNC) &_stringfish_sf_toupper, 1},
     {NULL, NULL, 0}
 };
 
