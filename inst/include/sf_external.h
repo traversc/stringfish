@@ -19,11 +19,12 @@ SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop) {static SEXP(*fu
 SEXP c_sf_paste(List dots, SEXP sep) {static SEXP(*fun)(List, SEXP) = (SEXP(*)(List, SEXP)) R_GetCCallable("stringfish", "c_sf_paste");return fun(dots, sep);}
 SEXP sf_collapse(SEXP x, SEXP collapse) {static SEXP(*fun)(SEXP, SEXP) = (SEXP(*)(SEXP, SEXP)) R_GetCCallable("stringfish", "sf_collapse");return fun(x, collapse);}
 SEXP sf_readLines(std::string filename, std::string encoding = "UTF-8") {static SEXP(*fun)(std::string, std::string) = (SEXP(*)(std::string, std::string)) R_GetCCallable("stringfish", "sf_readLines");return fun(filename, encoding);}
-LogicalVector sf_grepl(SEXP subject, SEXP pattern, std::string encode_mode = "auto") {static LogicalVector(*fun)(SEXP, SEXP, std::string) = (LogicalVector(*)(SEXP, SEXP, std::string)) R_GetCCallable("stringfish", "sf_grepl");return fun(subject, pattern, encode_mode);}
-SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, std::string encode_mode = "auto") {static SEXP(*fun)(SEXP, SEXP, SEXP, std::string) = (SEXP(*)(SEXP, SEXP, SEXP, std::string)) R_GetCCallable("stringfish", "sf_gsub");return fun(subject, pattern, replacement, encode_mode);}
+LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode = "auto", const bool fixed = false) {static LogicalVector(*fun)(SEXP, SEXP, const std::string, const bool) = (LogicalVector(*)(SEXP, SEXP, const std::string, const bool)) R_GetCCallable("stringfish", "sf_grepl");return fun(subject, pattern, encode_mode, fixed);}
+SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", const bool fixed = false) {static SEXP(*fun)(SEXP, SEXP, const std::string, const bool) = (SEXP(*)(SEXP, SEXP, const std::string, const bool)) R_GetCCallable("stringfish", "sf_split");return fun(subject, split, encode_mode, fixed);}
+SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode = "auto", const bool fixed = false) {static SEXP(*fun)(SEXP, SEXP, SEXP, const std::string, const bool) = (SEXP(*)(SEXP, SEXP, SEXP, const std::string, const bool)) R_GetCCallable("stringfish", "sf_gsub");return fun(subject, pattern, replacement, encode_mode, fixed);}
 SEXP random_strings(const int N, const int string_size = 50, std::string charset = "abcdefghijklmnopqrstuvwxyz", std::string vector_mode = "stringfish") {static SEXP(*fun)(const int, const int, std::string, std::string) = (SEXP(*)(const int, const int, std::string, std::string)) R_GetCCallable("stringfish", "sf_random_strings");return fun(N, string_size, charset, vector_mode);}
 SEXP sf_toupper(SEXP x) {static SEXP(*fun)(SEXP) = (SEXP(*)(SEXP)) R_GetCCallable("stringfish", "sf_toupper");return fun(x);}
 SEXP sf_tolower(SEXP x) {static SEXP(*fun)(SEXP) = (SEXP(*)(SEXP)) R_GetCCallable("stringfish", "sf_tolower");return fun(x);}
-
+IntegerVector sf_match(SEXP x, SEXP table) {static IntegerVector(*fun)(SEXP, SEXP) = (IntegerVector(*)(SEXP, SEXP)) R_GetCCallable("stringfish", "sf_match");return fun(x, table);}
 
 #endif // include guard

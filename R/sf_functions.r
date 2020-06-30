@@ -20,6 +20,23 @@ sf_paste <- function(..., sep="") {
   c_sf_paste(dots, sep)
 }
 
-# inspect <- function(x) {
-#   .Internal(inspect(x))
-# }
+sf_starts <- function(subject, pattern, ...) {
+  pattern <- paste0("^", pattern)
+  sf_grepl(subject, pattern, ...)
+}
+
+sf_ends <- function(subject, pattern, ...) {
+  pattern <- paste0(pattern, "$")
+  sf_grepl(subject, pattern, ...)
+}
+
+sf_trim <- function(subject, which = c("both", "left", "right"), whitespace = "[ \\t\\r\\n]", ...) {
+  which <- match.arg(which)
+  if(which == "both") {
+    sf_gsub(sf_gsub(subject, paste0("^", whitespace,"+"), "", ...), paste0(whitespace, "+", "$"), "", ...)
+  } else if(which == "left") {
+    sf_gsub(subject, paste0("^", whitespace, "+"), "", ...)
+  } else {
+    sf_gsub(subject, paste0(whitespace, "+", "$"), "", ...)
+  }
+}

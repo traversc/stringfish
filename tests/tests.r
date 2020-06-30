@@ -1,7 +1,10 @@
 suppressMessages(library(stringfish, quietly = T))
 suppressMessages(library(qs, quietly = T))
-suppressMessages(library(dplyr))
+suppressMessages(library(dplyr, quietly = T))
 suppressMessages(library(Rcpp, quietly = T))
+suppressMessages(library(stringr, quietly = T))
+suppressMessages(library(rlang, quietly = T))
+
 
 myfile <- tempfile()
 # qserialize(readLines("~/GoogleDrive/stringfish/tests/tests.cpp"), preset = "custom", compress_level = 22) %>% base91_encode %>% catquo
@@ -16,6 +19,9 @@ sourceCpp(paste0(myfile, ".cpp"))
 i500_utf8 <- qdeserialize(base91_decode('un]"BAAA@QBtHACAAAAAAAY4TBAABdk1kure+B3AwoFYdc"lM?hVjfxq5F^5OXd&}iic*u6aS*TsW0{Ur6@MdueBh+g1us}b/1]FhtGOG"/1xj=x/iL}2,4f#H8v+r_qDxuL3U2jD!9.@z%wUvNyLRYr4SugnxE`=hw2L+NI<X8w<q*MV&?(?V:FE!?+CimfUy<&u/Bk7xer7/u;syo9Cu:qx7J57?*_/6I@)xs[J;fXOK0B_l"[4EKyF#:{7z_>g.MhpqTM[&1_P.E@i&,j(3{?d|qu!g,fl:gUcJ;U#KwdN,_?zyzU~K@dwS}Evq&qWYNl(?xqk$j/L#s#{3^H)BXxo`t["IA+j+JLI*yEkS0<p4a3PV6<~N!f3v7HyE$j@/I@W0d[sy)p&z)?(k>qJoTLq#eE)}t8G:F`@bQJHYvHND{eS"@QH)m6Rgv,|a)@nV=!*%=<jElUsK5k}4,axCwZ~NB(+e|XA1OKDJ^@koTm4YAx#I8oCQOq}fyfqL>?loMXRva2k*4.V&`n?1j~MzQ1J[9t?IH1jV})PLT^,GA0J#8|VB=n9=cy91B.#J$m{SgJ=mk(5x*ml:j%u.(+_Nk8#/@w]C~PyEVk+tlU.iicD2hk^dYc2am&6_@ges.x$lbUZcTidf.IoKPnSUJp!gab|bS61!4U_u&XTPnEo%eUP&0J.OisuVyZ:|}b|Nl1[pZ:.7wOOS+*I`ojDvw6E#rq"){8i7Pt{.auL+`GVyZ&w!NKtp3k09J+K?;<:}#O/9+N#5DYF<{|cy7P_*9GzY(f4<qR$a&EaGeQ.fIo7_o#X?"_M$d[S]3;vJzM8Eg!;x(]~Nzn<d9`rCeJwn"5zd(npX_UA)yk=F!ue51ac;#>j6wnSlb,/9|fc|Um|^rb7+nr$w0P^x^nKZvO{Sg%@8{?VwNQgF<+cb@)Tf$3Zu(Oou,fN=EpfnqLI{s3$sp62;L!~x_*]5}`cIwJKDXWgY,/09Ft*;xn2,0KDrz/F.S[:)YJ:vsn{?EgMh`)#ss)1OiU9uAdZ6|bH+m6+x]?y;pq7ralfX;>Y?_h<YRdh7we_WP0{8|ft_oAbTodGh.cT9j&~5EgOVX.njZtoMu>f?0f~>9W0Y?K4+t#nNS(qOKox0"x>Tv|WP4vw|~XTlA]=SNJXdDpQdJbv*PL&8yGGEI%2$kqO1S)1i6?BmI,fTJ:=it_P,2.Mb/DeHFKMrTyB&oUjmpJ/SM^/A<{>g1HTVevQ7MeXcr)st{>AD;OQ)5Vwst^1xwdMa?g>?|yFSh9za`XtRat<xL@Pe7boGp6TaNQbu:bPFO7^S}CuzeR~YN5/_r04C:DOQ;KV?"xbkeU%OE814d~wg;FngvPgD$MCo"Oy|V)?6UXQJ!jPK0VqLjoCo9o[nxCOw"S3?;x$(24kGK,q+IkGAgAuW3L{C+WvL;^7tTH9C|2ID"V*3"az8.U&4{RW)2E5(NcJ#q=`[a7XzsUi;FJMv;G]Z@(mj4"_^5)il{eTT"/`r8)QuwW]Wlzm.XMI|$W~$OZ<L6>hV*2M.F(!o/e?&CEF>PK)z:prsTfugRCp(=%K!%hu.BL;*5tkY60XaMxD7rTc^rGIM#0,c*OD$^?,*2vlB%p11+;_gq]CPyXF4P:F#|WW}6nH,_z~l7bz[1n:m|]Nh[>k)A6Y).!U>w"AC}z1EB@AQ)qsB)oX2+N<a&e+@uCjenbJDZ~kqY7J)i7*+y/4B:pR/MbS{|Pgoi<4yzrymz2u(Hqg(`GNdLS{674]i^NIIHz$MVzw/&iJbn^4r0$)4G_<"A:yq<41d^+l/D^11}vs#LY|)1ghwz.6@&qE0!E[GCK[!"HWZxw1{N%IM2[W7X.A&L)u=E;GjSKo;l&}7W/*g<;E,tv[ZFzXCzd47&afxl]96H/Z?[i&YvmbxiMJeCG^Aaa|?j%`2*,@i#1#W!xfvG@/h+Fi{oGa;|c51I8C8wd:HDBosoF)n$IHioJa`RX.b{/KMM{y~N>}w]SjR<!KXER}h`e]WqHRV23+V;}SIx=N<#*xddZ;%wo?L|HnnOppxwc_[Lh.DG+`X4Nc1v{4;0]5$ufCd$vk}b+eLW,PsPc8E$GKSG$R:VznhU$t,kTg+?f"Z<R~:M=B9igR+DVzULgg8$!2^~T"RcU9:ln<8Jd4i$50@^s1{R9lVwJ^Pll*t>TN!=Lee,!77)G){k&p"C)_}`H&B|^B'))
 i500_latin1 <- iconv(i500_utf8, "UTF-8", "latin1")
 
+utf8_chars <- i500_utf8 %>% strsplit("") %>% unlist %>% unique
+latin1_chars <- iconv(utf8_chars, from="UTF-8", to="latin1")
+
 str_identical <- function(x, y) {
   if(length(x) != length(y)) return(F)
   if(any(nchar(x) != nchar(y))) return(F)
@@ -28,7 +34,7 @@ str_identical <- function(x, y) {
 catn <- function(...) {
   cat(..., "\n")
 }
-ntests <- 10
+ntests <- 50
 
 catn("sf_assign")
 for(. in 1:ntests) {
@@ -157,6 +163,38 @@ for(. in 1:ntests) {
   stopifnot(all(sf_gsub(i500_latin1, p2, "$1") == gsub(p2, "\\1", i500_latin1)))
 }
 
+
+catn("sf_split")
+for(. in 1:ntests) {
+  split <- sf_paste(sample(utf8_chars,1), ".")
+  x <- sf_split(i500_utf8, split)
+  y <- stringr::str_split(i500_utf8, split)
+  r <- sapply(1:length(y), function(i) {
+    str_identical(x[[i]], y[[i]])
+  })
+  stopifnot(all(r))
+  
+  split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
+  x <- sf_split(i500_latin1, split_latin1)
+  y <- stringr::str_split(i500_latin1, split_latin1)
+  x <- lapply(x, sf_iconv, from = "UTF-8", to = "latin1")
+  y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
+  r <- sapply(1:length(y), function(i) {
+    str_identical(x[[i]], y[[i]])
+  })
+  
+  split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
+  x <- sf_split(i500_latin1, split_latin1, encode_mode = "byte")
+  y <- stringr::str_split(i500_latin1, split_latin1)
+  y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
+  r <- sapply(1:length(y), function(i) {
+    str_identical(x[[i]], y[[i]])
+  })
+  
+  stopifnot(all(r))
+}
+
+
 catn("sf_toupper and sf_tolower")
 for(. in 1:ntests) {
   x1 <- sf_toupper(i500_latin1)
@@ -180,6 +218,12 @@ for(. in 1:ntests) {
   str_identical(sf_alternate_case(x), c("hElLo wOrLd", "hElLo wOrLd"))
 }
 
-
-
+catn("sf_trim")
+for(. in 1:ntests) {
+  x <- sf_trim(sf_paste("\t", i500_utf8, " \n"))
+  stopifnot(str_identical(x, i500_utf8))
+  
+  x <- sf_trim(sf_paste("\t", i500_latin1, " \n"), encode_mode = "byte")
+  stopifnot(str_identical(x, i500_latin1))
+}
 

@@ -7,7 +7,8 @@ Authors@R: c(
     person("Phillip", "Hazel", role = c("ctb"), comment = "Bundled PCRE2 code"),
     person("Zoltan", "Herczeg", role = c("ctb", "cph"), comment = "Bundled PCRE2 code"),
     person("University of Cambridge", role = c("cph"), comment = "Bundled PCRE2 code"),
-    person("Tilera Corporation", role = c("cph"), comment = "Stack-less Just-In-Time compiler bundled with PCRE2"))
+    person("Tilera Corporation", role = c("cph"), comment = "Stack-less Just-In-Time compiler bundled with PCRE2"),
+    person("Yann", "Collet", role = c("ctb", "cph"), comment = "Yann Collet is the author of the bundled xxHash code"))
 Maintainer: Travers Ching <traversc@gmail.com>
 Description: Provides an extendable and performant 'alt-string' implementation backed by 'C++' vectors and strings.
 License: GPL-3
@@ -23,6 +24,6 @@ Suggests:
     qs, knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
-Copyright: Copyright for the bundled 'PCRE2' library is held by University of Cambridge, Zoltan Herczeg and Tilera Coporation (Stack-less Just-In-Time compiler). 
+Copyright: Copyright for the bundled 'PCRE2' library is held by University of Cambridge, Zoltan Herczeg and Tilera Coporation (Stack-less Just-In-Time compiler); Copyright for the bundled 'xxHash' code is held by Yann Collet. 
 URL: https://github.com/traversc/stringfish
 BugReports: https://github.com/traversc/stringfish/issues

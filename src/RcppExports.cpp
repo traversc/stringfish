@@ -5,6 +5,22 @@
 
 using namespace Rcpp;
 
+// set_is_utf8_locale
+void set_is_utf8_locale();
+RcppExport SEXP _stringfish_set_is_utf8_locale() {
+BEGIN_RCPP
+    set_is_utf8_locale();
+    return R_NilValue;
+END_RCPP
+}
+// unset_is_utf8_locale
+void unset_is_utf8_locale();
+RcppExport SEXP _stringfish_unset_is_utf8_locale() {
+BEGIN_RCPP
+    unset_is_utf8_locale();
+    return R_NilValue;
+END_RCPP
+}
 // get_string_type
 std::string get_string_type(SEXP x);
 RcppExport SEXP _stringfish_get_string_type(SEXP xSEXP) {
@@ -47,13 +63,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // sf_iconv
-SEXP sf_iconv(SEXP x, std::string from, std::string to);
+SEXP sf_iconv(SEXP x, const std::string from, const std::string to);
 RcppExport SEXP _stringfish_sf_iconv(SEXP xSEXP, SEXP fromSEXP, SEXP toSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< std::string >::type from(fromSEXP);
-    Rcpp::traits::input_parameter< std::string >::type to(toSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type from(fromSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type to(toSEXP);
     rcpp_result_gen = Rcpp::wrap(sf_iconv(x, from, to));
     return rcpp_result_gen;
 END_RCPP
@@ -125,27 +141,42 @@ BEGIN_RCPP
 END_RCPP
 }
 // sf_grepl
-LogicalVector sf_grepl(SEXP subject, SEXP pattern, std::string encode_mode);
-RcppExport SEXP _stringfish_sf_grepl(SEXP subjectSEXP, SEXP patternSEXP, SEXP encode_modeSEXP) {
+LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode, const bool fixed);
+RcppExport SEXP _stringfish_sf_grepl(SEXP subjectSEXP, SEXP patternSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type subject(subjectSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pattern(patternSEXP);
-    Rcpp::traits::input_parameter< std::string >::type encode_mode(encode_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_grepl(subject, pattern, encode_mode));
+    Rcpp::traits::input_parameter< const std::string >::type encode_mode(encode_modeSEXP);
+    Rcpp::traits::input_parameter< const bool >::type fixed(fixedSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_grepl(subject, pattern, encode_mode, fixed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sf_split
+SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode, const bool fixed);
+RcppExport SEXP _stringfish_sf_split(SEXP subjectSEXP, SEXP splitSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type subject(subjectSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type split(splitSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type encode_mode(encode_modeSEXP);
+    Rcpp::traits::input_parameter< const bool >::type fixed(fixedSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_split(subject, split, encode_mode, fixed));
     return rcpp_result_gen;
 END_RCPP
 }
 // sf_gsub
-SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, std::string encode_mode);
-RcppExport SEXP _stringfish_sf_gsub(SEXP subjectSEXP, SEXP patternSEXP, SEXP replacementSEXP, SEXP encode_modeSEXP) {
+SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode, const bool fixed);
+RcppExport SEXP _stringfish_sf_gsub(SEXP subjectSEXP, SEXP patternSEXP, SEXP replacementSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type subject(subjectSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pattern(patternSEXP);
     Rcpp::traits::input_parameter< SEXP >::type replacement(replacementSEXP);
-    Rcpp::traits::input_parameter< std::string >::type encode_mode(encode_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_gsub(subject, pattern, replacement, encode_mode));
+    Rcpp::traits::input_parameter< const std::string >::type encode_mode(encode_modeSEXP);
+    Rcpp::traits::input_parameter< const bool >::type fixed(fixedSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_gsub(subject, pattern, replacement, encode_mode, fixed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -183,8 +214,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sf_match
+IntegerVector sf_match(SEXP x, SEXP table);
+RcppExport SEXP _stringfish_sf_match(SEXP xSEXP, SEXP tableSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type table(tableSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_match(x, table));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_stringfish_set_is_utf8_locale", (DL_FUNC) &_stringfish_set_is_utf8_locale, 0},
+    {"_stringfish_unset_is_utf8_locale", (DL_FUNC) &_stringfish_unset_is_utf8_locale, 0},
     {"_stringfish_get_string_type", (DL_FUNC) &_stringfish_get_string_type, 1},
     {"_stringfish_materialize", (DL_FUNC) &_stringfish_materialize, 1},
     {"_stringfish_sf_vector", (DL_FUNC) &_stringfish_sf_vector, 1},
@@ -196,11 +240,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_c_sf_paste", (DL_FUNC) &_stringfish_c_sf_paste, 2},
     {"_stringfish_sf_collapse", (DL_FUNC) &_stringfish_sf_collapse, 2},
     {"_stringfish_sf_readLines", (DL_FUNC) &_stringfish_sf_readLines, 2},
-    {"_stringfish_sf_grepl", (DL_FUNC) &_stringfish_sf_grepl, 3},
-    {"_stringfish_sf_gsub", (DL_FUNC) &_stringfish_sf_gsub, 4},
+    {"_stringfish_sf_grepl", (DL_FUNC) &_stringfish_sf_grepl, 4},
+    {"_stringfish_sf_split", (DL_FUNC) &_stringfish_sf_split, 4},
+    {"_stringfish_sf_gsub", (DL_FUNC) &_stringfish_sf_gsub, 5},
     {"_stringfish_random_strings", (DL_FUNC) &_stringfish_random_strings, 4},
     {"_stringfish_sf_tolower", (DL_FUNC) &_stringfish_sf_tolower, 1},
     {"_stringfish_sf_toupper", (DL_FUNC) &_stringfish_sf_toupper, 1},
+    {"_stringfish_sf_match", (DL_FUNC) &_stringfish_sf_match, 2},
     {NULL, NULL, 0}
 };
 
