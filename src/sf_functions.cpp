@@ -1,3 +1,7 @@
+#include <unordered_map>
+#include <fstream> // ifstream, ofstream
+#include <xxhash/xxhash.c> // "header only" library
+
 #include <Rcpp.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Riconv.h>
@@ -11,8 +15,240 @@
 #include "PCRE2/pcre2.h"
 
 #include "sf_altrep.h"
-#include <fstream> // ifstream, ofstream
 using namespace Rcpp;
+
+////////////////////////////////////////////////////////////////////////////////
+// constants
+static constexpr uint32_t R_MAX_INT = 2147483647; // R max (int) vector length
+
+// is_utf8_locale controls whether CE_NATIVE strings are iconv'ed to utf-8 strings
+// or used as is. Set during R package initialization
+// but if R package isn't loaded, default of "false" is fine
+static bool is_utf8_locale = false;
+// [[Rcpp::export(rng = false)]]
+void set_is_utf8_locale() {is_utf8_locale = true;}
+// [[Rcpp::export(rng = false)]]
+void unset_is_utf8_locale() {is_utf8_locale = false;}
+
+////////////////////////////////////////////////////////////////////////////////
+// iconv helper class
+
+struct iconv_wrapper {
+  void * cd;
+  std::string output;
+  iconv_wrapper() : cd(nullptr), output("") {}
+  iconv_wrapper(const char * to, const char * from) {
+    cd = Riconv_open(to, from);
+  }
+  const char * convert(const char * ptr, size_t len) {
+    // 4 bytes should always be enough? 
+    // UTF-8 = max 4 bytes per code point, but what about other encoding?
+    // what about multi-code point characters?
+    output.resize(len * 4);
+    size_t outlen = output.size();
+    char * outptr =  &output[0];
+    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
+    if(res == (size_t)(-1)) return nullptr; // throw std::runtime_error("invalid input sequence");
+    //reset state -- not needed?
+    // Riconv(cd, nullptr, nullptr, nullptr, nullptr);
+    size_t bytes_written = output.size() - outlen;
+    output.resize(bytes_written);
+    return output.c_str();
+  }
+  const char * convert(const char * ptr) {
+    size_t len = strlen(ptr);
+    output.resize(len * 4);
+    size_t outlen = output.size();
+    char * outptr =  &output[0];
+    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
+    if(res == (size_t)(-1)) return nullptr; // throw std::runtime_error("invalid input sequence");
+    size_t bytes_written = output.size() - outlen;
+    output.resize(bytes_written);
+    return output.c_str();
+  }
+  bool convertToString(const char * ptr, size_t len, std::string outstring) {
+    if(outstring.size() < len * 4) {
+      outstring.resize(len * 4);
+    }
+    size_t outlen = outstring.size();
+    char * outptr =  &outstring[0];
+    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
+    if(res == (size_t)(-1)) return false; // throw std::runtime_error("invalid input sequence");
+    size_t bytes_written = outstring.size() - outlen;
+    outstring.resize(bytes_written);
+    return true;
+  }
+  bool convertToString(const char * ptr, std::string outstring) {
+    size_t len = strlen(ptr);
+    if(outstring.size() < len * 4) {
+      outstring.resize(len * 4);
+    }
+    size_t outlen = outstring.size();
+    char * outptr =  &outstring[0];
+    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
+    if(res == (size_t)(-1)) return false; // throw std::runtime_error("invalid input sequence");
+    size_t bytes_written = outstring.size() - outlen;
+    outstring.resize(bytes_written);
+    return true;
+  }
+  iconv_wrapper(const iconv_wrapper&) = delete; // copy constructor
+  iconv_wrapper & operator=(const iconv_wrapper &) = delete; // copy assignment
+  iconv_wrapper & operator=(iconv_wrapper && other) { // move assignment
+    if(&other == this) return *this;
+    if(cd != nullptr) Riconv_close(cd);
+    cd = other.cd;
+    other.cd = nullptr;
+    output = std::move(other.output);
+    return *this;
+  }
+  ~iconv_wrapper() {
+    if(cd != nullptr) Riconv_close(cd);
+  }
+};
+
+static const std::string iconv_utf8_string = "UTF-8";
+static const std::string iconv_latin1_string = "latin1";
+static const std::string iconv_native_string = "";
+
+////////////////////////////////////////////////////////////////////////////////
+// pcre helper classes
+
+struct pcre2_match_wrapper {
+  pcre2_code * re;
+  pcre2_match_data * match_data;
+  pcre2_match_wrapper(const char * pattern_ptr, bool utf8, bool literal = false) {
+    int errorcode;
+    PCRE2_SIZE erroroffset;
+    uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
+    re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
+                       PCRE2_ZERO_TERMINATED, // length
+                       flags,
+                       &errorcode, // error reporting
+                       &erroroffset, // error reporting
+                       NULL // compile context
+    );
+    if(re == NULL) {
+      PCRE2_UCHAR buffer[256];
+      pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
+      throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
+    }
+    match_data = pcre2_match_data_create_from_pattern(re, NULL);
+    // match_data = pcre2_match_data_create(0, NULL);
+  }
+  pcre2_match_wrapper() : re(nullptr), match_data(nullptr) {}
+  pcre2_match_wrapper & operator=(const pcre2_match_wrapper &) = delete; // copy assignment
+  pcre2_match_wrapper & operator=(pcre2_match_wrapper && other) { // move assignment
+    if(&other == this) return *this;
+    if(re != nullptr) pcre2_code_free(re);
+    re = other.re;
+    match_data = other.match_data;
+    other.re = nullptr;
+    other.match_data = nullptr;
+    return *this;
+  }
+  pcre2_match_wrapper(const pcre2_match_wrapper&) = delete; // copy constructor
+  ~pcre2_match_wrapper() {
+    if(re != nullptr) pcre2_code_free(re);
+    if(match_data != nullptr) pcre2_match_data_free(match_data);
+  }
+  int match(const char * subject_ptr) {
+    int rc = pcre2_match(re, // compiled pattern
+                         (PCRE2_SPTR)subject_ptr, // subject
+                         PCRE2_ZERO_TERMINATED, // length
+                         0, // start offset
+                         0, // options
+                         match_data,  // match data block
+                         NULL // match context
+    );
+    if(rc == PCRE2_ERROR_NOMATCH) {
+      return 0;
+    } else if(rc < 0) {
+      throw std::runtime_error("error matching string");
+    } else {
+      return 1;
+    }
+  }
+  inline PCRE2_SIZE * match_ovector() {
+    return pcre2_get_ovector_pointer(match_data);
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct pcre2_sub_wrapper {
+  pcre2_code * re;
+  PCRE2_SPTR replacement;
+  std::vector<char> output;
+  pcre2_sub_wrapper(const char * pattern_ptr, const char * replacement_ptr, bool utf8, bool literal = false) : 
+    output(std::vector<char>(20)) {
+    int errorcode;
+    PCRE2_SIZE erroroffset;
+    uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
+    re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
+                       PCRE2_ZERO_TERMINATED, // length
+                       flags,
+                       &errorcode, // error reporting
+                       &erroroffset, // error reporting
+                       NULL // compile context
+    );
+    if(re == NULL) {
+      PCRE2_UCHAR buffer[256];
+      pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
+      throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
+    }
+    replacement = (PCRE2_SPTR)replacement_ptr;
+  }
+  pcre2_sub_wrapper() : re(nullptr) {}
+  pcre2_sub_wrapper & operator=(const pcre2_sub_wrapper &) = delete; // copy assignment
+  pcre2_sub_wrapper & operator=(pcre2_sub_wrapper && other) { // move assignment
+    if(&other == this) return *this;
+    re = other.re;
+    replacement = other.replacement;
+    output = std::move(other.output);
+    other.re = nullptr;
+    return *this;
+  }
+  pcre2_sub_wrapper(const pcre2_sub_wrapper&) = delete; // copy constructor
+  ~pcre2_sub_wrapper() {
+    if(re != nullptr) pcre2_code_free(re);
+  }
+  const char * gsub(const char * subject_ptr) {
+    PCRE2_SIZE output_len = (PCRE2_SIZE)(output.size() - 1);
+    int rc = pcre2_substitute(
+      re,                       // Points to the compiled pattern
+      (PCRE2_SPTR)subject_ptr,  // Points to the subject string
+      PCRE2_ZERO_TERMINATED,    // Length of the subject string
+      0,                        // Offset in the subject at which to start matching
+      PCRE2_SUBSTITUTE_GLOBAL & PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
+      NULL,                     // Points to a match data block, or is NULL
+      NULL,                     // Points to a match context, or is NULL
+      (PCRE2_SPTR)replacement,  // Points to the replacement string
+      PCRE2_ZERO_TERMINATED,    // Length of the replacement string
+      (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
+      &output_len
+    );
+    if(rc == PCRE2_ERROR_NOMEMORY) {
+      output.resize(output_len + 1);
+      rc = pcre2_substitute(
+        re,                       // Points to the compiled pattern
+        (PCRE2_SPTR)subject_ptr,  // Points to the subject string
+        PCRE2_ZERO_TERMINATED,    // Length of the subject string
+        0,                        // Offset in the subject at which to start matching
+        PCRE2_SUBSTITUTE_GLOBAL & PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
+        NULL,                     // Points to a match data block, or is NULL
+        NULL,                     // Points to a match context, or is NULL
+        (PCRE2_SPTR)replacement,  // Points to the replacement string
+        PCRE2_ZERO_TERMINATED,    // Length of the replacement string
+        (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
+        &output_len
+      );
+    }
+    if(rc < 0) {
+      throw std::runtime_error("error matching string: check for matching encoding and proper regex syntax");
+    }
+    return output.data();
+  }
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -37,7 +273,9 @@ std::string get_string_type(SEXP x) {
 
 // [[Rcpp::export(rng = false)]]
 SEXP materialize(SEXP x) {
-  ALTVEC_DATAPTR(x);
+  if(ALTREP(x)) {
+    ALTVEC_DATAPTR(x);
+  }
   return x;
 }
 
@@ -88,35 +326,8 @@ void sf_assign(SEXP x, size_t i, SEXP e) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct iconv_wrapper {
-  void * cd;
-  std::string output;
-  iconv_wrapper(const char * to, const char * from) {
-    cd = Riconv_open(to, from);
-  }
-  const char * convert(const char * ptr, size_t len) {
-    // 4 bytes should always be enough? 
-    // UTF-8 = max 4 bytes per code point, but what about other encoding?
-    // what about multi-code point characters?
-    output.resize(len * 4);
-    size_t outlen = output.size();
-    char * outptr =  &output[0];
-    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
-    if(res == (size_t)(-1)) throw std::runtime_error("invalid input sequence");
-    //reset state -- not needed?
-    // Riconv(cd, nullptr, nullptr, nullptr, nullptr);
-    size_t bytes_written = output.size() - outlen;
-    output.resize(bytes_written);
-    return output.c_str();
-  }
-  iconv_wrapper(const iconv_wrapper&) = delete;
-  ~iconv_wrapper() {
-    Riconv_close(cd);
-  }
-};
-
 // [[Rcpp::export(rng = false)]]
-SEXP sf_iconv(SEXP x, std::string from, std::string to) {
+SEXP sf_iconv(SEXP x, const std::string from, const std::string to) {
   cetype_t encoding;
   if(to == "UTF-8") {
     encoding = CE_UTF8;
@@ -135,7 +346,12 @@ SEXP sf_iconv(SEXP x, std::string from, std::string to) {
     if(q.ptr == nullptr) {
       ref[i] = sfstring(NA_STRING);
     } else {
-      ref[i] = sfstring(iw.convert(q.ptr, q.len), encoding);
+      const char * sc = iw.convert(q.ptr, q.len);
+      if(sc == nullptr) {
+        ref[i] = sfstring(NA_STRING);
+      } else {
+        ref[i] = sfstring(sc, encoding);
+      }
     }
   }
   UNPROTECT(1);
@@ -391,82 +607,32 @@ SEXP sf_readLines(std::string file, std::string encoding = "UTF-8") {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct pcre2_match_wrapper {
-  pcre2_code * re;
-  pcre2_match_data * match_data;
-  pcre2_match_wrapper(const char * pattern_ptr, bool utf8) {
-    int errorcode;
-    PCRE2_SIZE erroroffset;
-    re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
-                       PCRE2_ZERO_TERMINATED, // length
-                       utf8 ? PCRE2_UTF : 0, // PCRE2_UTF, // options -- 0 or PCRE2_UTF
-                       &errorcode, // error reporting
-                       &erroroffset, // error reporting
-                       NULL // compile context
-    );
-    if(re == NULL) {
-      PCRE2_UCHAR buffer[256];
-      pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
-      throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
-    }
-    // match_data = pcre2_match_data_create_from_pattern(re, NULL);
-    match_data = pcre2_match_data_create(0, NULL);
-  }
-  pcre2_match_wrapper() : re(nullptr), match_data(nullptr) {}
-  pcre2_match_wrapper & operator=(const pcre2_match_wrapper &) = delete; // copy assignment
-  pcre2_match_wrapper & operator=(pcre2_match_wrapper && other) { // move assignment
-    if(&other == this) return *this;
-    if(re != nullptr) pcre2_code_free(re);
-    re = other.re;
-    match_data = other.match_data;
-    other.re = nullptr;
-    other.match_data = nullptr;
-    return *this;
-  }
-  pcre2_match_wrapper(const pcre2_match_wrapper&) = delete; // copy constructor
-  ~pcre2_match_wrapper() {
-    if(re != nullptr) pcre2_code_free(re);
-    if(match_data != nullptr) pcre2_match_data_free(match_data);
-  }
-  int grepl(const char * subject_ptr) {
-    int rc = pcre2_match(re, // compiled pattern
-                         (PCRE2_SPTR)subject_ptr, // subject
-                         PCRE2_ZERO_TERMINATED, // length
-                         0, // start offset
-                         0, // options
-                         match_data,  // match data block
-                         NULL // match context
-    );
-    if(rc == PCRE2_ERROR_NOMATCH) {
-      return 0;
-    } else if(rc < 0) {
-      throw std::runtime_error("error matching string");
-    } else {
-      return 1;
-    }
-  }
-};
-
 // [[Rcpp::export(rng = false)]]
-LogicalVector sf_grepl(SEXP subject, SEXP pattern, std::string encode_mode = "auto") {
+LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode = "auto", const bool fixed = false) {
   SEXP pattern_element = STRING_ELT(pattern, 0);
   const char * pattern_ptr = CHAR(pattern_element);
   cetype_t pattern_enc = Rf_getCharCE(pattern_element);
-  pcre2_match_wrapper p;
-  if(encode_mode == "auto") {
-    if(pattern_enc == CE_UTF8) {
-      p = pcre2_match_wrapper(pattern_ptr,  true);
-    } else {
-      p = pcre2_match_wrapper(pattern_ptr,  false);
+  
+  iconv_wrapper iw_latin1;
+  iconv_wrapper iw_native;
+  pcre2_match_wrapper pm;
+  std::string pattern_str;
+  if((encode_mode == "auto")) {
+    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
+    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
+    
+    if( (!is_utf8_locale && (pattern_enc == CE_NATIVE) && !IS_ASCII(pattern_element)) ) {
+      pattern_str = std::string(iw_native.convert(pattern_ptr));
+      pattern_ptr = pattern_str.c_str();
+    } else if(pattern_enc == CE_LATIN1) {
+      pattern_str = std::string(iw_latin1.convert(pattern_ptr));
+      pattern_ptr = pattern_str.c_str();
     }
+    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
   } else if(encode_mode == "UTF-8") {
-    p = pcre2_match_wrapper(pattern_ptr,  true);
-  } else if(encode_mode == "latin1") {
-    p = pcre2_match_wrapper(pattern_ptr,  false);
-  } else if(encode_mode == "native") {
-    p = pcre2_match_wrapper(pattern_ptr,  false);
-  } else if(encode_mode == "bytes") {
-    p = pcre2_match_wrapper(pattern_ptr,  false);
+    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
+  }else if(encode_mode == "byte") {
+    pm = pcre2_match_wrapper(pattern_ptr, false, fixed);
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
@@ -481,132 +647,209 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, std::string encode_mode = "au
       outptr[i] = NA_LOGICAL;
       continue;
     }
-    outptr[i] = p.grepl(q.ptr);
+    // outptr[i] = p.match(q.ptr);
+    if(encode_mode == "UTF-8") {
+      outptr[i] = pm.match(q.ptr);
+    } else if(encode_mode == "byte") {
+      outptr[i] = pm.match(q.ptr);
+    } else { // auto - upscale everything to UTF-8
+      if(q.enc == CE_NATIVE) {
+        if(!is_utf8_locale && !cr.is_ASCII(i)) {
+          const char * iwptr = iw_native.convert(q.ptr);
+          if(iwptr == nullptr) {
+            outptr[i] = NA_LOGICAL;
+          } else {
+            outptr[i] = pm.match(iwptr);
+          }
+        } else {
+          outptr[i] = pm.match(q.ptr);
+        }
+      } else if(q.enc == CE_LATIN1) {
+        const char * iwptr = iw_latin1.convert(q.ptr);
+        if(iwptr == nullptr) {
+          outptr[i] = NA_LOGICAL;
+        } else {
+          outptr[i] = pm.match(iwptr);
+        }
+      } else {
+        outptr[i] = pm.match(q.ptr);
+      }
+    }
   }
   return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-struct pcre2_sub_wrapper {
-  pcre2_code * re;
-  PCRE2_SPTR replacement;
-  std::vector<char> output;
-  pcre2_sub_wrapper(const char * pattern_ptr, const char * replacement_ptr, bool utf8) : output(std::vector<char>(20)) {
-    int errorcode;
-    PCRE2_SIZE erroroffset;
-    re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
-                       PCRE2_ZERO_TERMINATED, // length
-                       utf8 ? PCRE2_UTF : 0, // PCRE2_UTF, // options -- 0 or PCRE2_UTF
-                       &errorcode, // error reporting
-                       &erroroffset, // error reporting
-                       NULL // compile context
-    );
-    if(re == NULL) {
-      PCRE2_UCHAR buffer[256];
-      pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
-      throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
-    }
-    replacement = (PCRE2_SPTR)replacement_ptr;
-  }
-  pcre2_sub_wrapper() : re(nullptr) {}
-  pcre2_sub_wrapper & operator=(const pcre2_sub_wrapper &) = delete; // copy assignment
-  pcre2_sub_wrapper & operator=(pcre2_sub_wrapper && other) { // move assignment
-    if(&other == this) return *this;
-    re = other.re;
-    replacement = other.replacement;
-    output = std::move(other.output);
-    other.re = nullptr;
-    return *this;
-  }
-  pcre2_sub_wrapper(const pcre2_sub_wrapper&) = delete; // copy constructor
-  ~pcre2_sub_wrapper() {
-    if(re != nullptr) pcre2_code_free(re);
-  }
-  const char * gsub(const char * subject_ptr) {
-    PCRE2_SIZE output_len = (PCRE2_SIZE)(output.size() - 1);
-    int rc = pcre2_substitute(
-      re,                       // Points to the compiled pattern
-      (PCRE2_SPTR)subject_ptr,  // Points to the subject string
-      PCRE2_ZERO_TERMINATED,    // Length of the subject string
-      0,                        // Offset in the subject at which to start matching
-      PCRE2_SUBSTITUTE_GLOBAL & PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
-      NULL,                     // Points to a match data block, or is NULL
-      NULL,                     // Points to a match context, or is NULL
-      (PCRE2_SPTR)replacement,  // Points to the replacement string
-      PCRE2_ZERO_TERMINATED,    // Length of the replacement string
-      (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
-      &output_len
-    );
-    if(rc == PCRE2_ERROR_NOMEMORY) {
-      output.resize(output_len + 1);
-      rc = pcre2_substitute(
-        re,                       // Points to the compiled pattern
-        (PCRE2_SPTR)subject_ptr,  // Points to the subject string
-        PCRE2_ZERO_TERMINATED,    // Length of the subject string
-        0,                        // Offset in the subject at which to start matching
-        PCRE2_SUBSTITUTE_GLOBAL & PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
-        NULL,                     // Points to a match data block, or is NULL
-        NULL,                     // Points to a match context, or is NULL
-        (PCRE2_SPTR)replacement,  // Points to the replacement string
-        PCRE2_ZERO_TERMINATED,    // Length of the replacement string
-        (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
-        &output_len
-      );
-    }
-    if(rc < 0) {
-      throw std::runtime_error("error matching string: check for matching encoding and proper regex syntax");
-    }
-    return output.data();
-  }
-};
 
+void sf_split_internal(sf_vec_data & ref, pcre2_match_wrapper & p, const char * sptr, cetype_t enc) {
+  int rc;
+  while((rc = p.match(sptr))) {
+    PCRE2_SIZE * ovec = p.match_ovector();
+    ref.emplace_back(sptr, ovec[0], enc);
+    sptr = sptr + ovec[1];
+  }
+  ref.emplace_back(sptr, enc);
+}
 
 // [[Rcpp::export(rng = false)]]
-SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, std::string encode_mode = "auto") {
-  SEXP pattern_element = STRING_ELT(pattern, 0);
-  const char * pattern_ptr = CHAR(pattern_element);
+SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", const bool fixed = false) {
+  
+  SEXP pattern_element = STRING_ELT(split, 0);
   cetype_t pattern_enc = Rf_getCharCE(pattern_element);
+  const char * pattern_ptr = CHAR(pattern_element);
+  std::string pattern_str;
   
-  SEXP replacement_element = STRING_ELT(replacement, 0);
-  const char * replacement_ptr = CHAR(replacement_element);
-  // cetype_t replacement_enc = Rf_getCharCE(replacement_element);
-  
-  pcre2_sub_wrapper p;
-  cetype_t output_enc;
-  if(encode_mode == "auto") {
-    output_enc = pattern_enc;
-    if(pattern_enc == CE_UTF8) {
-      p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  true);
-    } else {
-      p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
+  iconv_wrapper iw_latin1;
+  iconv_wrapper iw_native;
+  pcre2_match_wrapper pm;
+
+  if((encode_mode == "auto")) {
+    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
+    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
+    
+    if( (!is_utf8_locale && (pattern_enc == CE_NATIVE) && !IS_ASCII(pattern_element)) ) {
+      pattern_str = std::string(iw_native.convert(pattern_ptr));
+      pattern_ptr = pattern_str.c_str();
+    } else if(pattern_enc == CE_LATIN1) {
+      pattern_str = std::string(iw_latin1.convert(pattern_ptr));
+      pattern_ptr = pattern_str.c_str();
     }
+    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
   } else if(encode_mode == "UTF-8") {
-    output_enc = CE_UTF8;
-    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  true);
-  } else if(encode_mode == "latin1") {
-    output_enc = CE_LATIN1;
-    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
-  } else if(encode_mode == "native") {
-    output_enc = CE_NATIVE;
-    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
-  } else if(encode_mode == "bytes") {
-    output_enc = CE_BYTES;
-    p = pcre2_sub_wrapper(pattern_ptr, replacement_ptr,  false);
+    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
+  }else if(encode_mode == "byte") {
+    pm = pcre2_match_wrapper(pattern_ptr, false, fixed);
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
+  RStringIndexer cr(subject);
+  size_t len = cr.size();
+  SEXP ret = PROTECT(Rf_allocVector(VECSXP, len));
   
+  for(size_t i=0; i<len; i++) {
+    auto q = cr.getCharLenCE(i);
+    SEXP svec = PROTECT(sf_vector(0));
+    SET_VECTOR_ELT(ret, i, svec);
+    UNPROTECT(1);
+    auto & ref = sf_vec_data_ref(svec);
+    
+    if(q.ptr == nullptr) {
+      ref.emplace_back(NA_STRING);
+      continue;
+    }
+    
+    if(encode_mode == "UTF-8") {
+      sf_split_internal(ref, pm, q.ptr, CE_UTF8);
+    } else if(encode_mode == "byte") {
+      cetype_t new_enc = choose_enc(q.enc, pattern_enc);
+      sf_split_internal(ref, pm, q.ptr, new_enc);
+    } else { // auto
+      if(q.enc == CE_NATIVE) {
+        if(!is_utf8_locale && !cr.is_ASCII(i)) {
+          const char * iwptr = iw_native.convert(q.ptr);
+          if(iwptr == nullptr) ref.emplace_back(NA_STRING);
+          sf_split_internal(ref, pm, iwptr, CE_UTF8);
+        } else {
+          sf_split_internal(ref, pm, q.ptr, CE_UTF8);
+        }
+      } else if(q.enc == CE_LATIN1) {
+        const char * iwptr = iw_latin1.convert(q.ptr);
+        if(iwptr == nullptr) ref.emplace_back(NA_STRING);
+        sf_split_internal(ref, pm, iwptr, CE_UTF8);
+      } else {
+        sf_split_internal(ref, pm, q.ptr, CE_UTF8);
+      }
+    }
+  }
+  UNPROTECT(1);
+  return ret;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// [[Rcpp::export(rng = false)]]
+SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode = "auto", const bool fixed = false) {
+  SEXP pattern_element = STRING_ELT(pattern, 0);
+  cetype_t pattern_enc = Rf_getCharCE(pattern_element);
+  const char * pattern_ptr = CHAR(pattern_element);
+  std::string pattern_str; // if we need to re-cast as a UTF-8
+  
+  SEXP replacement_element = STRING_ELT(replacement, 0);
+  cetype_t replacement_enc = Rf_getCharCE(replacement_element);
+  const char * replacement_ptr = CHAR(replacement_element);
+  std::string replacement_str;
+  
+  iconv_wrapper iw_latin1;
+  iconv_wrapper iw_native;
+  pcre2_sub_wrapper ps;
+  
+  if((encode_mode == "auto")) {
+    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
+    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
+    
+    if( (!is_utf8_locale && (pattern_enc == CE_NATIVE) && !IS_ASCII(pattern_element)) ) {
+      pattern_str = std::string(iw_native.convert(pattern_ptr));
+      pattern_ptr = pattern_str.c_str();
+    } else if(pattern_enc == CE_LATIN1) {
+      pattern_str = std::string(iw_latin1.convert(pattern_ptr));
+      pattern_ptr = pattern_str.c_str();
+    }
+    if( (!is_utf8_locale && (replacement_enc == CE_NATIVE) && !IS_ASCII(replacement_element)) ) {
+      replacement_str = std::string(iw_native.convert(replacement_ptr));
+      replacement_ptr = replacement_str.c_str();
+    } else if(replacement_enc == CE_LATIN1) {
+      replacement_str = std::string(iw_latin1.convert(replacement_ptr));
+      replacement_ptr = replacement_str.c_str();
+    }
+    ps = pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
+  } else if(encode_mode == "UTF-8") {
+    ps = pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
+  }else if(encode_mode == "byte") {
+    ps = pcre2_sub_wrapper(pattern_ptr, replacement_ptr, false, fixed);
+  } else {
+    throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
+  }
+
   RStringIndexer cr(subject);
   size_t len = cr.size();
   SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
+  
   for(size_t i=0; i<len; i++) {
     auto q = cr.getCharLenCE(i);
     if(q.ptr == nullptr) {
       ref[i] = sfstring(NA_STRING);
       continue;
     }
-    ref[i] = sfstring(p.gsub(q.ptr), output_enc);
+    
+    if(encode_mode == "UTF-8") {
+      ref[i] = sfstring(ps.gsub(q.ptr), CE_UTF8);
+    } else if(encode_mode == "byte") {
+      cetype_t output_enc = choose_enc(q.enc, pattern_enc, replacement_enc);
+      ref[i] = sfstring(ps.gsub(q.ptr), output_enc);
+    } else { //auto
+      if(q.enc == CE_NATIVE) {
+        if(!is_utf8_locale && !cr.is_ASCII(i)) {
+          const char * iwptr = iw_native.convert(q.ptr);
+          if(iwptr == nullptr) {
+            ref[i] = sfstring(NA_STRING);
+          } else {
+            ref[i] = sfstring(ps.gsub(iwptr), CE_UTF8);
+          }
+        } else {
+          ref[i] = sfstring(ps.gsub(q.ptr), CE_UTF8);
+        }
+      } else if(q.enc == CE_LATIN1) {
+        const char * iwptr = iw_latin1.convert(q.ptr);
+        if(iwptr == nullptr) {
+          ref[i] = sfstring(NA_STRING);
+        } else {
+          ref[i] = sfstring(ps.gsub(iwptr), CE_UTF8);
+        }
+      } else {
+        ref[i] = sfstring(ps.gsub(q.ptr), CE_UTF8);
+      }
+    }
   }
   UNPROTECT(1);
   return ret;
@@ -692,16 +935,55 @@ SEXP sf_toupper(SEXP x) {
   return ret;
 }
 
+////////////////////////////////////////////////////////////////////////////////
 
-// to do:
+
+struct rstring_info_hash { 
+  size_t operator()(const RStringIndexer::rstring_info & s) const
+  { 
+    return XXH3_64bits(s.ptr, s.len);
+  } 
+};
+
+// [[Rcpp::export(rng = false)]]
+IntegerVector sf_match(SEXP x, SEXP table) {
+  RStringIndexer cr(table);
+  size_t len = cr.size();
+  if(len > R_MAX_INT) throw std::runtime_error("long vectors not supported");
+  
+  RStringIndexer xr(x);
+  size_t xlen = xr.size();
+  IntegerVector ret(xlen);
+  int * retp = INTEGER(ret);
+  
+  std::unordered_map<RStringIndexer::rstring_info, int, rstring_info_hash> table_hash;
+  for(size_t i=0; i<len; i++) {
+    auto q = cr.getCharLenCE(i);
+    if(table_hash.find(q) == table_hash.end()) {
+      table_hash.insert(std::make_pair(q, static_cast<int>(i)));
+    }
+  }
+  
+  for(size_t i=0; i<xlen; i++) {
+    auto q = xr.getCharLenCE(i);
+    auto it = table_hash.find(q);
+    if(it != table_hash.end()) {
+      retp[i] = it->second + 1;
+    } else {
+      retp[i] = NA_INTEGER;
+    }
+  }
+  return ret;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// to do list:
 // sf_sprintf
 // sf_assign
 // sf_subset
-// sf_strsplit
 // sf_reverse
 // sf_encoding
 // sf_set_encoding
-
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -721,10 +1003,12 @@ void sf_export_functions(DllInfo* dll) {
   R_RegisterCCallable("stringfish", "sf_collapse", (DL_FUNC) &sf_collapse);
   R_RegisterCCallable("stringfish", "sf_readLines", (DL_FUNC) &sf_readLines);
   R_RegisterCCallable("stringfish", "sf_grepl", (DL_FUNC) &sf_grepl);
+  R_RegisterCCallable("stringfish", "sf_split", (DL_FUNC) &sf_split);
   R_RegisterCCallable("stringfish", "sf_gsub", (DL_FUNC) &sf_gsub);
   R_RegisterCCallable("stringfish", "random_strings", (DL_FUNC) &random_strings);
   R_RegisterCCallable("stringfish", "sf_toupper", (DL_FUNC) &sf_toupper);
   R_RegisterCCallable("stringfish", "sf_tolower", (DL_FUNC) &sf_tolower);
+  R_RegisterCCallable("stringfish", "sf_match", (DL_FUNC) &sf_match);
 }
 
 // END OF SF_FUNCTIONS.CPP

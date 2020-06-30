@@ -16,4 +16,9 @@ export(
 "sf_gsub",
 "random_strings",
 "sf_toupper",
-"sf_tolower")
+"sf_tolower",
+"sf_starts",
+"sf_ends",
+"sf_trim",
+"sf_split",
+"sf_match")

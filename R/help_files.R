@@ -213,7 +213,8 @@ NULL
 #' @usage sf_grepl(subject, pattern, encode_mode = "auto")
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
-#' @param encode_mode The encoding type to use (UTF-8, latin1, bytes, native or auto)
+#' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
+#' @param fixed determines whether the pattern parameter should be interpreted literally or as a regular expression
 #' @return A logical vector with the same length as subject
 #' @details 
 #' The function uses the PCRE2 library, which is also used internally by R. 
@@ -236,7 +237,8 @@ NULL
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param replacement The replacement string
-#' @param encode_mode The encoding type to use (UTF-8, latin1, bytes, native or auto)
+#' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
+#' @param fixed determines whether the pattern parameter should be interpreted literally or as a regular expression
 #' @return A stringfish vector of the replacement string
 #' @details 
 #' The function uses the PCRE2 library, which is also used internally by R. However, syntax may be slightly different. 
@@ -305,6 +307,81 @@ NULL
 #' @name sf_tolower
 NULL
 
+
+#' sf_starts
+#' 
+#' A function for detecting a pattern at the start of a string
+#' @usage sf_starts(subject, pattern, ...)
+#' @param subject A character vector
+#' @param pattern A string to look for at the start
+#' @param ... Parameters passed to sf_grepl
+#' @return A logical vector true if there is a match, false if no match, NA is the subject was NA
+#' @seealso startsWith, sf_ends
+#' @examples 
+#' x <- c("alpha", "beta", "gamma", "delta", "epsilon")
+#' sf_starts(x, "a")
+#' @name sf_starts
+NULL
+
+#' sf_ends
+#' 
+#' A function for detecting a pattern at the end of a string
+#' @usage sf_starts(subject, pattern)
+#' @param subject A character vector
+#' @param pattern A string to look for at the start
+#' @param ... Parameters passed to sf_grepl
+#' @return A logical vector true if there is a match, false if no match, NA is the subject was NA
+#' @seealso endsWith, sf_starts
+#' @examples 
+#' x <- c("alpha", "beta", "gamma", "delta", "epsilon")
+#' sf_ends(x, "a")
+#' @name sf_ends
+NULL
+
+#' sf_trim
+#' 
+#' A function to remove leading/trailing whitespace
+#' @usage sf_starts(subject, which = "both", whitespace = "[ \\t\\r\\n]")
+#' @param subject A character vector
+#' @param which "Both", "left", or "right" determines which white space is removed
+#' @param whitespace Whitespace characters (default: "[ \\t\\r\\n]")
+#' @param ... Parameters passed to sf_gsub
+#' @return A stringfish vector of trimmed whitespace
+#' @seealso trimws
+#' @examples 
+#' x <- c(" alpha ", " beta", " gamma ", "delta ", "epsilon ")
+#' sf_trim(x)
+#' @name sf_trim
+NULL
+
+#' sf_match
+#' 
+#' Returns a vector of the positions of x in table
+#' @usage sf_match(x, table)
+#' @param x A character vector to search for in table
+#' @param table A character vector to be matched against x
+#' @return An integer vector of the indicies of each x element's position in table
+#' @seealso match
+#' @details Note: similarly to the base R function, long "table" vectors are not supported. This is due to the maximum integer value that can be returned (`.Machine$integer.max`)
+#' @examples 
+#' sf_match("c", letters)
+#' @name sf_match
+NULL
+
+#' sf_split
+#' 
+#' A function to split strings by a delimiter
+#' @usage sf_split(subject, split, encode_mode = "auto", fixed = false)
+#' @param subject A character vector
+#' @param split A delimiter to split the string by
+#' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
+#' @param fixed determines whether the split parameter should be interpreted literally or as a regular expression
+#' @return A list of stringfish character vectors
+#' @seealso strsplit
+#' @examples 
+#' sf_split(datasets::state.name, "\\W") # split U.S. state names by any space character
+#' @name sf_split
+NULL
 
 # not yet implemented:
 # sf_grep
