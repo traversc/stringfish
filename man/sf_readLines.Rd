@@ -22,7 +22,7 @@ A function for reading in text data using `std::ifstream`.
 }
 \examples{
 file <- tempfile()
-writeLines(letters, file)
+sf_writeLines(letters, file)
 sf_readLines(file)
 }
 \seealso{

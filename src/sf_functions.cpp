@@ -133,7 +133,6 @@ struct pcre2_match_wrapper {
       throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
     }
     match_data = pcre2_match_data_create_from_pattern(re, NULL);
-    // match_data = pcre2_match_data_create(0, NULL);
   }
   pcre2_match_wrapper() : re(nullptr), match_data(nullptr) {}
   pcre2_match_wrapper & operator=(const pcre2_match_wrapper &) = delete; // copy assignment
@@ -177,6 +176,7 @@ struct pcre2_match_wrapper {
 
 struct pcre2_sub_wrapper {
   pcre2_code * re;
+  pcre2_match_data * match_data;
   PCRE2_SPTR replacement;
   std::vector<char> output;
   pcre2_sub_wrapper(const char * pattern_ptr, const char * replacement_ptr, bool utf8, bool literal = false) : 
@@ -196,6 +196,7 @@ struct pcre2_sub_wrapper {
       pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
       throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
     }
+    match_data = pcre2_match_data_create_from_pattern(re, NULL);
     replacement = (PCRE2_SPTR)replacement_ptr;
   }
   pcre2_sub_wrapper() : re(nullptr) {}
@@ -205,12 +206,15 @@ struct pcre2_sub_wrapper {
     re = other.re;
     replacement = other.replacement;
     output = std::move(other.output);
+    match_data = other.match_data;
     other.re = nullptr;
+    other.match_data = nullptr;
     return *this;
   }
   pcre2_sub_wrapper(const pcre2_sub_wrapper&) = delete; // copy constructor
   ~pcre2_sub_wrapper() {
     if(re != nullptr) pcre2_code_free(re);
+    if(match_data != nullptr) pcre2_match_data_free(match_data);
   }
   const char * gsub(const char * subject_ptr) {
     PCRE2_SIZE output_len = (PCRE2_SIZE)(output.size() - 1);
@@ -219,14 +223,20 @@ struct pcre2_sub_wrapper {
       (PCRE2_SPTR)subject_ptr,  // Points to the subject string
       PCRE2_ZERO_TERMINATED,    // Length of the subject string
       0,                        // Offset in the subject at which to start matching
-      PCRE2_SUBSTITUTE_GLOBAL & PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
-      NULL,                     // Points to a match data block, or is NULL
+      PCRE2_SUBSTITUTE_GLOBAL | PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
+      match_data,                     // Points to a match data block, or is NULL
       NULL,                     // Points to a match context, or is NULL
-      (PCRE2_SPTR)replacement,  // Points to the replacement string
+      replacement,              // Points to the replacement string
       PCRE2_ZERO_TERMINATED,    // Length of the replacement string
       (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
       &output_len
     );
+    // std::cout << PCRE2_ERROR_NOMEMORY << std::endl;
+    // std::cout << rc << " " << output_len << std::endl;
+    // std::string errmsg;
+    // errmsg.resize(300);
+    // pcre2_get_error_message(rc, (PCRE2_UCHAR *)&errmsg[0], (PCRE2_SIZE)300);
+    // std::cout << errmsg << std::endl;
     if(rc == PCRE2_ERROR_NOMEMORY) {
       output.resize(output_len + 1);
       rc = pcre2_substitute(
@@ -234,10 +244,10 @@ struct pcre2_sub_wrapper {
         (PCRE2_SPTR)subject_ptr,  // Points to the subject string
         PCRE2_ZERO_TERMINATED,    // Length of the subject string
         0,                        // Offset in the subject at which to start matching
-        PCRE2_SUBSTITUTE_GLOBAL & PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
-        NULL,                     // Points to a match data block, or is NULL
+        PCRE2_SUBSTITUTE_GLOBAL, // Option bits
+        match_data,                     // Points to a match data block, or is NULL
         NULL,                     // Points to a match context, or is NULL
-        (PCRE2_SPTR)replacement,  // Points to the replacement string
+        replacement,              // Points to the replacement string
         PCRE2_ZERO_TERMINATED,    // Length of the replacement string
         (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
         &output_len
@@ -495,7 +505,7 @@ SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop) {
 // [[Rcpp::export(rng = false)]]
 SEXP c_sf_paste(List dots, SEXP sep) {
   size_t maxlen = 1;
-
+  
   RStringIndexer sr(sep);
   if(sr.size() != 1) throw std::runtime_error("sep should be a character vector of length 1");
   auto sr_element = sr.getCharLenCE(0);
@@ -575,7 +585,7 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
 
 ////////////////////////////////////////////////////////////////////////////////
 // [[Rcpp::export(rng = false)]]
-SEXP sf_readLines(std::string file, std::string encoding = "UTF-8") {
+SEXP sf_readLines(const std::string file, const std::string encoding = "UTF-8") {
   SEXP ret = PROTECT(sf_vector(0));
   sf_vec_data & ref = sf_vec_data_ref(ret);
   cetype_t enc;
@@ -592,7 +602,7 @@ SEXP sf_readLines(std::string file, std::string encoding = "UTF-8") {
   if(!myFile) {
     throw std::runtime_error("Failed to open " + file + ". Check file path.");
   }
-
+  
   // possibly better way of handling line endings: https://stackoverflow.com/q/6089231/2723734
   std::string str;
   while(std::getline(myFile, str)) {
@@ -604,6 +614,64 @@ SEXP sf_readLines(std::string file, std::string encoding = "UTF-8") {
   UNPROTECT(1);
   return ret;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// [[Rcpp::export(rng = false)]]
+void sf_writeLines(SEXP text, const std::string file, const std::string sep = "\n", const std::string na_value = "NA", const std::string encode_mode = "UTF-8") {
+  if((encode_mode != "UTF-8") && (encode_mode != "byte")) {
+    throw std::runtime_error("encode_mode must be byte or UTF-8");
+  }
+  std::ofstream myFile(R_ExpandFileName(file.c_str()), std::ios::out | std::ios::binary);
+  if(!myFile) {
+    throw std::runtime_error("Failed to open " + file + ". Check file path.");
+  }
+  
+  iconv_wrapper iw_latin1;
+  iconv_wrapper iw_native;
+  if((encode_mode == "UTF-8")) {
+    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
+    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
+  }
+  
+  RStringIndexer xr(text);
+  size_t len = xr.size();
+  
+  for(size_t i=0; i<len; i++) {
+    auto q = xr.getCharLenCE(i);
+    if(q.ptr == nullptr) {
+      myFile.write(na_value.c_str(), na_value.size());
+    } else {
+      if(encode_mode == "byte") {
+        myFile.write(q.ptr, q.len);
+      } else { // UTF-8
+        if(q.enc == CE_NATIVE) {
+          if(!is_utf8_locale && !xr.is_ASCII(i)) {
+            const char * iwptr = iw_native.convert(q.ptr);
+            if(iwptr == nullptr) {
+              myFile.write(na_value.c_str(), na_value.size());
+            } else {
+              myFile.write(iwptr, strlen(iwptr));
+            }
+          } else {
+            myFile.write(q.ptr, q.len);
+          }
+        } else if(q.enc == CE_LATIN1) {
+          const char * iwptr = iw_latin1.convert(q.ptr);
+          if(iwptr == nullptr) {
+            myFile.write(na_value.c_str(), na_value.size());
+          } else {
+            myFile.write(iwptr, strlen(iwptr));
+          }
+        } else {
+          myFile.write(q.ptr, q.len);
+        }
+      }
+    }
+    myFile.write(sep.c_str(), sep.size());
+  }
+  
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -702,7 +770,7 @@ SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", 
   iconv_wrapper iw_latin1;
   iconv_wrapper iw_native;
   pcre2_match_wrapper pm;
-
+  
   if((encode_mode == "auto")) {
     iw_latin1 = iconv_wrapper("UTF-8", "latin1");
     if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
@@ -809,7 +877,7 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string enc
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
-
+  
   RStringIndexer cr(subject);
   size_t len = cr.size();
   SEXP ret = PROTECT(sf_vector(len));
@@ -858,8 +926,8 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string enc
 ////////////////////////////////////////////////////////////////////////////////
 // [[Rcpp::export]] // RNG needed
 SEXP random_strings(const int N, const int string_size = 50, 
-                       std::string charset = "abcdefghijklmnopqrstuvwxyz", 
-                       std::string vector_mode = "stringfish") {
+                    std::string charset = "abcdefghijklmnopqrstuvwxyz", 
+                    std::string vector_mode = "stringfish") {
   if(vector_mode == "stringfish") {
     SEXP ret = PROTECT(sf_vector(N));
     sf_vec_data & ref = sf_vec_data_ref(ret);
@@ -1002,6 +1070,7 @@ void sf_export_functions(DllInfo* dll) {
   R_RegisterCCallable("stringfish", "c_sf_paste", (DL_FUNC) &c_sf_paste);
   R_RegisterCCallable("stringfish", "sf_collapse", (DL_FUNC) &sf_collapse);
   R_RegisterCCallable("stringfish", "sf_readLines", (DL_FUNC) &sf_readLines);
+  R_RegisterCCallable("stringfish", "sf_writeLines", (DL_FUNC) &sf_writeLines);
   R_RegisterCCallable("stringfish", "sf_grepl", (DL_FUNC) &sf_grepl);
   R_RegisterCCallable("stringfish", "sf_split", (DL_FUNC) &sf_split);
   R_RegisterCCallable("stringfish", "sf_gsub", (DL_FUNC) &sf_gsub);

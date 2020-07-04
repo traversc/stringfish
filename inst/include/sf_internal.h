@@ -117,7 +117,7 @@ struct sfstring {
     sdata.resize(size);
   }
   bool check_if_native_is_ascii(cetype_t enc) {
-    if((enc = CE_NATIVE) && checkAscii(sdata.c_str(), sdata.size())) {
+    if((enc == CE_NATIVE) && checkAscii(sdata.c_str(), sdata.size())) {
       encoding = cetype_t_ext::CE_ASCII;
       return true;
     } else {

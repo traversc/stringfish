@@ -1,5 +1,6 @@
 Version 0.13.1 (2020-6-18)
    * Additional functions: `sf_toupper`, `sf_tolower`, `sf_toupper`, `sf_tolower`, `sf_starts`, `sf_ends`, `sf_trim`, `sf_split`, `sf_match`
+   * Additional functions: `string_identical`, `sf_writeLines`
 
 Version 0.11.2 (2020-6-1)
    * Fixed compilation error on Fedora (adding -mshstk flag compile flag in configure file)

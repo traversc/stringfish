@@ -53,6 +53,10 @@ sf_readLines <- function(file, encoding = "UTF-8") {
     .Call(`_stringfish_sf_readLines`, file, encoding)
 }
 
+sf_writeLines <- function(text, file, sep = "\n", na_value = "NA", encode_mode = "UTF-8") {
+    invisible(.Call(`_stringfish_sf_writeLines`, text, file, sep, na_value, encode_mode))
+}
+
 sf_grepl <- function(subject, pattern, encode_mode = "auto", fixed = FALSE) {
     .Call(`_stringfish_sf_grepl`, subject, pattern, encode_mode, fixed)
 }

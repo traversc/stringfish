@@ -23,34 +23,17 @@ The ALTREP system (new as of R 3.5.0) allows package developers to represent R o
 
 Using normal R functions to process string data (e.g. `substr`, `gsub`, `paste`, etc.) causes "materialization" of ALTREP vectors to normal R data, which can be a slow process. Therefore, in order to take full advantage of the ALTREP framework, string processing functions need to be re-written to be ALTREP aware. This package hopes to fulfill that purpose. 
 
-## Example
-
-Below is an example that imitates common bioinformatic processing. First, we read in a bunch of sequencing data (in this case, 1 million randomly generated amino acid sequences) and then uses `sf_substr` to chop off two amino acids at the beginning and end of each sequence. The last operation then uses `sf_grepl` to count the number of "RS" motifs, a common T-cell Receptor *Influenza* binding motif. 
-
+## Installation:
 ```{r eval=FALSE}
-library(stringfish)
-x <- sf_random_strings(1e6, string_size = 20, charset = "ARNDCQEGHILKMFPSTWYV")
-x1 <- sf_substr(x, 3, -3)
-s1 <- sum(sf_grepl(x, "RS", encode_mode = "byte"))
-```
-
-Doing the same thing in base R for comparison:
-```{r eval=FALSE}
-x <- sf_random_strings(1e6, string_size = 20, charset = "ARNDCQEGHILKMFPSTWYV", mode = "normal")
-x0 <- substr(x, 3, 18)
-s0 <- sum(grepl("RS", x))
+install.packages("stringfish")
 ```
 
 ## Benchmark
 
-A quick benchmark comparing the above example done with `stringfish` or base R. 
+The simplest way to show the utility of the ALTREP framework is through a quick benchmark comparing `stringfish` and base R. 
 
-![](bench_v1.png "bench_v1"){width=576px}
+![](bench_v2.png "bench_v2"){width=576px}
 
-## Installation:
-```{r eval=FALSE}
-remotes::install_github("traversc/stringfish")
-```
 
 ## Currently implemented functions
 
@@ -153,3 +136,7 @@ Example function call:
 sf_alternate_case("hello world") 
 [1] "hElLo wOrLd"
 ```
+
+## To do
+* Multithreading
+* Additional functions
