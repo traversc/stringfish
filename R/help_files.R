@@ -201,11 +201,28 @@ NULL
 #' @seealso readLines
 #' @examples 
 #' file <- tempfile()
-#' writeLines(letters, file)
+#' sf_writeLines(letters, file)
 #' sf_readLines(file)
 #' @name sf_readLines
 NULL
 
+#' sf_writeLines
+#' 
+#' A function that reads a file line by line
+#' @usage sf_writeLines(text, file, sep = "\n", na_value = "NA", encode_mode = "UTF-8")
+#' @param text A character to write to file
+#' @param file Name of the file to write to
+#' @param na_value What to write in case of a NA string
+#' @param encode_mode "UTF-8" or "byte". If "UTF-8", all strings are re-encoded as UTF-8. 
+#' @details 
+#' A function for writing text data using `std::ofstream`.
+#' @seealso writeLines
+#' @examples 
+#' file <- tempfile()
+#' sf_writeLines(letters, file)
+#' sf_readLines(file)
+#' @name sf_writeLines
+NULL
 
 #' sf_grepl
 #' 
@@ -380,6 +397,24 @@ NULL
 #' @seealso strsplit
 #' @examples 
 #' sf_split(datasets::state.name, "\\W") # split U.S. state names by any space character
+#' @name sf_split
+NULL
+
+
+#' string_identical
+#' 
+#' A stricter comparison of string equality
+#' @usage string_identical(x, y)
+#' @param x A character vector
+#' @param y Another character to compare to x
+#' @return TRUE if
+#' @seealso identical
+#' @examples 
+# x <- "fa\xE7ile"
+# Encoding(x) <- "latin1"
+# y <- iconv(x, "latin1", "UTF-8")
+# identical(x, y) # TRUE
+# string_identical(x, y) # FALSE
 #' @name sf_split
 NULL
 

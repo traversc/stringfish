@@ -130,14 +130,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // sf_readLines
-SEXP sf_readLines(std::string file, std::string encoding);
+SEXP sf_readLines(const std::string file, const std::string encoding);
 RcppExport SEXP _stringfish_sf_readLines(SEXP fileSEXP, SEXP encodingSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< std::string >::type file(fileSEXP);
-    Rcpp::traits::input_parameter< std::string >::type encoding(encodingSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type file(fileSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type encoding(encodingSEXP);
     rcpp_result_gen = Rcpp::wrap(sf_readLines(file, encoding));
     return rcpp_result_gen;
+END_RCPP
+}
+// sf_writeLines
+void sf_writeLines(SEXP text, const std::string file, const std::string sep, const std::string na_value, const std::string encode_mode);
+RcppExport SEXP _stringfish_sf_writeLines(SEXP textSEXP, SEXP fileSEXP, SEXP sepSEXP, SEXP na_valueSEXP, SEXP encode_modeSEXP) {
+BEGIN_RCPP
+    Rcpp::traits::input_parameter< SEXP >::type text(textSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type file(fileSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type sep(sepSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type na_value(na_valueSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type encode_mode(encode_modeSEXP);
+    sf_writeLines(text, file, sep, na_value, encode_mode);
+    return R_NilValue;
 END_RCPP
 }
 // sf_grepl
@@ -240,6 +253,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_c_sf_paste", (DL_FUNC) &_stringfish_c_sf_paste, 2},
     {"_stringfish_sf_collapse", (DL_FUNC) &_stringfish_sf_collapse, 2},
     {"_stringfish_sf_readLines", (DL_FUNC) &_stringfish_sf_readLines, 2},
+    {"_stringfish_sf_writeLines", (DL_FUNC) &_stringfish_sf_writeLines, 5},
     {"_stringfish_sf_grepl", (DL_FUNC) &_stringfish_sf_grepl, 4},
     {"_stringfish_sf_split", (DL_FUNC) &_stringfish_sf_split, 4},
     {"_stringfish_sf_gsub", (DL_FUNC) &_stringfish_sf_gsub, 5},

@@ -59,3 +59,5 @@ vignette:
 
 test:
 	Rscript tests/tests.r
+	Rscript tests/benchmark_test.r
+

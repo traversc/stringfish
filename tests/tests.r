@@ -161,6 +161,11 @@ for(. in 1:ntests) {
   Encoding(p2) <- "latin1"
   stopifnot(all(sf_gsub(i500_utf8, p, "$1") == gsub(p, "\\1", i500_utf8)))
   stopifnot(all(sf_gsub(i500_latin1, p2, "$1") == gsub(p2, "\\1", i500_latin1)))
+  
+  p <- "^h.+(.)$"
+  stopifnot(all(sf_gsub(i500_utf8, p, "$1") == gsub(p, "\\1", i500_utf8)))
+  stopifnot(all(sf_gsub(i500_latin1, p, "$1") == gsub(p, "\\1", i500_latin1)))
+  
 }
 
 

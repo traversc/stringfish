@@ -40,3 +40,18 @@ sf_trim <- function(subject, which = c("both", "left", "right"), whitespace = "[
     sf_gsub(subject, paste0(whitespace, "+", "$"), "", ...)
   }
 }
+
+string_identical <- function(x, y) {
+  stopifnot(is.character(x))
+  stopifnot(is.character(y))
+  if(length(x) != length(y)) return(F)
+  na_x <- is.na(x)
+  na_y <- is.na(y)
+  stopifnot(identical(na_x,na_y))
+  if(all(na_x)) return(T) # correctly catches zero length as well
+  not_na <- !na_x
+  if(any(nchar(x[not_na]) != nchar(y[not_na]))) return(F)
+  if(!all(Encoding(x[not_na]) == Encoding(y[not_na]))) return(F)
+  if(any(x[not_na] != y[not_na])) return(F)
+  return(T)
+}
