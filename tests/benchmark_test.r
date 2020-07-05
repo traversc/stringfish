@@ -1,24 +1,44 @@
-library(stringfish)
-library(stringi)
-library(microbenchmark)
-library(dplyr)
-library(tools)
+suppressMessages(library(stringfish, quietly = T))
+# suppressMessages(library(qs, quietly = T))
+suppressMessages(library(dplyr, quietly = T))
+suppressMessages(library(microbenchmark, quietly = T))
+suppressMessages(library(stringi, quietly = T))
+suppressMessages(library(tools, quietly = T))
+
+catn <- function(...) {
+  cat(..., "\n")
+}
+
+args <- commandArgs(T)
+if(length(args) == 0) {
+  n <- 1
+} else {
+  n <- as.integer(args[1])
+}
+
 # enwik8 and enwik9 from http://prize.hutter1.net/
 # First 1e8 lines of wikipedia (UTF-8 encoded)
-
 test_file <- "~/enwik8"
+if(!file.exists(test_file)) {
+  test_folder <- tempdir()
+  zip_file <- tempfile()
+  download.file("http://mattmahoney.net/dc/enwik8.zip", zip_file)
+  unzip(zip_file, "enwik8", exdir = test_folder, overwrite=T)
+  test_file <- paste0(test_folder, "/enwik8")
+}
 
-n <- 5
-
+catn("readLines")
 readlines_bench <- microbenchmark(
-  base_R = readLines(test_file, encoding = "UTF-8"),
+  base_R = readLines(test_file, encoding = "UTF-8", warn = F),
   stringi = stringi::stri_read_lines(test_file, encoding = "UTF-8"),
   stringfish = stringfish::sf_readLines(test_file),
   stringfish_materialized = stringfish::materialize(stringfish::sf_readLines(test_file)),
   times=n, setup = gc())
 
-enwik8 <- readLines(test_file, encoding = "UTF-8")
+enwik8 <- readLines(test_file, encoding = "UTF-8", warn = F)
 enwik8_sf <- stringfish::sf_readLines(test_file)
+
+# ewc <- convert_to_sf(enwik8)
 
 set.seed(1)
 enwik8_shuffled <- sample(enwik8)
@@ -26,6 +46,7 @@ enwik8_sf_shuffled <- stringfish::convert_to_sf(enwik8_shuffled) # no sf_sample 
 
 temp <- tempfile()
 
+catn("writeLines")
 writeLines_bench <- microbenchmark(
   base_R = writeLines(enwik8, temp),
   stringi = stringi::stri_write_lines(enwik8, temp, encoding = "UTF-8"),
@@ -43,6 +64,7 @@ rm(x, y)
 stopifnot(string_identical(enwik8, enwik8_sf))
 stopifnot(string_identical(enwik8_shuffled, enwik8_sf_shuffled))
 
+catn("substr")
 substr_bench <- microbenchmark(
   base_R = substr(enwik8, 1, 100),
   stringi = stringi::stri_sub(enwik8, 1, 100),
@@ -56,6 +78,7 @@ stopifnot(string_identical(x, y))
 rm(x, y)
 gc()
 
+catn("paste")
 paste_bench <- microbenchmark(
   base_R = paste0(enwik8, enwik8),
   stringi = stringi::stri_paste(enwik8, enwik8),
@@ -69,6 +92,7 @@ stopifnot(string_identical(x, y))
 rm(x, y)
 gc()
 
+catn("grepl")
 grepl_bench <- microbenchmark(
   base_R = grepl("<title>.+</title>", enwik8),
   stringi = stringi::stri_detect(enwik8, regex="<title>.+</title>"),
@@ -81,6 +105,7 @@ stopifnot(identical(x, y))
 rm(x, y)
 gc()
 
+catn("gsub")
 gsub_bench <- microbenchmark(
   base_R = gsub("^.*<title>(.+)</title>.*$", "\\1", enwik8),
   stringi = stringi::stri_replace_all_regex(enwik8, "^.*<title>(.+)</title>.*$", "$1"),
@@ -94,6 +119,7 @@ stopifnot(string_identical(x, y))
 rm(x, y)
 gc()
 
+catn("strsplit")
 strsplit_bench <- microbenchmark(
   base_R = strsplit(enwik8, split=",|;"),
   stringi = stringi::stri_split(enwik8, regex=",|;"),
@@ -107,6 +133,7 @@ stopifnot(identical(x, y))
 rm(x, y)
 gc()
 
+catn("match")
 match_bench <- microbenchmark(
   base_R = match(enwik8_shuffled, enwik8),
   stringfish = stringfish::sf_match(enwik8_sf_shuffled, enwik8_sf),
@@ -118,6 +145,7 @@ stopifnot(identical(x, y))
 rm(x, y)
 gc()
 
+catn("trimws")
 trimws_bench <- microbenchmark(
   base_R = trimws(enwik8),
   stringi = stringi::stri_trim(enwik8),
@@ -130,7 +158,7 @@ stopifnot(string_identical(x, y))
 rm(x, y)
 gc()
 
-
+catn("nchar")
 nchar_bench <- microbenchmark(
   base_R = nchar(enwik8),
   stringi = stringi::stri_length(enwik8),

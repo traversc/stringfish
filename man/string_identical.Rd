@@ -12,7 +12,7 @@ string_identical(x, y)
 \item{y}{Another character to compare to x}
 }
 \value{
-TRUE if
+TRUE if strings are identical, including encoding
 }
 \description{
 A stricter comparison of string equality

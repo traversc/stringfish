@@ -87,6 +87,8 @@ struct sf_vec {
     for (R_xlen_t i = 0; i < n; i++) {
       if(data1[i].encoding == cetype_t_ext::CE_NA) {
         SET_STRING_ELT(data2, i, NA_STRING);
+      } else if(data1[i].encoding == cetype_t_ext::CE_ASCII) {
+        SET_STRING_ELT(data2, i, Rf_mkCharLenCE(data1[i].sdata.c_str(), data1[i].sdata.size(), CE_NATIVE));
       } else {
         SET_STRING_ELT(data2, i, Rf_mkCharLenCE(data1[i].sdata.c_str(), data1[i].sdata.size(), static_cast<cetype_t>(data1[i].encoding)));
       }
@@ -140,6 +142,8 @@ struct sf_vec {
     sf_vec_data & data1 = Get(vec);
     if(data1[i].encoding == cetype_t_ext::CE_NA) {
       return NA_STRING;
+    } else if(data1[i].encoding == cetype_t_ext::CE_ASCII) {
+      return Rf_mkCharLenCE(data1[i].sdata.c_str(), data1[i].sdata.size(), CE_NATIVE);
     } else {
       return Rf_mkCharLenCE(data1[i].sdata.c_str(), data1[i].sdata.size(), static_cast<cetype_t>(data1[i].encoding));
     }
