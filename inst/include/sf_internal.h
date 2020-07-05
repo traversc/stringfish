@@ -35,7 +35,7 @@ enum class cetype_t_ext : uint8_t {
   CE_BYTES   = 3,
   CE_SYMBOL  = 5, // this isn't actually used in getCharCE
   CE_ANY     = 99,
-  CE_ASCII  = 254, // IS_ASCII mark in defn.h
+  CE_ASCII   = 254, // IS_ASCII mark in defn.h
   CE_NA      = 255 // Easier to keep NA values here
 };
 
@@ -82,8 +82,8 @@ struct sfstring {
   std::string sdata;
   cetype_t_ext encoding;
   sfstring(std::string x, cetype_t enc) : sdata(x) {
-    if((enc == CE_NATIVE) || checkAscii(sdata.c_str(), sdata.size())) {
-      encoding = cetype_t_ext::CE_NATIVE; // to keep the same as R
+    if(checkAscii(sdata.c_str(), sdata.size())) {
+      encoding = cetype_t_ext::CE_ASCII; // to keep the same as R
     } else {
       encoding = static_cast<cetype_t_ext>(enc);
     }
@@ -91,16 +91,16 @@ struct sfstring {
   sfstring(const char * ptr, cetype_t enc) {
     size_t len = strlen(ptr);
     sdata = std::string(ptr);
-    if((enc == CE_NATIVE) || checkAscii(ptr, len)) {
-      encoding = cetype_t_ext::CE_NATIVE; // to keep the same as R
+    if(checkAscii(ptr, len)) {
+      encoding = cetype_t_ext::CE_ASCII; // to keep the same as R
     } else {
       encoding = static_cast<cetype_t_ext>(enc);
     }
   }
   sfstring(const char * ptr, int len, cetype_t enc) {
     sdata = std::string(ptr, len);
-    if((enc == CE_NATIVE) || checkAscii(ptr, len)) {
-      encoding = cetype_t_ext::CE_NATIVE; // to keep the same as R
+    if(checkAscii(ptr, len)) {
+      encoding = cetype_t_ext::CE_ASCII; // to keep the same as R
     } else {
       encoding = static_cast<cetype_t_ext>(enc);
     }
@@ -130,7 +130,7 @@ struct sfstring {
       encoding = cetype_t_ext::CE_ASCII;
       return true;
     } else {
-      encoding = static_cast<cetype_t_ext>(CE_NATIVE);;
+      encoding = static_cast<cetype_t_ext>(enc);;
       return false;
     }
   }
@@ -143,7 +143,7 @@ struct sfstring {
       encoding = static_cast<cetype_t_ext>(Rf_getCharCE(x));
     }
   }
-  sfstring() : sdata(""), encoding(cetype_t_ext::CE_NATIVE) {}
+  sfstring() : sdata(""), encoding(cetype_t_ext::CE_ASCII) {}
 };
 using sf_vec_data = std::vector<sfstring>;
 

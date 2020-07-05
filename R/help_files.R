@@ -408,7 +408,7 @@ NULL
 #' @usage string_identical(x, y)
 #' @param x A character vector
 #' @param y Another character to compare to x
-#' @return TRUE if
+#' @return TRUE if strings are identical, including encoding
 #' @seealso identical
 #' @examples 
 # x <- "fa\xE7ile"
