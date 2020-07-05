@@ -11,6 +11,8 @@ sf_writeLines(text, file, sep = "\n", na_value = "NA", encode_mode = "UTF-8")
 
 \item{file}{Name of the file to write to}
 
+\item{sep}{The line separator character(s)}
+
 \item{na_value}{What to write in case of a NA string}
 
 \item{encode_mode}{"UTF-8" or "byte". If "UTF-8", all strings are re-encoded as UTF-8.}

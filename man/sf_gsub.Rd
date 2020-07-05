@@ -4,7 +4,7 @@
 \alias{sf_gsub}
 \title{sf_gsub}
 \usage{
-sf_gsub(subject, pattern, replacement, encode_mode = "auto")
+sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE)
 }
 \arguments{
 \item{subject}{The subject character vector to search}

@@ -4,9 +4,7 @@
 \alias{sf_split}
 \title{sf_split}
 \usage{
-sf_split(subject, split, encode_mode = "auto", fixed = false)
-
-string_identical(x, y)
+sf_split(subject, split, encode_mode = "auto", fixed = FALSE)
 }
 \arguments{
 \item{subject}{A character vector}
@@ -16,26 +14,16 @@ string_identical(x, y)
 \item{encode_mode}{"auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.}
 
 \item{fixed}{determines whether the split parameter should be interpreted literally or as a regular expression}
-
-\item{x}{A character vector}
-
-\item{y}{Another character to compare to x}
 }
 \value{
 A list of stringfish character vectors
-
-TRUE if
 }
 \description{
 A function to split strings by a delimiter
-
-A stricter comparison of string equality
 }
 \examples{
-sf_split(datasets::state.name, "\\\\W") # split U.S. state names by any space character
+sf_split(datasets::state.name, "\\\\s") # split U.S. state names by any space character
 }
 \seealso{
 strsplit
-
-identical
 }

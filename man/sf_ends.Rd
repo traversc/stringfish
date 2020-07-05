@@ -4,7 +4,7 @@
 \alias{sf_ends}
 \title{sf_ends}
 \usage{
-sf_starts(subject, pattern)
+sf_ends(subject, pattern, ...)
 }
 \arguments{
 \item{subject}{A character vector}
