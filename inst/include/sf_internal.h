@@ -116,6 +116,19 @@ struct sfstring {
     sdata = std::string();
     sdata.resize(size);
   }
+  sfstring(SEXP x) {
+    if(x == NA_STRING) {
+      encoding = cetype_t_ext::CE_NA;
+    } else {
+      sdata = std::string(CHAR(x));
+      if(checkAscii(sdata.c_str(), sdata.size())) {
+        encoding = cetype_t_ext::CE_ASCII;
+      } else {
+        encoding = static_cast<cetype_t_ext>(Rf_getCharCE(x));
+      }
+    }
+  }
+  sfstring() : sdata(""), encoding(cetype_t_ext::CE_ASCII) {}
   bool check_if_native_is_ascii(cetype_t enc) {
     if((enc == CE_NATIVE) && checkAscii(sdata.c_str(), sdata.size())) {
       encoding = cetype_t_ext::CE_ASCII;
@@ -134,16 +147,6 @@ struct sfstring {
       return false;
     }
   }
-  
-  sfstring(SEXP x) {
-    if(x == NA_STRING) {
-      encoding = cetype_t_ext::CE_NA;
-    } else {
-      sdata = std::string(CHAR(x));
-      encoding = static_cast<cetype_t_ext>(Rf_getCharCE(x));
-    }
-  }
-  sfstring() : sdata(""), encoding(cetype_t_ext::CE_ASCII) {}
 };
 using sf_vec_data = std::vector<sfstring>;
 
