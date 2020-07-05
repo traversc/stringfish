@@ -4,7 +4,7 @@
 \alias{sf_grepl}
 \title{sf_grepl}
 \usage{
-sf_grepl(subject, pattern, encode_mode = "auto")
+sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE)
 }
 \arguments{
 \item{subject}{The subject character vector to search}

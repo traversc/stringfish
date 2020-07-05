@@ -212,6 +212,7 @@ NULL
 #' @usage sf_writeLines(text, file, sep = "\n", na_value = "NA", encode_mode = "UTF-8")
 #' @param text A character to write to file
 #' @param file Name of the file to write to
+#' @param sep The line separator character(s)
 #' @param na_value What to write in case of a NA string
 #' @param encode_mode "UTF-8" or "byte". If "UTF-8", all strings are re-encoded as UTF-8. 
 #' @details 
@@ -227,7 +228,7 @@ NULL
 #' sf_grepl
 #' 
 #' A function that matches patterns and returns a logical vector
-#' @usage sf_grepl(subject, pattern, encode_mode = "auto")
+#' @usage sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE)
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
@@ -250,7 +251,7 @@ NULL
 #' sf_gsub
 #' 
 #' A function that performs pattern substitution
-#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto")
+#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE)
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param replacement The replacement string
@@ -343,7 +344,7 @@ NULL
 #' sf_ends
 #' 
 #' A function for detecting a pattern at the end of a string
-#' @usage sf_starts(subject, pattern)
+#' @usage sf_ends(subject, pattern, ...)
 #' @param subject A character vector
 #' @param pattern A string to look for at the start
 #' @param ... Parameters passed to sf_grepl
@@ -358,10 +359,10 @@ NULL
 #' sf_trim
 #' 
 #' A function to remove leading/trailing whitespace
-#' @usage sf_starts(subject, which = "both", whitespace = "[ \\t\\r\\n]")
+#' @usage sf_trim(subject, which = c("both", "left", "right"), whitespace = "[ \\\\t\\\\r\\\\n]", ...)
 #' @param subject A character vector
-#' @param which "Both", "left", or "right" determines which white space is removed
-#' @param whitespace Whitespace characters (default: "[ \\t\\r\\n]")
+#' @param which "both", "left", or "right" determines which white space is removed
+#' @param whitespace Whitespace characters (default: "[ \\\\t\\\\r\\\\n]")
 #' @param ... Parameters passed to sf_gsub
 #' @return A stringfish vector of trimmed whitespace
 #' @seealso trimws
@@ -388,7 +389,7 @@ NULL
 #' sf_split
 #' 
 #' A function to split strings by a delimiter
-#' @usage sf_split(subject, split, encode_mode = "auto", fixed = false)
+#' @usage sf_split(subject, split, encode_mode = "auto", fixed = FALSE)
 #' @param subject A character vector
 #' @param split A delimiter to split the string by
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
@@ -396,7 +397,7 @@ NULL
 #' @return A list of stringfish character vectors
 #' @seealso strsplit
 #' @examples 
-#' sf_split(datasets::state.name, "\\W") # split U.S. state names by any space character
+#' sf_split(datasets::state.name, "\\s") # split U.S. state names by any space character
 #' @name sf_split
 NULL
 
@@ -415,7 +416,7 @@ NULL
 # y <- iconv(x, "latin1", "UTF-8")
 # identical(x, y) # TRUE
 # string_identical(x, y) # FALSE
-#' @name sf_split
+#' @name string_identical
 NULL
 
 # not yet implemented:

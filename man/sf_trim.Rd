@@ -4,14 +4,14 @@
 \alias{sf_trim}
 \title{sf_trim}
 \usage{
-sf_starts(subject, which = "both", whitespace = "[ \\t\\r\\n]")
+sf_trim(subject, which = c("both", "left", "right"), whitespace = "[ \\\\t\\\\r\\\\n]", ...)
 }
 \arguments{
 \item{subject}{A character vector}
 
-\item{which}{"Both", "left", or "right" determines which white space is removed}
+\item{which}{"both", "left", or "right" determines which white space is removed}
 
-\item{whitespace}{Whitespace characters (default: "[ \\t\\r\\n]")}
+\item{whitespace}{Whitespace characters (default: "[ \\\\t\\\\r\\\\n]")}
 
 \item{...}{Parameters passed to sf_gsub}
 }
