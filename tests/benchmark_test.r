@@ -53,13 +53,14 @@ writeLines_bench <- microbenchmark(
   stringfish = stringfish::sf_writeLines(enwik8_sf, temp),
   times=n, setup = {unlink(temp); gc()})
 
+if(Sys.info()["sysname"] != "Windows") {
 writeLines(enwik8, temp)
 x <- tools::md5sum(temp)
 stringfish::sf_writeLines(enwik8_sf, temp)
 y <- tools::md5sum(temp)
 stopifnot(identical(x,y))
 unlink(temp)
-rm(x, y)
+}
 
 stopifnot(string_identical(enwik8, enwik8_sf))
 stopifnot(string_identical(enwik8_shuffled, enwik8_sf_shuffled))
