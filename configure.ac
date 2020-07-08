@@ -1,4 +1,4 @@
-AC_INIT(stringfish, 0.12 traversc@gmail.com)
+AC_INIT(stringfish, 0.13.2 traversc@gmail.com)
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin:/opt/bin:/opt/local/bin])
 
 ########################################################
@@ -81,24 +81,25 @@ echo $(($MAJOR*1000+$MINOR))
 
 ########################################################
 #### Check for GCC version and add -mshstk cflags for GCC 8+
+#### ver 0.13.2 -- no longer in use
 
-echo "Testing for C compiler version"
-echo "R_HOME: $R_HOME"
-: ${R_HOME=`R RHOME`}
-echo "R_HOME: $R_HOME"
-if test -z "${R_HOME}"; then
-  echo "could not determine R_HOME"
-  exit 1
-fi
-CC=`"${R_HOME}/bin/R" CMD config CC`
-echo "C compiler command: $CC"
+# echo "Testing for C compiler version"
+# echo "R_HOME: $R_HOME"
+# : ${R_HOME=`R RHOME`}
+# echo "R_HOME: $R_HOME"
+# if test -z "${R_HOME}"; then
+#   echo "could not determine R_HOME"
+#   exit 1
+# fi
+# CC=`"${R_HOME}/bin/R" CMD config CC`
+# echo "C compiler command: $CC"
 
-AC_LANG(C)
-AX_CHECK_COMPILE_FLAG([-mshstk],[MSHSTK_FLAG_AVAIL=yes])
+# AC_LANG(C)
+# AX_CHECK_COMPILE_FLAG([-mshstk],[MSHSTK_FLAG_AVAIL=yes])
 
-if test xx$MSHSTK_FLAG_AVAIL = "xxyes"; then
-   ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
-fi
+# if test xx$MSHSTK_FLAG_AVAIL = "xxyes"; then
+#   ADD_CFLAGS="${ADD_CFLAGS} -mshstk"
+# fi
 
 # AC_LANG(C)
 # AX_COMPILER_VENDOR

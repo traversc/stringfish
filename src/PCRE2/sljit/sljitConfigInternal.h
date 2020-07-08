@@ -211,7 +211,7 @@ extern "C" {
 
 #ifdef SLJIT_CONFIG_X86
 #if defined(__CET__)
-#define SLJIT_CONFIG_X86_CET 1
+// #define SLJIT_CONFIG_X86_CET 1 // TC disable so we don't need -mshstk
 #endif
 #if (defined SLJIT_CONFIG_X86_CET && SLJIT_CONFIG_X86_CET)
 #if defined(__GNUC__)
