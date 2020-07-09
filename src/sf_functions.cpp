@@ -1009,8 +1009,8 @@ SEXP sf_toupper(SEXP x) {
 struct rstring_info_hash { 
   size_t operator()(const RStringIndexer::rstring_info & s) const
   { 
-    return XXH3_64bits(s.ptr, s.len);
-  } 
+    return XXH64(s.ptr, s.len, 0);
+  }
 };
 
 // [[Rcpp::export(rng = false)]]
