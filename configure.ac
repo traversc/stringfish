@@ -1,6 +1,7 @@
 AC_INIT(stringfish, 0.13.2 traversc@gmail.com)
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin:/opt/bin:/opt/local/bin])
 
+echo "stringfish configure script"
 ########################################################
 ### Predefined compile strings for different cases
 
