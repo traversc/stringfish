@@ -1,4 +1,5 @@
 importFrom(Rcpp,sourceCpp)
+importFrom(RcppParallel, RcppParallelLibs)
 useDynLib(stringfish, .registration=TRUE)
 export(
 "materialize",

@@ -18,6 +18,7 @@ inline bool checkAscii(const void * ptr, size_t len) {
   return true;
 }
 
+
 // defined in Rinternals.h, very unlikely to change
 // typedef enum {
 //   CE_NATIVE = 0,

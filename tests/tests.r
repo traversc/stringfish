@@ -22,213 +22,239 @@ i500_latin1 <- iconv(i500_utf8, "UTF-8", "latin1")
 utf8_chars <- i500_utf8 %>% strsplit("") %>% unlist %>% unique
 latin1_chars <- iconv(utf8_chars, from="UTF-8", to="latin1")
 
-str_identical <- function(x, y) {
-  if(length(x) != length(y)) return(F)
-  if(any(nchar(x) != nchar(y))) return(F)
-  if(!all(Encoding(x) == Encoding(y))) return(F)
-  for(i in 1:length(x)) {
-    if(any(charToRaw(x[i]) != charToRaw(y[i]))) return(F)
-  }
-  return(T)
-}
 catn <- function(...) {
   cat(..., "\n")
 }
-ntests <- 50
+ntests <- 100
+nthreads <- c(1,8)
 
-catn("sf_assign")
-for(. in 1:ntests) {
-  x <- sf_vector(10)
-  y <- character(10)
-  for(i in 1:10) {
-    new_str <- sample(c(i500_utf8,i500_latin1),1)
-    stringfish:::sf_assign(x, i, new_str)
-    y[i] <- new_str
+for(nt in nthreads) {
+  
+  catn("sf_assign")
+  for(. in 1:ntests) {
+    x <- sf_vector(10)
+    y <- character(10)
+    for(i in 1:10) {
+      new_str <- sample(c(i500_utf8,i500_latin1),1)
+      stringfish:::sf_assign(x, i, new_str)
+      y[i] <- new_str
+    }
+    stopifnot(string_identical(x,y))
   }
-  stopifnot(str_identical(x,y))
-}
-
-catn("sf_iconv")
-for(. in 1:ntests) {
-  x <- sf_iconv(i500_latin1, "latin1", "UTF-8")
-  y <- sf_iconv(i500_utf8, "UTF-8", "latin1")
-  stopifnot(str_identical(x, i500_utf8))
-  stopifnot(str_identical(y, i500_latin1))
-  x <- sf_iconv(convert_to_sf(i500_latin1), "latin1", "UTF-8")
-  y <- sf_iconv(convert_to_sf(i500_utf8), "UTF-8", "latin1")
-  stopifnot(str_identical(x, i500_utf8))
-  stopifnot(str_identical(y, i500_latin1))
-}
-
-catn("sf_nchar")
-for(. in 1:ntests) {
-  x <- convert_to_sf(i500_latin1)
-  y <- convert_to_sf(i500_utf8)
-  stopifnot( identical(sf_nchar(x), nchar(x)) )
-  stopifnot( identical(sf_nchar(y), nchar(y)) )
-  stopifnot( identical(sf_nchar(x), nchar(i500_latin1)) )
-  stopifnot( identical(sf_nchar(y), nchar(i500_utf8)) )
-  stopifnot( identical(sf_nchar(x, type = "bytes"), nchar(i500_latin1, type = "bytes")) )
-  stopifnot( identical(sf_nchar(y, type = "bytes"), nchar(i500_utf8, type = "bytes")) )
-}
-
-catn("sf_substr")
-for(. in 1:ntests) {
-  start <- sample(-10:10, size=1)
-  if(start < 0) {
-    rstart <- sf_nchar(i500_latin1) + start + 1
-  } else {
-    rstart <- start
+  
+  catn("sf_iconv")
+  for(. in 1:ntests) {
+    x <- sf_iconv(i500_latin1, "latin1", "UTF-8")
+    y <- sf_iconv(i500_utf8, "UTF-8", "latin1")
+    stopifnot(string_identical(x, i500_utf8))
+    stopifnot(string_identical(y, i500_latin1))
+    x <- sf_iconv(convert_to_sf(i500_latin1), "latin1", "UTF-8")
+    y <- sf_iconv(convert_to_sf(i500_utf8), "UTF-8", "latin1")
+    stopifnot(string_identical(x, i500_utf8))
+    stopifnot(string_identical(y, i500_latin1))
   }
-  stop <- sample(-10:10, size=1)
-  if(stop < 0) {
-    rstop <- sf_nchar(i500_latin1) + stop + 1
-  } else {
-    rstop <- stop
+  
+  catn("sf_nchar")
+  for(. in 1:ntests) {
+    x <- convert_to_sf(i500_latin1)
+    y <- convert_to_sf(i500_utf8)
+    stopifnot( identical(sf_nchar(x, nthreads = nt), nchar(x)) )
+    stopifnot( identical(sf_nchar(y, nthreads = nt), nchar(y)) )
+    stopifnot( identical(sf_nchar(x, nthreads = nt), nchar(i500_latin1)) )
+    stopifnot( identical(sf_nchar(y, nthreads = nt), nchar(i500_utf8)) )
+    stopifnot( identical(sf_nchar(x, type = "bytes", nthreads = nt), nchar(i500_latin1, type = "bytes")) )
+    stopifnot( identical(sf_nchar(y, type = "bytes", nthreads = nt), nchar(i500_utf8, type = "bytes")) )
   }
-  x <- sf_substr(i500_latin1, start, stop)
-  y <- substr(i500_latin1, rstart, rstop)
-  x2 <- sf_substr(i500_utf8, start, stop)
-  y2 <- substr(i500_utf8, rstart, rstop)
-  stopifnot(str_identical(x, y))
-  stopifnot(str_identical(x2, y2))
-}
-
-catn("sf_collapse")
-for(. in 1:ntests) {
-  x <- sf_collapse(i500_latin1, collapse = ":::")
-  y <- paste0(i500_latin1, collapse = ":::")
-  # stopifnot(str_identical(x, y)) # paste0 converts to UTF-8 -- doesn't respect encoding
-  stopifnot(x == y)
-  x <- sf_collapse(i500_latin1, collapse = ",")
-  y <- paste0(i500_latin1, collapse = ",")
-  stopifnot(x == y)
-  x <- sf_collapse(i500_utf8, collapse = ":::")
-  y <- paste0(i500_utf8, collapse = ":::")
-  stopifnot(x == y)
-  x <- sf_collapse(i500_utf8, collapse = ",")
-  y <- paste0(i500_utf8, collapse = ",")
-  stopifnot(x == y)
-}
-
-catn("sf_paste")
-for(. in 1:ntests) {
-  x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
-  y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::"))
-  stopifnot(x == y)
-  x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
-  y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::"))
-  stopifnot(x == y)
-  x <- do.call(paste, c(as.list(i500_utf8), sep=","))
-  y <- do.call(sf_paste, c(as.list(i500_utf8), sep=","))
-  stopifnot(x == y)
-  x <- do.call(paste, c(as.list(i500_utf8), sep=","))
-  y <- do.call(sf_paste, c(as.list(i500_utf8), sep=","))
-  stopifnot(x == y)
-}
-
-catn("sf_readLines")
-for(. in 1:ntests) {
-  writeLines(i500_utf8, con=myfile, useBytes=T)
-  x <- sf_readLines(myfile, encoding = "UTF-8")
-  y <- readLines(myfile); Encoding(y) <- "UTF-8"
-  stopifnot(str_identical(x, y))
-  writeLines(i500_latin1, con=myfile)
-  x <- sf_readLines(myfile, encoding = "latin1")
-  y <- readLines(myfile); Encoding(y) <- "latin1"
-  stopifnot(str_identical(x, y))
-}
-
-
-catn("sf_grepl")
-for(. in 1:ntests) {
-  p <- rawToChar(as.raw(c(0x5e, 0xc3, 0xb6, 0x2e, 0x2b)))
-  Encoding(p) <- "UTF-8"
-  p2 <- rawToChar(as.raw(c(0x5e, 0xf6, 0x2e, 0x2b)))
-  Encoding(p2) <- "latin1"
-  stopifnot(all(sf_grepl(i500_utf8, p) == grepl(p, i500_utf8)))
-  stopifnot(all(sf_grepl(i500_latin1, p2) == grepl(p2, i500_latin1)))
   
-  stopifnot(sf_grepl(i500_utf8, "[a-f]") == grepl("[a-f]", i500_utf8))
-  stopifnot(sf_grepl(i500_latin1, "[a-f]") == grepl("[a-f]", i500_latin1))
-}
-
-catn("sf_gsub")
-for(. in 1:ntests) {
-  p <- rawToChar(as.raw(c(0x5e, 0xc3, 0xb6, 0x2e, 0x2b, 0x28, 0x2e, 0x29, 0x24)))
-  Encoding(p) <- "UTF-8"
-  p2 <- rawToChar(as.raw(c(0x5e, 0xf6, 0x2e, 0x2b, 0x28, 0x2e, 0x29, 0x24)))
-  Encoding(p2) <- "latin1"
-  stopifnot(all(sf_gsub(i500_utf8, p, "$1") == gsub(p, "\\1", i500_utf8)))
-  stopifnot(all(sf_gsub(i500_latin1, p2, "$1") == gsub(p2, "\\1", i500_latin1)))
+  catn("sf_substr")
+  for(. in 1:ntests) {
+    start <- sample(-10:10, size=1)
+    if(start < 0) {
+      rstart <- sf_nchar(i500_latin1, nthreads = nt) + start + 1
+    } else {
+      rstart <- start
+    }
+    stop <- sample(-10:10, size=1)
+    if(stop < 0) {
+      rstop <- sf_nchar(i500_latin1, nthreads = nt) + stop + 1
+    } else {
+      rstop <- stop
+    }
+    x <- sf_substr(i500_latin1, start, stop, nthreads = nt)
+    y <- substr(i500_latin1, rstart, rstop)
+    x2 <- sf_substr(i500_utf8, start, stop, nthreads = nt)
+    y2 <- substr(i500_utf8, rstart, rstop)
+    stopifnot(string_identical(x, y))
+    stopifnot(string_identical(x2, y2))
+  }
   
-  p <- "^h.+(.)$"
-  stopifnot(all(sf_gsub(i500_utf8, p, "$1") == gsub(p, "\\1", i500_utf8)))
-  stopifnot(all(sf_gsub(i500_latin1, p, "$1") == gsub(p, "\\1", i500_latin1)))
+  catn("sf_collapse")
+  for(. in 1:ntests) {
+    x <- sf_collapse(i500_latin1, collapse = ":::")
+    y <- paste0(i500_latin1, collapse = ":::")
+    # stopifnot(string_identical(x, y)) # paste0 converts to UTF-8 -- doesn't respect encoding
+    stopifnot(x == y)
+    x <- sf_collapse(i500_latin1, collapse = ",")
+    y <- paste0(i500_latin1, collapse = ",")
+    stopifnot(x == y)
+    x <- sf_collapse(i500_utf8, collapse = ":::")
+    y <- paste0(i500_utf8, collapse = ":::")
+    stopifnot(x == y)
+    x <- sf_collapse(i500_utf8, collapse = ",")
+    y <- paste0(i500_utf8, collapse = ",")
+    stopifnot(x == y)
+  }
   
-}
-
-
-catn("sf_split")
-for(. in 1:ntests) {
-  split <- sf_paste(sample(utf8_chars,1), ".")
-  x <- sf_split(i500_utf8, split)
-  y <- stringr::str_split(i500_utf8, split)
-  r <- sapply(1:length(y), function(i) {
-    str_identical(x[[i]], y[[i]])
-  })
-  stopifnot(all(r))
+  catn("sf_paste")
+  for(. in 1:ntests) {
+    x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
+    y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::", nthreads = nt))
+    stopifnot(x == y)
+    x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
+    y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::", nthreads = nt))
+    stopifnot(x == y)
+    x <- do.call(paste, c(as.list(i500_utf8), sep=","))
+    y <- do.call(sf_paste, c(as.list(i500_utf8), sep=",", nthreads = nt))
+    stopifnot(x == y)
+    x <- do.call(paste, c(as.list(i500_utf8), sep=","))
+    y <- do.call(sf_paste, c(as.list(i500_utf8), sep=",", nthreads = nt))
+    stopifnot(x == y)
+  }
   
-  split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
-  x <- sf_split(i500_latin1, split_latin1)
-  y <- stringr::str_split(i500_latin1, split_latin1)
-  x <- lapply(x, sf_iconv, from = "UTF-8", to = "latin1")
-  y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
-  r <- sapply(1:length(y), function(i) {
-    str_identical(x[[i]], y[[i]])
-  })
+  catn("sf_readLines")
+  for(. in 1:ntests) {
+    writeLines(i500_utf8, con=myfile, useBytes=T)
+    x <- sf_readLines(myfile, encoding = "UTF-8")
+    y <- readLines(myfile); Encoding(y) <- "UTF-8"
+    stopifnot(string_identical(x, y))
+    writeLines(i500_latin1, con=myfile)
+    x <- sf_readLines(myfile, encoding = "latin1")
+    y <- readLines(myfile); Encoding(y) <- "latin1"
+    stopifnot(string_identical(x, y))
+  }
   
-  split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
-  x <- sf_split(i500_latin1, split_latin1, encode_mode = "byte")
-  y <- stringr::str_split(i500_latin1, split_latin1)
-  y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
-  r <- sapply(1:length(y), function(i) {
-    str_identical(x[[i]], y[[i]])
-  })
   
-  stopifnot(all(r))
-}
-
-
-catn("sf_toupper and sf_tolower")
-for(. in 1:ntests) {
-  x1 <- sf_toupper(i500_latin1)
-  x2 <- sf_toupper(i500_utf8)
-  y1 <- sf_tolower(i500_latin1)
-  y2 <- sf_tolower(i500_utf8)
-  z1 <- sf_tolower(x1)
-  z2 <- sf_tolower(x2)
-  stopifnot(str_identical(z1, i500_latin1))
-  stopifnot(str_identical(z2, i500_utf8))
-  stopifnot(str_identical(y1, i500_latin1))
-  stopifnot(str_identical(y2, i500_utf8))
-  # base R functions also convert Unicode characters to upper
-  # stopifnot(str_identical(x1, iconv(toupper(i500_latin1),"UTF-8", "latin1")))
-  # stopifnot(str_identical(x2, toupper(i500_utf8)))
-}
-
-catn("Rcpp test with sf_alternate_case")
-for(. in 1:ntests) {
-  x <- c("hello world", "HELLO WORLD")
-  str_identical(sf_alternate_case(x), c("hElLo wOrLd", "hElLo wOrLd"))
-}
-
-catn("sf_trim")
-for(. in 1:ntests) {
-  x <- sf_trim(sf_paste("\t", i500_utf8, " \n"))
-  stopifnot(str_identical(x, i500_utf8))
+  catn("sf_grepl")
+  for(. in 1:ntests) {
+    p <- rawToChar(as.raw(c(0x5e, 0xc3, 0xb6, 0x2e, 0x2b)))
+    Encoding(p) <- "UTF-8"
+    p2 <- rawToChar(as.raw(c(0x5e, 0xf6, 0x2e, 0x2b)))
+    Encoding(p2) <- "latin1"
+    stopifnot(all(sf_grepl(i500_utf8, p, nthreads = nt) == grepl(p, i500_utf8)))
+    stopifnot(all(sf_grepl(i500_latin1, p2, nthreads = nt) == grepl(p2, i500_latin1)))
+    
+    stopifnot(sf_grepl(i500_utf8, "[a-f]", nthreads = nt) == grepl("[a-f]", i500_utf8))
+    stopifnot(sf_grepl(i500_latin1, "[a-f]", nthreads = nt) == grepl("[a-f]", i500_latin1))
+  }
   
-  x <- sf_trim(sf_paste("\t", i500_latin1, " \n"), encode_mode = "byte")
-  stopifnot(str_identical(x, i500_latin1))
-}
+  catn("sf_gsub")
+  for(. in 1:ntests) {
+    p <- rawToChar(as.raw(c(0x5e, 0xc3, 0xb6, 0x2e, 0x2b, 0x28, 0x2e, 0x29, 0x24)))
+    Encoding(p) <- "UTF-8"
+    p2 <- rawToChar(as.raw(c(0x5e, 0xf6, 0x2e, 0x2b, 0x28, 0x2e, 0x29, 0x24)))
+    Encoding(p2) <- "latin1"
+    stopifnot(all(sf_gsub(i500_utf8, p, "$1", nthreads = nt) == gsub(p, "\\1", i500_utf8)))
+    stopifnot(all(sf_gsub(i500_latin1, p2, "$1", nthreads = nt) == gsub(p2, "\\1", i500_latin1)))
+    
+    p <- "^h.+(.)$"
+    stopifnot(all(sf_gsub(i500_utf8, p, "$1", nthreads = nt) == gsub(p, "\\1", i500_utf8)))
+    stopifnot(all(sf_gsub(i500_latin1, p, "$1", nthreads = nt) == gsub(p, "\\1", i500_latin1)))
+  }
+  
+  
+  catn("sf_split")
+  for(. in 1:ntests) {
+    # empty split is a special case
+    split <- ""
+    x <- sf_split(i500_utf8, split, nthreads = nt)
+    y <- stringr::str_split(i500_utf8, split)
+    r <- sapply(1:length(y), function(i) {
+      string_identical(x[[i]], y[[i]])
+    })
+    stopifnot(all(r))
+    
+    # empty subject
+    x <- sf_split(rep("", 1e3), "a", nthreads=nt)
+    stopifnot(all(x == ""))
+    
+    # empty subject, empty split
+    x <- sf_split(rep("", 1e3), "", nthreads=nt)
+    stopifnot(all(x == ""))
+    
+    # split not in subject
+    x <- sf_split(rep("abcde", 1e3), "f", nthreads=nt)
+    stopifnot(all(x == "abcde"))
+    
+    # single character split, including UTF-8
+    split <- sf_paste(sample(utf8_chars,1))
+    x <- sf_split(i500_utf8, split, nthreads = nt)
+    y <- stringr::str_split(i500_utf8, split)
+    r <- sapply(1:length(y), function(i) {
+      string_identical(x[[i]], y[[i]])
+    })
+    stopifnot(all(r))
+    
+    # split with regex
+    split <- sf_paste(sample(utf8_chars,1), ".")
+    x <- sf_split(i500_utf8, split, nthreads = nt)
+    y <- stringr::str_split(i500_utf8, split)
+    r <- sapply(1:length(y), function(i) {
+      string_identical(x[[i]], y[[i]])
+    })
+    stopifnot(all(r))
+    
+    split <- sf_paste(sample(utf8_chars,1), ".")
+    split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
+    x <- sf_split(i500_latin1, split_latin1, nthreads = nt)
+    y <- stringr::str_split(i500_latin1, split_latin1)
+    x <- lapply(x, sf_iconv, from = "UTF-8", to = "latin1")
+    y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
+    r <- sapply(1:length(y), function(i) {
+      string_identical(x[[i]], y[[i]])
+    })
+    stopifnot(all(r))
+    
+    split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
+    x <- sf_split(i500_latin1, split_latin1, encode_mode = "byte", nthreads = nt)
+    y <- stringr::str_split(i500_latin1, split_latin1)
+    y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
+    r <- sapply(1:length(y), function(i) {
+      string_identical(x[[i]], y[[i]])
+    })
+    stopifnot(all(r))
+  }
+  
+  
+  catn("sf_toupper and sf_tolower")
+  for(. in 1:ntests) {
+    x1 <- sf_toupper(i500_latin1)
+    x2 <- sf_toupper(i500_utf8)
+    y1 <- sf_tolower(i500_latin1)
+    y2 <- sf_tolower(i500_utf8)
+    z1 <- sf_tolower(x1)
+    z2 <- sf_tolower(x2)
+    stopifnot(string_identical(z1, i500_latin1))
+    stopifnot(string_identical(z2, i500_utf8))
+    stopifnot(string_identical(y1, i500_latin1))
+    stopifnot(string_identical(y2, i500_utf8))
+    # base R functions also convert Unicode characters to upper
+    # stopifnot(string_identical(x1, iconv(toupper(i500_latin1),"UTF-8", "latin1")))
+    # stopifnot(string_identical(x2, toupper(i500_utf8)))
+  }
+  
+  catn("Rcpp test with sf_alternate_case")
+  for(. in 1:ntests) {
+    x <- c("hello world", "HELLO WORLD")
+    string_identical(sf_alternate_case(x), c("hElLo wOrLd", "hElLo wOrLd"))
+  }
+  
+  catn("sf_trim")
+  for(. in 1:ntests) {
+    x <- sf_trim(sf_paste("\t", i500_utf8, " \n"))
+    stopifnot(string_identical(x, i500_utf8))
+    
+    x <- sf_trim(sf_paste("\t", i500_latin1, " \n"), encode_mode = "byte")
+    stopifnot(string_identical(x, i500_latin1))
+  }
 
+}

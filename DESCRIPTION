@@ -15,11 +15,11 @@ License: GPL-3
 Biarch: true
 Encoding: UTF-8
 Depends: R (>= 3.5.0)
-SystemRequirements: C++11
+SystemRequirements: C++11, GNU make
 LinkingTo: 
-    Rcpp (>= 0.12.18.3)
+    Rcpp (>= 0.12.18.3), RcppParallel
 Imports: 
-    Rcpp
+    Rcpp, RcppParallel
 Suggests:
     qs, knitr, rmarkdown
 VignetteBuilder: knitr

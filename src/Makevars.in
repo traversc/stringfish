@@ -1,5 +1,5 @@
 PKG_CFLAGS=@ADD_CFLAGS@
 CXX_STD=CXX11
 PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -I. @INCLUDE_PATHS@
-PKG_LIBS=-lpthread @ADD_LIBS@
+PKG_LIBS=-lpthread @ADD_LIBS@ $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")
 @COMPILE_STRING@
