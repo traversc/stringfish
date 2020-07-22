@@ -21,6 +21,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// is_tbb
+bool is_tbb();
+RcppExport SEXP _stringfish_is_tbb() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    rcpp_result_gen = Rcpp::wrap(is_tbb());
+    return rcpp_result_gen;
+END_RCPP
+}
 // get_string_type
 std::string get_string_type(SEXP x);
 RcppExport SEXP _stringfish_get_string_type(SEXP xSEXP) {
@@ -63,14 +72,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // sf_iconv
-SEXP sf_iconv(SEXP x, const std::string from, const std::string to);
-RcppExport SEXP _stringfish_sf_iconv(SEXP xSEXP, SEXP fromSEXP, SEXP toSEXP) {
+SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads);
+RcppExport SEXP _stringfish_sf_iconv(SEXP xSEXP, SEXP fromSEXP, SEXP toSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
     Rcpp::traits::input_parameter< const std::string >::type from(fromSEXP);
     Rcpp::traits::input_parameter< const std::string >::type to(toSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_iconv(x, from, to));
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_iconv(x, from, to, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -85,36 +95,39 @@ BEGIN_RCPP
 END_RCPP
 }
 // sf_nchar
-IntegerVector sf_nchar(SEXP x, std::string type);
-RcppExport SEXP _stringfish_sf_nchar(SEXP xSEXP, SEXP typeSEXP) {
+IntegerVector sf_nchar(SEXP x, const std::string type, const int nthreads);
+RcppExport SEXP _stringfish_sf_nchar(SEXP xSEXP, SEXP typeSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_nchar(x, type));
+    Rcpp::traits::input_parameter< const std::string >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_nchar(x, type, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
 // sf_substr
-SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop);
-RcppExport SEXP _stringfish_sf_substr(SEXP xSEXP, SEXP startSEXP, SEXP stopSEXP) {
+SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthreads);
+RcppExport SEXP _stringfish_sf_substr(SEXP xSEXP, SEXP startSEXP, SEXP stopSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type start(startSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type stop(stopSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_substr(x, start, stop));
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_substr(x, start, stop, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
 // c_sf_paste
-SEXP c_sf_paste(List dots, SEXP sep);
-RcppExport SEXP _stringfish_c_sf_paste(SEXP dotsSEXP, SEXP sepSEXP) {
+SEXP c_sf_paste(List dots, SEXP sep, const int nthreads);
+RcppExport SEXP _stringfish_c_sf_paste(SEXP dotsSEXP, SEXP sepSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< List >::type dots(dotsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type sep(sepSEXP);
-    rcpp_result_gen = Rcpp::wrap(c_sf_paste(dots, sep));
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_sf_paste(dots, sep, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -154,34 +167,36 @@ BEGIN_RCPP
 END_RCPP
 }
 // sf_grepl
-LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode, const bool fixed);
-RcppExport SEXP _stringfish_sf_grepl(SEXP subjectSEXP, SEXP patternSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP) {
+LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode, const bool fixed, const int nthreads);
+RcppExport SEXP _stringfish_sf_grepl(SEXP subjectSEXP, SEXP patternSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type subject(subjectSEXP);
     Rcpp::traits::input_parameter< SEXP >::type pattern(patternSEXP);
     Rcpp::traits::input_parameter< const std::string >::type encode_mode(encode_modeSEXP);
     Rcpp::traits::input_parameter< const bool >::type fixed(fixedSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_grepl(subject, pattern, encode_mode, fixed));
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_grepl(subject, pattern, encode_mode, fixed, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
 // sf_split
-SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode, const bool fixed);
-RcppExport SEXP _stringfish_sf_split(SEXP subjectSEXP, SEXP splitSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP) {
+SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode, const bool fixed, const int nthreads);
+RcppExport SEXP _stringfish_sf_split(SEXP subjectSEXP, SEXP splitSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type subject(subjectSEXP);
     Rcpp::traits::input_parameter< SEXP >::type split(splitSEXP);
     Rcpp::traits::input_parameter< const std::string >::type encode_mode(encode_modeSEXP);
     Rcpp::traits::input_parameter< const bool >::type fixed(fixedSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_split(subject, split, encode_mode, fixed));
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_split(subject, split, encode_mode, fixed, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
 // sf_gsub
-SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode, const bool fixed);
-RcppExport SEXP _stringfish_sf_gsub(SEXP subjectSEXP, SEXP patternSEXP, SEXP replacementSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP) {
+SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode, const bool fixed, const int nthreads);
+RcppExport SEXP _stringfish_sf_gsub(SEXP subjectSEXP, SEXP patternSEXP, SEXP replacementSEXP, SEXP encode_modeSEXP, SEXP fixedSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type subject(subjectSEXP);
@@ -189,7 +204,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type replacement(replacementSEXP);
     Rcpp::traits::input_parameter< const std::string >::type encode_mode(encode_modeSEXP);
     Rcpp::traits::input_parameter< const bool >::type fixed(fixedSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_gsub(subject, pattern, replacement, encode_mode, fixed));
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_gsub(subject, pattern, replacement, encode_mode, fixed, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -228,13 +244,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // sf_match
-IntegerVector sf_match(SEXP x, SEXP table);
-RcppExport SEXP _stringfish_sf_match(SEXP xSEXP, SEXP tableSEXP) {
+IntegerVector sf_match(SEXP x, SEXP table, const int nthreads);
+RcppExport SEXP _stringfish_sf_match(SEXP xSEXP, SEXP tableSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
     Rcpp::traits::input_parameter< SEXP >::type table(tableSEXP);
-    rcpp_result_gen = Rcpp::wrap(sf_match(x, table));
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_match(x, table, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -242,25 +259,26 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_set_is_utf8_locale", (DL_FUNC) &_stringfish_set_is_utf8_locale, 0},
     {"_stringfish_unset_is_utf8_locale", (DL_FUNC) &_stringfish_unset_is_utf8_locale, 0},
+    {"_stringfish_is_tbb", (DL_FUNC) &_stringfish_is_tbb, 0},
     {"_stringfish_get_string_type", (DL_FUNC) &_stringfish_get_string_type, 1},
     {"_stringfish_materialize", (DL_FUNC) &_stringfish_materialize, 1},
     {"_stringfish_sf_vector", (DL_FUNC) &_stringfish_sf_vector, 1},
     {"_stringfish_sf_assign", (DL_FUNC) &_stringfish_sf_assign, 3},
-    {"_stringfish_sf_iconv", (DL_FUNC) &_stringfish_sf_iconv, 3},
+    {"_stringfish_sf_iconv", (DL_FUNC) &_stringfish_sf_iconv, 4},
     {"_stringfish_convert_to_sf", (DL_FUNC) &_stringfish_convert_to_sf, 1},
-    {"_stringfish_sf_nchar", (DL_FUNC) &_stringfish_sf_nchar, 2},
-    {"_stringfish_sf_substr", (DL_FUNC) &_stringfish_sf_substr, 3},
-    {"_stringfish_c_sf_paste", (DL_FUNC) &_stringfish_c_sf_paste, 2},
+    {"_stringfish_sf_nchar", (DL_FUNC) &_stringfish_sf_nchar, 3},
+    {"_stringfish_sf_substr", (DL_FUNC) &_stringfish_sf_substr, 4},
+    {"_stringfish_c_sf_paste", (DL_FUNC) &_stringfish_c_sf_paste, 3},
     {"_stringfish_sf_collapse", (DL_FUNC) &_stringfish_sf_collapse, 2},
     {"_stringfish_sf_readLines", (DL_FUNC) &_stringfish_sf_readLines, 2},
     {"_stringfish_sf_writeLines", (DL_FUNC) &_stringfish_sf_writeLines, 5},
-    {"_stringfish_sf_grepl", (DL_FUNC) &_stringfish_sf_grepl, 4},
-    {"_stringfish_sf_split", (DL_FUNC) &_stringfish_sf_split, 4},
-    {"_stringfish_sf_gsub", (DL_FUNC) &_stringfish_sf_gsub, 5},
+    {"_stringfish_sf_grepl", (DL_FUNC) &_stringfish_sf_grepl, 5},
+    {"_stringfish_sf_split", (DL_FUNC) &_stringfish_sf_split, 5},
+    {"_stringfish_sf_gsub", (DL_FUNC) &_stringfish_sf_gsub, 6},
     {"_stringfish_random_strings", (DL_FUNC) &_stringfish_random_strings, 4},
     {"_stringfish_sf_tolower", (DL_FUNC) &_stringfish_sf_tolower, 1},
     {"_stringfish_sf_toupper", (DL_FUNC) &_stringfish_sf_toupper, 1},
-    {"_stringfish_sf_match", (DL_FUNC) &_stringfish_sf_match, 2},
+    {"_stringfish_sf_match", (DL_FUNC) &_stringfish_sf_match, 3},
     {NULL, NULL, 0}
 };
 

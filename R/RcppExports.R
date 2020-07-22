@@ -9,6 +9,10 @@ unset_is_utf8_locale <- function() {
     invisible(.Call(`_stringfish_unset_is_utf8_locale`))
 }
 
+is_tbb <- function() {
+    .Call(`_stringfish_is_tbb`)
+}
+
 get_string_type <- function(x) {
     .Call(`_stringfish_get_string_type`, x)
 }
@@ -25,24 +29,24 @@ sf_assign <- function(x, i, e) {
     invisible(.Call(`_stringfish_sf_assign`, x, i, e))
 }
 
-sf_iconv <- function(x, from, to) {
-    .Call(`_stringfish_sf_iconv`, x, from, to)
+sf_iconv <- function(x, from, to, nthreads = 1L) {
+    .Call(`_stringfish_sf_iconv`, x, from, to, nthreads)
 }
 
 convert_to_sf <- function(x) {
     .Call(`_stringfish_convert_to_sf`, x)
 }
 
-sf_nchar <- function(x, type = "chars") {
-    .Call(`_stringfish_sf_nchar`, x, type)
+sf_nchar <- function(x, type = "chars", nthreads = 1L) {
+    .Call(`_stringfish_sf_nchar`, x, type, nthreads)
 }
 
-sf_substr <- function(x, start, stop) {
-    .Call(`_stringfish_sf_substr`, x, start, stop)
+sf_substr <- function(x, start, stop, nthreads = 1L) {
+    .Call(`_stringfish_sf_substr`, x, start, stop, nthreads)
 }
 
-c_sf_paste <- function(dots, sep) {
-    .Call(`_stringfish_c_sf_paste`, dots, sep)
+c_sf_paste <- function(dots, sep, nthreads = 1L) {
+    .Call(`_stringfish_c_sf_paste`, dots, sep, nthreads)
 }
 
 sf_collapse <- function(x, collapse) {
@@ -57,16 +61,16 @@ sf_writeLines <- function(text, file, sep = "\n", na_value = "NA", encode_mode =
     invisible(.Call(`_stringfish_sf_writeLines`, text, file, sep, na_value, encode_mode))
 }
 
-sf_grepl <- function(subject, pattern, encode_mode = "auto", fixed = FALSE) {
-    .Call(`_stringfish_sf_grepl`, subject, pattern, encode_mode, fixed)
+sf_grepl <- function(subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = 1L) {
+    .Call(`_stringfish_sf_grepl`, subject, pattern, encode_mode, fixed, nthreads)
 }
 
-sf_split <- function(subject, split, encode_mode = "auto", fixed = FALSE) {
-    .Call(`_stringfish_sf_split`, subject, split, encode_mode, fixed)
+sf_split <- function(subject, split, encode_mode = "auto", fixed = FALSE, nthreads = 1L) {
+    .Call(`_stringfish_sf_split`, subject, split, encode_mode, fixed, nthreads)
 }
 
-sf_gsub <- function(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE) {
-    .Call(`_stringfish_sf_gsub`, subject, pattern, replacement, encode_mode, fixed)
+sf_gsub <- function(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = 1L) {
+    .Call(`_stringfish_sf_gsub`, subject, pattern, replacement, encode_mode, fixed, nthreads)
 }
 
 random_strings <- function(N, string_size = 50L, charset = "abcdefghijklmnopqrstuvwxyz", vector_mode = "stringfish") {
@@ -81,7 +85,7 @@ sf_toupper <- function(x) {
     .Call(`_stringfish_sf_toupper`, x)
 }
 
-sf_match <- function(x, table) {
-    .Call(`_stringfish_sf_match`, x, table)
+sf_match <- function(x, table, nthreads = 1L) {
+    .Call(`_stringfish_sf_match`, x, table, nthreads)
 }
 
