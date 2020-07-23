@@ -89,3 +89,7 @@ sf_match <- function(x, table, nthreads = 1L) {
     .Call(`_stringfish_sf_match`, x, table, nthreads)
 }
 
+sf_compare <- function(x, y, nthreads = 1L) {
+    .Call(`_stringfish_sf_compare`, x, y, nthreads)
+}
+

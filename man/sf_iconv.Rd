@@ -4,12 +4,14 @@
 \alias{sf_iconv}
 \title{sf_iconv}
 \usage{
-sf_iconv(x, from, to)
+sf_iconv(x, from, to, nthreads = 1)
 }
 \arguments{
 \item{x}{An alt-rep object}
 
 \item{from}{the encoding to assume of `x`}
+
+\item{nthreads}{Number of threads to use}
 
 \item{to}{the new encoding}
 }

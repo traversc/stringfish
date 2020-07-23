@@ -4,7 +4,7 @@
 \alias{sf_substr}
 \title{sf_substr}
 \usage{
-sf_substr(x, start, stop)
+sf_substr(x, start, stop, nthreads = 1)
 }
 \arguments{
 \item{x}{A character vector}
@@ -12,6 +12,8 @@ sf_substr(x, start, stop)
 \item{start}{The begining to extract from}
 
 \item{stop}{The end to extract from}
+
+\item{nthreads}{Number of threads to use}
 }
 \value{
 A stringfish vector of substrings

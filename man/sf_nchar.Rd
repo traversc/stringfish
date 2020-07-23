@@ -4,12 +4,14 @@
 \alias{sf_nchar}
 \title{sf_nchar}
 \usage{
-sf_nchar(x, type = "chars")
+sf_nchar(x, type = "chars", nthreads = 1)
 }
 \arguments{
 \item{x}{A character vector}
 
 \item{type}{The type of counting to perform ("chars" or "bytes", default: "chars")}
+
+\item{nthreads}{Number of threads to use}
 }
 \value{
 An integer vector of the number of characters

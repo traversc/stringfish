@@ -1595,6 +1595,73 @@ IntegerVector sf_match(SEXP x, SEXP table, const int nthreads = 1) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
+struct compare_worker : public Worker {
+  RStringIndexer & xr;
+  RStringIndexer & yr;
+  const size_t xlen;
+  const size_t ylen;
+  int * out;
+  compare_worker(RStringIndexer & xr, RStringIndexer & yr, const size_t xlen, const size_t ylen, int * out) : 
+    xr(xr), yr(yr), xlen(xlen), ylen(ylen), out(out) {}
+  
+  void operator()(std::size_t begin, std::size_t end) {
+    for (std::size_t i = begin; i < end; i++) {
+      auto qx = xr.getCharLenCE(xlen == 1 ? 0 : i);
+      if(qx.ptr == nullptr) {
+        out[i] = NA_LOGICAL;
+        continue;
+      }
+      auto qy = yr.getCharLenCE(ylen == 1 ? 0 : i);
+      if(qx.ptr == nullptr) {
+        out[i] = NA_LOGICAL;
+        continue;
+      }
+      if(qx == qy) out[i] = 1;
+    }
+  }
+};
+
+
+// [[Rcpp::export(rng = false)]]
+LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads = 1) {
+  RStringIndexer xr(x);
+  RStringIndexer yr(y);
+  size_t xlen = xr.size();
+  size_t ylen = yr.size();
+  if((xlen == 0) || (ylen == 0) || ((xlen != 1) && (ylen != 1) && (xlen != ylen))) {
+    throw std::runtime_error("x and y must be length 1 or the same length > 0");
+  }
+  size_t outlen = std::max(xlen, ylen);
+  LogicalVector ret(outlen);
+  int * out = INTEGER(ret);
+
+  if(nthreads > 1) {
+#if RCPP_PARALLEL_USE_TBB
+    compare_worker w(xr, yr, xlen, ylen, out);
+    parallelFor2(0, xlen, w, 100, nthreads);
+#else
+    throw std::runtime_error("RcppParallel TBB not supported");
+#endif
+  } else {
+    for(size_t i=0; i<outlen; i++) {
+      auto qx = xr.getCharLenCE(xlen == 1 ? 0 : i);
+      if(qx.ptr == nullptr) {
+        out[i] = NA_LOGICAL;
+        continue;
+      }
+      auto qy = yr.getCharLenCE(ylen == 1 ? 0 : i);
+      if(qx.ptr == nullptr) {
+        out[i] = NA_LOGICAL;
+        continue;
+      }
+      if(qx == qy) out[i] = 1;
+    }
+  }
+  return ret;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // to do list:
 // sf_sprintf
 // sf_assign

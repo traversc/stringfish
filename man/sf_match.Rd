@@ -4,12 +4,14 @@
 \alias{sf_match}
 \title{sf_match}
 \usage{
-sf_match(x, table)
+sf_match(x, table, nthreads = 1)
 }
 \arguments{
 \item{x}{A character vector to search for in table}
 
 \item{table}{A character vector to be matched against x}
+
+\item{nthreads}{Number of threads to use}
 }
 \value{
 An integer vector of the indicies of each x element's position in table

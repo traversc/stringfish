@@ -6,7 +6,6 @@
 #include <vector>
 #include <cstring>
 
-
 inline bool checkAscii(const void * ptr, size_t len) {
   const uint8_t * qp = reinterpret_cast<const uint8_t*>(ptr);
   for(size_t j=0; j<len; j++) {
@@ -106,7 +105,6 @@ struct sfstring {
       encoding = static_cast<cetype_t_ext>(enc);
     }
   }
-  
   // It's (probably ?) more efficient to serialize directly into object?
   sfstring(size_t size, cetype_t enc) {
     sdata = std::string();
@@ -139,6 +137,8 @@ struct sfstring {
       return false;
     }
   }
+  sfstring(const sfstring & other) : sdata(other.sdata), encoding(other.encoding) {} //copy constructor 
+  
   bool check_if_ascii(cetype_t enc) {
     if( checkAscii(sdata.c_str(), sdata.size()) ) {
       encoding = cetype_t_ext::CE_ASCII;
@@ -193,6 +193,8 @@ public:
     rstring_info() : ptr(nullptr), len(0), enc(CE_NATIVE) {}
     rstring_info(const rstring_info & other) : ptr(other.ptr), len(other.len), enc(other.enc) {}
     bool operator==(const rstring_info & other) const {
+      if((ptr == nullptr) && (other.ptr == nullptr)) return true;
+      if((ptr == nullptr) || (other.ptr == nullptr)) return false;
       return (strcmp(ptr, other.ptr) == 0) && (len == other.len) && (enc == other.enc);
     }
   };

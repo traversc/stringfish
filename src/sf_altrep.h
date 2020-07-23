@@ -187,6 +187,42 @@ struct sf_vec {
     return 1;
   }
   
+  static SEXP Extract_subset(SEXP x, SEXP indx, SEXP call) {
+    SEXP data2 = R_altrep_data2(x);
+    if(data2 == nullptr) {
+      return nullptr;
+    }
+    
+    size_t len = Rf_xlength(indx);
+    sf_vec_data & ref = Get(x);
+    sf_vec_data * out = new sf_vec_data(len);
+    sf_vec_data & outref = *out;
+    if(TYPEOF(indx) == INTSXP) {
+      int * idx = INTEGER(indx);
+      for(size_t i=0; i<len; i++) {
+        int idx_i = idx[i]; // 1 based
+        if( (static_cast<size_t>(idx_i) > ref.size()) || (idx_i == NA_INTEGER) ) {
+          outref[i] = sfstring(NA_STRING);
+        } else {
+          outref[i] = sfstring(ref[idx_i - 1]);
+        }
+      }
+    } else if(TYPEOF(indx) == REALSXP) {
+      double * idx = REAL(indx);
+      for(size_t i=0; i<len; i++) {
+        double idx_i = idx[i]; // 1 based
+        if((static_cast<size_t>(idx_i) > ref.size()) || (idx[i] == NA_REAL) ) {
+          outref[i] = sfstring(NA_STRING);
+        } else {
+          outref[i] = sfstring(ref[static_cast<size_t>(idx_i) - 1]);
+        }
+      }
+    } else {
+      throw std::runtime_error("invalid indx type in Extract_subset method");
+    } // no other type should be possible
+    return Make(out, true);
+  }
+  
   // -------- initialize the altrep class with the methods above
   static void Init(DllInfo* dll){
     class_t = R_make_altstring_class("__sf_vec__", "stringfish", dll);
@@ -203,6 +239,9 @@ struct sf_vec {
     R_set_altstring_Elt_method(class_t, string_Elt);
     R_set_altstring_Set_elt_method(class_t, string_Set_elt);
     R_set_altstring_No_NA_method(class_t, no_NA);
+    
+    // subset method for e.g. head, tail, etc
+    R_set_altvec_Extract_subset_method(class_t, Extract_subset);
   }
 };
 
