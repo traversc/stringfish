@@ -4,12 +4,14 @@
 \alias{sf_paste}
 \title{sf_paste}
 \usage{
-sf_paste(..., sep = "")
+sf_paste(..., sep = "", nthreads = 1)
 }
 \arguments{
 \item{...}{Any number of character vector strings}
 
 \item{sep}{The seperating string between strings}
+
+\item{nthreads}{Number of threads to use}
 }
 \value{
 A character vector where elements of the arguments are pasted together

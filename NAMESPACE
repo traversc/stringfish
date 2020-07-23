@@ -3,11 +3,14 @@ importFrom(RcppParallel, RcppParallelLibs)
 useDynLib(stringfish, .registration=TRUE)
 export(
 "materialize",
+"get_string_type",
+"convert_to_sf", "sf_convert", 
 "sf_vector",
 "sf_assign",
-"get_string_type",
+"random_strings",
+"string_identical",
+
 "sf_iconv",
-"convert_to_sf",
 "sf_nchar",
 "sf_substr",
 "sf_paste",
@@ -16,7 +19,6 @@ export(
 "sf_writeLines",
 "sf_grepl",
 "sf_gsub",
-"random_strings",
 "sf_toupper",
 "sf_tolower",
 "sf_starts",
@@ -24,4 +26,4 @@ export(
 "sf_trim",
 "sf_split",
 "sf_match",
-"string_identical")
+"sf_equals", "sf_compare")

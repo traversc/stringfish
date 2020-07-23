@@ -255,6 +255,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sf_compare
+LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads);
+RcppExport SEXP _stringfish_sf_compare(SEXP xSEXP, SEXP ySEXP, SEXP nthreadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_compare(x, y, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_set_is_utf8_locale", (DL_FUNC) &_stringfish_set_is_utf8_locale, 0},
@@ -279,6 +291,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_sf_tolower", (DL_FUNC) &_stringfish_sf_tolower, 1},
     {"_stringfish_sf_toupper", (DL_FUNC) &_stringfish_sf_toupper, 1},
     {"_stringfish_sf_match", (DL_FUNC) &_stringfish_sf_match, 3},
+    {"_stringfish_sf_compare", (DL_FUNC) &_stringfish_sf_compare, 3},
     {NULL, NULL, 0}
 };
 

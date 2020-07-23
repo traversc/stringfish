@@ -2,9 +2,12 @@
 % Please edit documentation in R/help_files.R
 \name{convert_to_sf}
 \alias{convert_to_sf}
+\alias{sf_convert}
 \title{convert_to_sf}
 \usage{
 convert_to_sf(x)
+
+sf_convert(x)
 }
 \arguments{
 \item{x}{A character vector}

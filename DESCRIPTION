@@ -1,7 +1,7 @@
 Package: stringfish
 Title: Alt String Implementation
-Version: 0.13.3
-Date: 2020-7-8
+Version: 0.14.1
+Date: 2020-7-23
 Authors@R: c(
     person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre", "cph")),
     person("Phillip", "Hazel", role = c("ctb"), comment = "Bundled PCRE2 code"),
@@ -10,7 +10,7 @@ Authors@R: c(
     person("Tilera Corporation", role = c("cph"), comment = "Stack-less Just-In-Time compiler bundled with PCRE2"),
     person("Yann", "Collet", role = c("ctb", "cph"), comment = "Yann Collet is the author of the bundled xxHash code"))
 Maintainer: Travers Ching <traversc@gmail.com>
-Description: Provides an extendable and performant 'alt-string' implementation backed by 'C++' vectors and strings.
+Description: Provides an extendable, performant and multithreaded 'alt-string' implementation backed by 'C++' vectors and strings.
 License: GPL-3
 Biarch: true
 Encoding: UTF-8

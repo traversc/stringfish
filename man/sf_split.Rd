@@ -4,7 +4,7 @@
 \alias{sf_split}
 \title{sf_split}
 \usage{
-sf_split(subject, split, encode_mode = "auto", fixed = FALSE)
+sf_split(subject, split, encode_mode = "auto", fixed = FALSE, nthreads = 1)
 }
 \arguments{
 \item{subject}{A character vector}
@@ -14,6 +14,8 @@ sf_split(subject, split, encode_mode = "auto", fixed = FALSE)
 \item{encode_mode}{"auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.}
 
 \item{fixed}{determines whether the split parameter should be interpreted literally or as a regular expression}
+
+\item{nthreads}{Number of threads to use}
 }
 \value{
 A list of stringfish character vectors

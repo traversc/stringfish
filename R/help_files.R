@@ -97,12 +97,16 @@ NULL
 #' @name convert_to_sf
 NULL
 
+#' @rdname convert_to_sf
+sf_convert <- convert_to_sf
+
 #' sf_iconv
 #' 
 #' Converts encoding of one character vector to another
-#' @usage sf_iconv(x, from, to)
+#' @usage sf_iconv(x, from, to, nthreads = 1)
 #' @param x An alt-rep object
 #' @param from the encoding to assume of `x`
+#' @param nthreads Number of threads to use
 #' @param to the new encoding
 #' @return the converted character vector as a stringfish vector
 #' @details 
@@ -118,9 +122,10 @@ NULL
 #' sf_nchar
 #' 
 #' Counts the number of characters in a character vector
-#' @usage sf_nchar(x, type = "chars")
+#' @usage sf_nchar(x, type = "chars", nthreads = 1)
 #' @param x A character vector
 #' @param type The type of counting to perform ("chars" or "bytes", default: "chars")
+#' @param nthreads Number of threads to use
 #' @return An integer vector of the number of characters
 #' @details 
 #' Returns the number of characters per string. The type of counting only matters for UTF-8 strings, where a character can be represented by multiple bytes. 
@@ -135,10 +140,11 @@ NULL
 #' sf_substr
 #' 
 #' Extracts substrings from a character vector
-#' @usage sf_substr(x, start, stop)
+#' @usage sf_substr(x, start, stop, nthreads = 1)
 #' @param x A character vector
 #' @param start The begining to extract from
 #' @param stop The end to extract from
+#' @param nthreads Number of threads to use
 #' @return A stringfish vector of substrings
 #' @details 
 #' This works the same way as `substr`, but in addition allows negative indexing. 
@@ -174,9 +180,10 @@ NULL
 #' sf_paste
 #' 
 #' Pastes a series of strings together
-#' @usage sf_paste(..., sep = "")
+#' @usage sf_paste(..., sep = "", nthreads = 1)
 #' @param ... Any number of character vector strings
 #' @param sep The seperating string between strings
+#' @param nthreads Number of threads to use
 #' @return A character vector where elements of the arguments are pasted together
 #' @details 
 #' This works the same way as `paste0(..., sep=sep)`
@@ -228,11 +235,12 @@ NULL
 #' sf_grepl
 #' 
 #' A function that matches patterns and returns a logical vector
-#' @usage sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE)
+#' @usage sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = 1)
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
 #' @param fixed determines whether the pattern parameter should be interpreted literally or as a regular expression
+#' @param nthreads Number of threads to use
 #' @return A logical vector with the same length as subject
 #' @details 
 #' The function uses the PCRE2 library, which is also used internally by R. 
@@ -251,12 +259,13 @@ NULL
 #' sf_gsub
 #' 
 #' A function that performs pattern substitution
-#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE)
+#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = 1)
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param replacement The replacement string
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
 #' @param fixed determines whether the pattern parameter should be interpreted literally or as a regular expression
+#' @param nthreads Number of threads to use
 #' @return A stringfish vector of the replacement string
 #' @details 
 #' The function uses the PCRE2 library, which is also used internally by R. However, syntax may be slightly different. 
@@ -375,9 +384,10 @@ NULL
 #' sf_match
 #' 
 #' Returns a vector of the positions of x in table
-#' @usage sf_match(x, table)
+#' @usage sf_match(x, table, nthreads = 1)
 #' @param x A character vector to search for in table
 #' @param table A character vector to be matched against x
+#' @param nthreads Number of threads to use
 #' @return An integer vector of the indicies of each x element's position in table
 #' @seealso match
 #' @details Note: similarly to the base R function, long "table" vectors are not supported. This is due to the maximum integer value that can be returned (`.Machine$integer.max`)
@@ -389,11 +399,12 @@ NULL
 #' sf_split
 #' 
 #' A function to split strings by a delimiter
-#' @usage sf_split(subject, split, encode_mode = "auto", fixed = FALSE)
+#' @usage sf_split(subject, split, encode_mode = "auto", fixed = FALSE, nthreads = 1)
 #' @param subject A character vector
 #' @param split A delimiter to split the string by
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
 #' @param fixed determines whether the split parameter should be interpreted literally or as a regular expression
+#' @param nthreads Number of threads to use
 #' @return A list of stringfish character vectors
 #' @seealso strsplit
 #' @examples 
@@ -401,6 +412,22 @@ NULL
 #' @name sf_split
 NULL
 
+#' sf_compare
+#' 
+#' Returns a logical vector testing equality of strings from two string vectors
+#' @usage sf_compare(x, y, nthreads = 1)
+#' @param x A character vector of length 1 or the same non-zero length as y
+#' @param y Another character vector of length 1 or the same non-zero length as y
+#' @param nthreads Number of threads to use
+#' @return A logical vector
+#' @details Note: the function tests for both string and encoding equality
+#' @examples 
+#' sf_compare(letters, "a")
+#' @name sf_compare
+NULL
+
+#' @rdname sf_compare
+sf_equals <- sf_compare
 
 #' string_identical
 #' 
@@ -419,14 +446,10 @@ NULL
 #' @name string_identical
 NULL
 
+
 # not yet implemented:
 # sf_grep
-# sf_writeLines
 # sf_sprintf
-# sf_subset
-# sf_strsplit
 # sf_reverse
 # sf_encoding / sf_set_encoding
-# sf_equal
-# sf_match
 # sf_table

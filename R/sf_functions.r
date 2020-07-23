@@ -55,3 +55,4 @@ string_identical <- function(x, y) {
   if(any(x[not_na] != y[not_na])) return(F)
   return(T)
 }
+
