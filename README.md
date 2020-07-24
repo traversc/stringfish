@@ -42,9 +42,9 @@ a quick benchmark comparing `stringfish` and base R.
 ![](vignettes/bench_v2.png "bench_v2")
 
 Yes you are reading the graph correctly: some functions in `stringfish`
-are more than an order of magnitude faster than base R operations with a
-bit of multithreading (and sometimes without any multithreading). On
-large text datasets, this can turn minutes of computation into seconds.
+are more than an order of magnitude faster than vectorized base R
+operations (and even faster with some build in multithreading). On large
+text datasets, this can turn minutes of computation into seconds.
 
 ## Currently implemented functions
 
@@ -67,22 +67,38 @@ function:
   - `sf_trim` (`trimws`)
   - `sf_split` (`strsplit`)
   - `sf_match` (`match` for strings only)
+  - `sf_compare`/`sf_equals` (`==`, ALTREP-aware string equality)
 
 Utility functions:
 
-  - `convert_to_sf` – converts a character vector to a `stringfish`
-    vector
+  - `sf_vector` – creates a new and empty `stringfish` vector
+  - `sf_assign` – assign strings into a `stringfish` vector in place
+    (like `x[i] <- "mystring"`)
+  - `sf_convert`/`convert_to_sf` – converts a character vector to a
+    `stringfish` vector
   - `get_string_type` – determines string type (whether ALTREP or
     normal)
   - `materialize` – converts any ALTREP object into a normal R object
-  - `sf_vector` – creates a new and empty `stringfish` vector
-  - `sf_random_strings` – creates a random strings as either a
-    `stringfish` or normal R vector
+  - `random_strings` – creates a random strings as either a `stringfish`
+    or normal R vector
+  - `string_identical` – like `identical` for strings but also requires
+    identical encoding (i.e. latin1 and UTF-8 strings will not match)
+
+In addition, many R operations in base R and other packages are already
+ALTREP-aware (i.e. they don’t cause materialization). Functions that
+subset or index into string vectors generally do not materialize.
+
+  - `sample`
+  - `head`
+  - `tail`
+  - `[` – e.g. `x[20:30]`
+  - `dplyr::filter` – e.g. `dplyr::filter(df, sf_starts("a"))`
+  - Etc.
 
 `stringfish` functions are not intended to exactly replicate their base
 R analogues. One difference is that `subject` parameters are always the
-first argument, to be easier to use with pipes (`%>%`). E.g.,
-`gsub(pattern, replacement, subject)` becomes `sf_gsub(subject ,pattern,
+first argument, which is easier to use with pipes (`%>%`). E.g.,
+`gsub(pattern, replacement, subject)` becomes `sf_gsub(subject, pattern,
 replacement)`.
 
 ## Extensibility
