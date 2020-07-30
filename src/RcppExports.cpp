@@ -267,6 +267,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// c_sf_concat
+SEXP c_sf_concat(SEXP x);
+RcppExport SEXP _stringfish_c_sf_concat(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_sf_concat(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_set_is_utf8_locale", (DL_FUNC) &_stringfish_set_is_utf8_locale, 0},
@@ -292,6 +302,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_sf_toupper", (DL_FUNC) &_stringfish_sf_toupper, 1},
     {"_stringfish_sf_match", (DL_FUNC) &_stringfish_sf_match, 3},
     {"_stringfish_sf_compare", (DL_FUNC) &_stringfish_sf_compare, 3},
+    {"_stringfish_c_sf_concat", (DL_FUNC) &_stringfish_c_sf_concat, 1},
     {NULL, NULL, 0}
 };
 

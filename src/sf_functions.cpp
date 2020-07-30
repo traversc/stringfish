@@ -18,11 +18,16 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Riconv.h>
 
+#ifndef PCRE2_CODE_UNIT_WIDTH
 #define PCRE2_CODE_UNIT_WIDTH 8
+#endif
+#ifndef HAVE_CONFIG_H
 #define HAVE_CONFIG_H
-#include <PCRE2/pcre2.h>
+#endif
+#include "PCRE2/pcre2.h"
 
 #include "sf_altrep.h"
+
 using namespace Rcpp;
 using namespace RcppParallel;
 
@@ -1662,13 +1667,45 @@ LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads = 1) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// to do list:
-// sf_sprintf
-// sf_assign
-// sf_subset
-// sf_reverse
-// sf_encoding
-// sf_set_encoding
+
+// [[Rcpp::export(rng = false)]]
+SEXP c_sf_concat(SEXP x) {
+  size_t xlen = Rf_xlength(x);
+  std::vector<RStringIndexer> indexers(xlen);
+  std::vector<size_t> sizes(xlen);
+  size_t total_size = 0;
+  for(size_t i=0; i<xlen; i++) {
+    SEXP xi = VECTOR_ELT(x, i);
+    indexers[i] = RStringIndexer(xi);
+    sizes[i] = indexers[i].size();
+    total_size += sizes[i];
+  }
+  SEXP ret = PROTECT(sf_vector(total_size));
+  auto & ref = sf_vec_data_ref(ret);
+  size_t count = 0;
+  for(size_t i=0; i<xlen; i++) {
+    switch(indexers[i].getType()) {
+    case rstring_type::SF_VEC:
+    {
+      auto & rp = *reinterpret_cast<sf_vec_data*>(indexers[i].getData());
+      for(auto && e : rp) {
+        ref[count++] = e;
+      }
+    }
+      break;
+    default:
+    {
+      SEXP rp = reinterpret_cast<SEXP>(indexers[i].getData());
+      for(size_t j = 0; j < sizes[i]; j++) {
+        ref[count++] = sfstring(STRING_ELT(rp, j));
+      }
+    }
+      break;
+    }
+  }
+  UNPROTECT(1);
+  return ret;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 

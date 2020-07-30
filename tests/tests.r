@@ -290,5 +290,20 @@ for(.j in 1:2) {
       y <- c(i500_latin1, NA_character_) == c(i500_latin1_shuffled, NA_character_)
       stopifnot(identical(x,y))
     }
+    
+    catn("sf_concat")
+    for(. in 1:ntests) {
+      i500_utf8_shuffled <- i500_utf8
+      i500_utf8_shuffled[sample(length(i500_utf8), size = 100)] <- ""
+      x <- sfc(sfc(i500_utf8, NA_character_), sfc(i500_utf8_shuffled, NA_character_), character(0))
+      y <- sfc(sfc(sf_convert(i500_utf8), NA_character_), sfc(sf_convert(i500_utf8_shuffled), NA_character_), character(0))
+      z <- c(c(sf_convert(i500_utf8), NA_character_), c(sf_convert(i500_utf8_shuffled), NA_character_), character(0))
+      z2 <- c(c(i500_utf8, NA_character_), c(i500_utf8_shuffled, NA_character_), character(0))
+      stopifnot(string_identical(x,y))
+      stopifnot(string_identical(x,z))
+      stopifnot(string_identical(x,z2))
+      stopifnot(string_identical(x,y))
+      stopifnot(identical(sfc(character(0)), character(0)))
+    }
   }
 }

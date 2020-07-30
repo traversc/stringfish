@@ -93,3 +93,7 @@ sf_compare <- function(x, y, nthreads = 1L) {
     .Call(`_stringfish_sf_compare`, x, y, nthreads)
 }
 
+c_sf_concat <- function(x) {
+    .Call(`_stringfish_c_sf_concat`, x)
+}
+

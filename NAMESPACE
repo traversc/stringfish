@@ -26,4 +26,5 @@ export(
 "sf_trim",
 "sf_split",
 "sf_match",
-"sf_equals", "sf_compare")
+"sf_equals", "sf_compare",
+"sf_concat", "sfc")

@@ -20,6 +20,14 @@ sf_paste <- function(..., sep="", nthreads=1) {
   c_sf_paste(dots, sep, nthreads)
 }
 
+sf_concat <- function(...) {
+  dots <- list(...)
+  for(i in seq_along(dots)) {
+    if(!is.character(dots[[i]])) dots[[i]] <- as.character(dots[[i]])
+  }
+  c_sf_concat(dots)
+}
+
 sf_starts <- function(subject, pattern, ...) {
   pattern <- paste0("^", pattern)
   sf_grepl(subject, pattern, ...)
