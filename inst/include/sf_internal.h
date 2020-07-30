@@ -220,11 +220,7 @@ public:
     switch(type) {
     case rstring_type::NORMAL:
     case rstring_type::SF_VEC_MATERIALIZED:
-      dptr = obj;
-      len = Rf_xlength(obj);
-      break;
     case rstring_type::OTHER_ALT_REP:
-      ALTVEC_DATAPTR(obj); // should materialize the object if not already
       dptr = obj;
       len = Rf_xlength(obj);
       break;
@@ -237,6 +233,7 @@ public:
       throw std::runtime_error("incorrect RStringIndexer constructor");
     }
   }
+  RStringIndexer() :len(0), type(rstring_type::NORMAL), dptr(nullptr) {}
   bool is_NA(size_t i) const {
     switch(type) {
     case rstring_type::NORMAL:
@@ -317,6 +314,12 @@ public:
     default:
       throw std::runtime_error("getCharLenCE error");
     }
+  }
+  inline rstring_type getType() const {
+    return type;
+  }
+  inline void * getData() const {
+    return dptr;
   }
   inline size_t size() const {
     return len;

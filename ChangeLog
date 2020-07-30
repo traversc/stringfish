@@ -1,7 +1,7 @@
 Version 0.14.1 (2020-7-23)
    * Implemented multithreading with RcppParallel
    * Addition of `Extract_subset` ALTREP method
-   * Additional functions (`sf_compare`)
+   * Additional functions (`sf_compare`, `sf_concat`, `sf_equals`)
    * Various bug fixes
 
 Version 0.13.2 (2020-7-5)

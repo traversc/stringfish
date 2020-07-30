@@ -446,6 +446,21 @@ sf_equals <- sf_compare
 #' @name string_identical
 NULL
 
+#' sf_concat
+#' 
+#' Appends vectors together
+#' @usage sf_concat(...)
+#' @param ... Any number of vectors, coerced to character vector if necessary
+#' @return A concatenated stringfish vector
+#' @examples 
+#' sf_concat(letters, 1:5)
+#' @name sf_concat
+NULL
+
+#' @rdname sf_concat
+sfc <- sf_concat
+
+
 
 # not yet implemented:
 # sf_grep
@@ -453,3 +468,6 @@ NULL
 # sf_reverse
 # sf_encoding / sf_set_encoding
 # sf_table
+# sf_unique / sf_distinct
+# sf_concat / sf_c
+# sf_rbind
