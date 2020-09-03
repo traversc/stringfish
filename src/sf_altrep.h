@@ -189,7 +189,7 @@ struct sf_vec {
   
   static SEXP Extract_subset(SEXP x, SEXP indx, SEXP call) {
     SEXP data2 = R_altrep_data2(x);
-    if(data2 == nullptr) {
+    if(data2 != nullptr) {
       return nullptr;
     }
     
