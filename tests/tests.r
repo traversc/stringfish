@@ -256,7 +256,7 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
-      gc()
+      print(gc())
     }
     
     
