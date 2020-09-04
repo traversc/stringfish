@@ -188,6 +188,7 @@ for(.j in 1:4) {
     
     catn("sf_split")
     for(. in 1:ntests) {
+      catn("n =", .)
       print("sf_split_1")
       # empty split is a special case
       split <- ""
