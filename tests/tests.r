@@ -25,7 +25,7 @@ latin1_chars <- iconv(utf8_chars, from="UTF-8", to="latin1")
 catn <- function(...) {
   cat(..., "\n")
 }
-ntests <- 50
+ntests <- 30
 nthreads <- c(1,8)
 
 print(sessionInfo())
@@ -188,7 +188,7 @@ for(.j in 1:4) {
     
     catn("sf_split")
     for(. in 1:ntests) {
-      catn("n =", .)
+      catn("n = ", .)
       print("sf_split_1")
       # empty split is a special case
       split <- ""
