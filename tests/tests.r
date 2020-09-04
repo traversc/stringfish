@@ -28,8 +28,8 @@ catn <- function(...) {
 ntests <- 50
 nthreads <- c(1,8)
 
-for(.j in 1:2) {
-  if(.j == 1) {
+for(.j in 1:4) {
+  if(.j %% 2 == 0) {
     stringfish:::set_is_utf8_locale()
   } else {
     stringfish:::unset_is_utf8_locale()
@@ -42,6 +42,7 @@ for(.j in 1:2) {
       y <- character(10)
       for(i in 1:10) {
         new_str <- sample(c(i500_utf8,i500_latin1),1)
+        if(.j %% 2 == 1) materialize(x)
         stringfish:::sf_assign(x, i, new_str)
         y[i] <- new_str
       }
@@ -51,6 +52,7 @@ for(.j in 1:2) {
     catn("sf_iconv")
     for(. in 1:ntests) {
       x <- sf_iconv(i500_latin1, "latin1", "UTF-8")
+      if(.j %% 2 == 1) materialize(x)
       y <- sf_iconv(i500_utf8, "UTF-8", "latin1")
       stopifnot(string_identical(x, i500_utf8))
       stopifnot(string_identical(y, i500_latin1))
@@ -63,6 +65,7 @@ for(.j in 1:2) {
     catn("sf_nchar")
     for(. in 1:ntests) {
       x <- convert_to_sf(i500_latin1)
+      if(.j %% 2 == 1) materialize(x)
       y <- convert_to_sf(i500_utf8)
       stopifnot( identical(sf_nchar(x, nthreads = nt), nchar(x)) )
       stopifnot( identical(sf_nchar(y, nthreads = nt), nchar(y)) )
@@ -87,6 +90,7 @@ for(.j in 1:2) {
         rstop <- stop
       }
       x <- sf_substr(i500_latin1, start, stop, nthreads = nt)
+      if(.j %% 2 == 1) materialize(x)
       y <- substr(i500_latin1, rstart, rstop)
       x2 <- sf_substr(i500_utf8, start, stop, nthreads = nt)
       y2 <- substr(i500_utf8, rstart, rstop)
@@ -97,16 +101,20 @@ for(.j in 1:2) {
     catn("sf_collapse")
     for(. in 1:ntests) {
       x <- sf_collapse(i500_latin1, collapse = ":::")
+      if(.j %% 2 == 1) materialize(x)
       y <- paste0(i500_latin1, collapse = ":::")
       # stopifnot(string_identical(x, y)) # paste0 converts to UTF-8 -- doesn't respect encoding
       stopifnot(x == y)
       x <- sf_collapse(i500_latin1, collapse = ",")
+      if(.j %% 2 == 1) materialize(x)
       y <- paste0(i500_latin1, collapse = ",")
       stopifnot(x == y)
       x <- sf_collapse(i500_utf8, collapse = ":::")
+      if(.j %% 2 == 1) materialize(x)
       y <- paste0(i500_utf8, collapse = ":::")
       stopifnot(x == y)
       x <- sf_collapse(i500_utf8, collapse = ",")
+      if(.j %% 2 == 1) materialize(x)
       y <- paste0(i500_utf8, collapse = ",")
       stopifnot(x == y)
     }
@@ -114,15 +122,19 @@ for(.j in 1:2) {
     catn("sf_paste")
     for(. in 1:ntests) {
       x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
+      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::", nthreads = nt))
       stopifnot(x == y)
       x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
+      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::", nthreads = nt))
       stopifnot(x == y)
       x <- do.call(paste, c(as.list(i500_utf8), sep=","))
+      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_utf8), sep=",", nthreads = nt))
       stopifnot(x == y)
       x <- do.call(paste, c(as.list(i500_utf8), sep=","))
+      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_utf8), sep=",", nthreads = nt))
       stopifnot(x == y)
     }
@@ -131,10 +143,12 @@ for(.j in 1:2) {
     for(. in 1:ntests) {
       writeLines(i500_utf8, con=myfile, useBytes=T)
       x <- sf_readLines(myfile, encoding = "UTF-8")
+      if(.j %% 2 == 1) materialize(x)
       y <- readLines(myfile); Encoding(y) <- "UTF-8"
       stopifnot(string_identical(x, y))
       writeLines(i500_latin1, con=myfile)
       x <- sf_readLines(myfile, encoding = "latin1")
+      if(.j %% 2 == 1) materialize(x)
       y <- readLines(myfile); Encoding(y) <- "latin1"
       stopifnot(string_identical(x, y))
     }
@@ -236,7 +250,9 @@ for(.j in 1:2) {
       x1 <- sf_toupper(i500_latin1)
       x2 <- sf_toupper(i500_utf8)
       y1 <- sf_tolower(i500_latin1)
+      if(.j %% 2 == 1) materialize(y1)
       y2 <- sf_tolower(i500_utf8)
+      if(.j %% 2 == 1) materialize(y2)
       z1 <- sf_tolower(x1)
       z2 <- sf_tolower(x2)
       stopifnot(string_identical(z1, i500_latin1))
@@ -257,9 +273,11 @@ for(.j in 1:2) {
     catn("sf_trim")
     for(. in 1:ntests) {
       x <- sf_trim(sf_paste("\t", i500_utf8, " \n"))
+      if(.j %% 2 == 1) materialize(x)
       stopifnot(string_identical(x, i500_utf8))
       
       x <- sf_trim(sf_paste("\t", i500_latin1, " \n"), encode_mode = "byte")
+      if(.j %% 2 == 1) materialize(x)
       stopifnot(string_identical(x, i500_latin1))
     }
     
@@ -296,6 +314,7 @@ for(.j in 1:2) {
       i500_utf8_shuffled <- i500_utf8
       i500_utf8_shuffled[sample(length(i500_utf8), size = 100)] <- ""
       x <- sfc(sfc(i500_utf8, NA_character_), sfc(i500_utf8_shuffled, NA_character_), character(0))
+      if(.j %% 2 == 1) materialize(x)
       y <- sfc(sfc(sf_convert(i500_utf8), NA_character_), sfc(sf_convert(i500_utf8_shuffled), NA_character_), character(0))
       z <- c(c(sf_convert(i500_utf8), NA_character_), c(sf_convert(i500_utf8_shuffled), NA_character_), character(0))
       z2 <- c(c(i500_utf8, NA_character_), c(i500_utf8_shuffled, NA_character_), character(0))
