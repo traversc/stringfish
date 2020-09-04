@@ -254,6 +254,8 @@ for(.j in 1:4) {
         string_identical(x[[i]], y[[i]])
       })
       stopifnot(all(r))
+      
+      gc()
     }
     
     
