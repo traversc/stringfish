@@ -28,6 +28,9 @@ catn <- function(...) {
 ntests <- 50
 nthreads <- c(1,8)
 
+print(sessionInfo())
+print(utils::localeToCharset())
+
 for(.j in 1:4) {
   print(.j)
   if(.j %% 2 == 0) {
@@ -36,7 +39,7 @@ for(.j in 1:4) {
     stringfish:::unset_is_utf8_locale()
   }
   for(nt in nthreads) {
-    
+    print(nt)
     catn("sf_assign")
     for(. in 1:ntests) {
       x <- sf_vector(10)
@@ -185,6 +188,7 @@ for(.j in 1:4) {
     
     catn("sf_split")
     for(. in 1:ntests) {
+      print("sf_split_1")
       # empty split is a special case
       split <- ""
       x <- sf_split(i500_utf8, split, nthreads = nt)
@@ -194,18 +198,22 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
+      print("sf_split_2")
       # empty subject
       x <- sf_split(rep("", 1e3), "a", nthreads=nt)
       stopifnot(all(x == ""))
       
+      print("sf_split_3")
       # empty subject, empty split
       x <- sf_split(rep("", 1e3), "", nthreads=nt)
       stopifnot(all(x == ""))
       
+      print("sf_split_4")
       # split not in subject
       x <- sf_split(rep("abcde", 1e3), "f", nthreads=nt)
       stopifnot(all(x == "abcde"))
       
+      print("sf_split_5")
       # single character split, including UTF-8
       split <- sf_paste(sample(utf8_chars,1))
       x <- sf_split(i500_utf8, split, nthreads = nt)
@@ -215,6 +223,7 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
+      print("sf_split_6")
       # split with regex
       split <- sf_paste(sample(utf8_chars,1), ".")
       x <- sf_split(i500_utf8, split, nthreads = nt)
@@ -224,6 +233,7 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
+      print("sf_split_7")
       split <- sf_paste(sample(utf8_chars,1), ".")
       split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
       x <- sf_split(i500_latin1, split_latin1, nthreads = nt)
@@ -235,6 +245,7 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
+      print("sf_split_8")
       split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
       x <- sf_split(i500_latin1, split_latin1, encode_mode = "byte", nthreads = nt)
       y <- stringr::str_split(i500_latin1, split_latin1)
