@@ -29,6 +29,7 @@ ntests <- 50
 nthreads <- c(1,8)
 
 for(.j in 1:4) {
+  print(.j)
   if(.j %% 2 == 0) {
     stringfish:::set_is_utf8_locale()
   } else {
