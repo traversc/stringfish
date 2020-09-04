@@ -446,8 +446,10 @@ void sf_assign(SEXP x, size_t i, SEXP e) {
     ref[i] = sfstring(STRING_ELT(e,0));
   }
     break;
-  case rstring_type::NORMAL:
   case rstring_type::SF_VEC_MATERIALIZED:
+    SET_STRING_ELT(R_altrep_data2(x), i, STRING_ELT(e,0));
+    break;
+  case rstring_type::NORMAL:
   case rstring_type::OTHER_ALT_REP:
   default:
     SET_STRING_ELT(x, i, STRING_ELT(e,0));
