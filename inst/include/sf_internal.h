@@ -219,10 +219,16 @@ public:
     type = get_rstring_type_internal(obj);
     switch(type) {
     case rstring_type::NORMAL:
-    case rstring_type::SF_VEC_MATERIALIZED:
-    case rstring_type::OTHER_ALT_REP:
       dptr = obj;
       len = Rf_xlength(obj);
+      break;
+    case rstring_type::OTHER_ALT_REP:
+      dptr = ALTVEC_DATAPTR(obj);
+      len = Rf_xlength(reinterpret_cast<SEXP>(dptr));
+      break;
+    case rstring_type::SF_VEC_MATERIALIZED:
+      dptr = R_altrep_data2(obj);
+      len = Rf_xlength(reinterpret_cast<SEXP>(dptr));
       break;
     case rstring_type::SF_VEC:
       // sf_vec_data * ptr = reinterpret_cast<sf_vec_data*>(  );
