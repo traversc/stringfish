@@ -25,7 +25,7 @@ latin1_chars <- iconv(utf8_chars, from="UTF-8", to="latin1")
 catn <- function(...) {
   cat(..., "\n")
 }
-ntests <- 30
+ntests <- 50
 nthreads <- c(1,8)
 
 print(sessionInfo())
