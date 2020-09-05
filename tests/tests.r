@@ -30,7 +30,7 @@ nthreads <- c(1,8)
 
 print(sessionInfo())
 print(utils::localeToCharset())
-
+# materialize <- function(x) {}
 for(.j in 1:4) {
   print(.j)
   if(.j %% 2 == 0) {
@@ -126,20 +126,20 @@ for(.j in 1:4) {
     catn("sf_paste")
     for(. in 1:ntests) {
       x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
-      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::", nthreads = nt))
+      if(.j %% 2 == 1) materialize(y)
       stopifnot(x == y)
       x <- do.call(paste, c(as.list(i500_latin1), sep=":::"))
-      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_latin1), sep=":::", nthreads = nt))
+      if(.j %% 2 == 1) materialize(y)
       stopifnot(x == y)
       x <- do.call(paste, c(as.list(i500_utf8), sep=","))
-      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_utf8), sep=",", nthreads = nt))
+      if(.j %% 2 == 1) materialize(y)
       stopifnot(x == y)
       x <- do.call(paste, c(as.list(i500_utf8), sep=","))
-      if(.j %% 2 == 1) materialize(x)
       y <- do.call(sf_paste, c(as.list(i500_utf8), sep=",", nthreads = nt))
+      if(.j %% 2 == 1) materialize(y)
       stopifnot(x == y)
     }
     
@@ -156,7 +156,6 @@ for(.j in 1:4) {
       y <- readLines(myfile); Encoding(y) <- "latin1"
       stopifnot(string_identical(x, y))
     }
-    
     
     catn("sf_grepl")
     for(. in 1:ntests) {
@@ -185,11 +184,10 @@ for(.j in 1:4) {
       stopifnot(all(sf_gsub(i500_latin1, p, "$1", nthreads = nt) == gsub(p, "\\1", i500_latin1)))
     }
     
-    
     catn("sf_split")
     for(. in 1:ntests) {
-      catn("n = ", .)
-      print("sf_split_1")
+      # catn("n = ", .)
+      # print("sf_split_1")
       # empty split is a special case
       split <- ""
       x <- sf_split(i500_utf8, split, nthreads = nt)
@@ -199,22 +197,22 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
-      print("sf_split_2")
+      # print("sf_split_2")
       # empty subject
       x <- sf_split(rep("", 1e3), "a", nthreads=nt)
       stopifnot(all(x == ""))
       
-      print("sf_split_3")
+      # print("sf_split_3")
       # empty subject, empty split
       x <- sf_split(rep("", 1e3), "", nthreads=nt)
       stopifnot(all(x == ""))
       
-      print("sf_split_4")
+      # print("sf_split_4")
       # split not in subject
       x <- sf_split(rep("abcde", 1e3), "f", nthreads=nt)
       stopifnot(all(x == "abcde"))
       
-      print("sf_split_5")
+      # print("sf_split_5")
       # single character split, including UTF-8
       split <- sf_paste(sample(utf8_chars,1))
       x <- sf_split(i500_utf8, split, nthreads = nt)
@@ -224,7 +222,7 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
-      print("sf_split_6")
+      # print("sf_split_6")
       # split with regex
       split <- sf_paste(sample(utf8_chars,1), ".")
       x <- sf_split(i500_utf8, split, nthreads = nt)
@@ -234,7 +232,7 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
-      print("sf_split_7")
+      # print("sf_split_7")
       split <- sf_paste(sample(utf8_chars,1), ".")
       split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
       x <- sf_split(i500_latin1, split_latin1, nthreads = nt)
@@ -246,7 +244,7 @@ for(.j in 1:4) {
       })
       stopifnot(all(r))
       
-      print("sf_split_8")
+      # print("sf_split_8")
       split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
       x <- sf_split(i500_latin1, split_latin1, encode_mode = "byte", nthreads = nt)
       y <- stringr::str_split(i500_latin1, split_latin1)
@@ -255,10 +253,7 @@ for(.j in 1:4) {
         string_identical(x[[i]], y[[i]])
       })
       stopifnot(all(r))
-      
-      print(gc())
     }
-    
     
     catn("sf_toupper and sf_tolower")
     for(. in 1:ntests) {
@@ -339,6 +334,8 @@ for(.j in 1:4) {
       stopifnot(string_identical(x,y))
       stopifnot(identical(sfc(character(0)), character(0)))
     }
+    
+    print(gc())
   }
 }
 

@@ -92,23 +92,6 @@ struct sf_vec {
       } else {
         SET_STRING_ELT(data2, i, Rf_mkCharLenCE(data1[i].sdata.c_str(), data1[i].sdata.size(), static_cast<cetype_t>(data1[i].encoding)));
       }
-      // switch(data1.encodings[i]) {
-      // case 0:
-      //   SET_STRING_ELT(data2, i, Rf_mkCharLenCE(data1.strings[i].data(), data1.strings[i].size(), CE_NATIVE) );
-      //   break;
-      // case 1:
-      //   SET_STRING_ELT(data2, i, Rf_mkCharLenCE(data1.strings[i].data(), data1.strings[i].size(), CE_UTF8) );
-      //   break;
-      // case 2:
-      //   SET_STRING_ELT(data2, i, Rf_mkCharLenCE(data1.strings[i].data(), data1.strings[i].size(), CE_LATIN1) );
-      //   break;
-      // case 3:
-      //   SET_STRING_ELT(data2, i, Rf_mkCharLenCE(data1.strings[i].data(), data1.strings[i].size(), CE_BYTES) );
-      //   break;
-      // default:
-      //   SET_STRING_ELT(data2, i, NA_STRING);
-      // break;
-      // }
     }
     
     R_set_altrep_data2(vec, data2);
@@ -128,7 +111,6 @@ struct sf_vec {
   static void* Dataptr(SEXP vec, Rboolean writeable) {
     return STDVEC_DATAPTR(Materialize(vec));
   }
-  
   
   // ALTSTRING methods -----------------
   // the element at the index `i`

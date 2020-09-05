@@ -49,17 +49,21 @@ void unset_is_utf8_locale() {is_utf8_locale = false;}
 // tbb helper functions
 
 #if RCPP_PARALLEL_USE_TBB
+// inline void parallelFor2(std::size_t begin, std::size_t end, Worker& worker, std::size_t grainSize = 1, int nthreads = 1) {
+//   int max_threads = tbb::task_scheduler_init::default_num_threads();
+//   if(nthreads > max_threads) nthreads = max_threads;
+//   tbb::task_arena limited(nthreads);
+//   tbb::task_group tg;
+//   limited.execute([&]{
+//     tg.run([&]{
+//       parallelFor(begin, end, worker, grainSize);
+//     });
+//   });
+//   limited.execute([&]{ tg.wait(); });
+// }
+
 inline void parallelFor2(std::size_t begin, std::size_t end, Worker& worker, std::size_t grainSize = 1, int nthreads = 1) {
-  int max_threads = tbb::task_scheduler_init::default_num_threads();
-  if(nthreads > max_threads) nthreads = max_threads;
-  tbb::task_arena limited(nthreads);
-  tbb::task_group tg;
-  limited.execute([&]{
-    tg.run([&]{
-      parallelFor(begin, end, worker, grainSize);
-    });
-  });
-  limited.execute([&]{ tg.wait(); });
+  parallelFor(begin, end, worker, grainSize);
 }
 #endif
 
@@ -80,8 +84,12 @@ struct iconv_wrapper {
   const char * to;
   const char * from;
   void * cd;
-  iconv_wrapper() : to(nullptr), from(nullptr), cd(nullptr) {}
-  iconv_wrapper(const char * to, const char * from) : to(to), from(from), cd(Riconv_open(to,from)) {}
+  iconv_wrapper() : to(nullptr), from(nullptr), cd(nullptr) {
+    // std::cout << "a";
+  }
+  iconv_wrapper(const char * to, const char * from) : to(to), from(from), cd(Riconv_open(to,from)) {
+    // std::cout << "b";
+  }
   std::pair<bool, std::string> convertToString(const char * ptr, size_t len) {
     std::string outstring;
     outstring.resize(len * 4);
@@ -127,6 +135,7 @@ struct iconv_wrapper {
     return true;
   }
   iconv_wrapper(const iconv_wrapper& other) { // copy constructor
+    // std::cout << "c";
     to = other.to;
     from = other.from;
     if(to != nullptr) {
@@ -136,12 +145,14 @@ struct iconv_wrapper {
     }
   }
   iconv_wrapper(iconv_wrapper && other) { // move constructor
+    // std::cout << "d";
     to = other.to;
     from = other.from;
     cd = other.cd;
     other.cd = nullptr;
   }
   iconv_wrapper & operator=(const iconv_wrapper & other) { // copy assignment
+    // std::cout << "e";
     if(&other == this) return *this;
     if(cd != nullptr) Riconv_close(cd);
     to = other.to;
@@ -154,6 +165,7 @@ struct iconv_wrapper {
     return *this;
   }
   iconv_wrapper & operator=(iconv_wrapper && other) { // move assignment
+    // std::cout << "f";
     if(&other == this) return *this;
     if(cd != nullptr) Riconv_close(cd);
     to = other.to;
@@ -163,6 +175,7 @@ struct iconv_wrapper {
     return *this;
   }
   ~iconv_wrapper() {
+    // std::cout << "g";
     if(cd != nullptr) Riconv_close(cd);
   }
 };
