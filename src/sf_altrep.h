@@ -84,7 +84,7 @@ struct sf_vec {
     data2 = PROTECT(Rf_allocVector(STRSXP, n));
     
     auto & data1 = Get(vec);
-    for (R_xlen_t i = 0; i < n; i++) {
+    for (R_xlen_t i = 0; i < n; ++i) {
       if(data1[i].encoding == cetype_t_ext::CE_NA) {
         SET_STRING_ELT(data2, i, NA_STRING);
       } else if(data1[i].encoding == cetype_t_ext::CE_ASCII) {
@@ -156,14 +156,14 @@ struct sf_vec {
     SEXP data2 = R_altrep_data2(vec);
     R_xlen_t len = Length(vec);
     if (data2 != R_NilValue) {
-      for(R_xlen_t i = 0; i < len; i++) {
+      for(R_xlen_t i = 0; i < len; ++i) {
         if(STRING_ELT(data2, i) == NA_STRING) return 0;
       }
       return 1;
     }
     
     auto & data1 = Get(vec);
-    for(size_t i=0; i<data1.size(); i++) {
+    for(size_t i=0; i<data1.size(); ++i) {
       if(data1[i].encoding == cetype_t_ext::CE_NA) return 0;
     }
     return 1;
@@ -181,7 +181,7 @@ struct sf_vec {
     sf_vec_data & outref = *out;
     if(TYPEOF(indx) == INTSXP) {
       int * idx = INTEGER(indx);
-      for(size_t i=0; i<len; i++) {
+      for(size_t i=0; i<len; ++i) {
         int idx_i = idx[i]; // 1 based
         if( (static_cast<size_t>(idx_i) > ref.size()) || (idx_i == NA_INTEGER) ) {
           outref[i] = sfstring(NA_STRING);
@@ -191,7 +191,7 @@ struct sf_vec {
       }
     } else if(TYPEOF(indx) == REALSXP) {
       double * idx = REAL(indx);
-      for(size_t i=0; i<len; i++) {
+      for(size_t i=0; i<len; ++i) {
         double idx_i = idx[i]; // 1 based
         if((static_cast<size_t>(idx_i) > ref.size()) || (idx[i] == NA_REAL) ) {
           outref[i] = sfstring(NA_STRING);

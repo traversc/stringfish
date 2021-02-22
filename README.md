@@ -21,7 +21,7 @@ represent R objects using their own custom memory layout, completely
 invisible to the user. `stringfish` represents string data as a simple
 C++/STL vector, which is very fast andlightweight.
 
-Using normal R functions to process string data (e.g. `substr`, `gsub`,
+Using normal R functions to process string data (e.g. `substr`, `gsub`,
 `paste`, etc.) causes “materialization” of ALTREP vectors to normal R
 data, which can be a slow process. Therefore, in order to take full
 advantage of the ALTREP framework, string processing functions need to
@@ -31,7 +31,7 @@ purpose.
 ## Installation:
 
 ``` r
-install.packages("stringfish")
+install.packages("stringfish", type="source", configure.args="--with-simd=AVX2")
 ```
 
 ## Benchmark
@@ -91,8 +91,8 @@ subset or index into string vectors generally do not materialize.
   - `sample`
   - `head`
   - `tail`
-  - `[` – e.g. `x[20:30]`
-  - `dplyr::filter` – e.g. `dplyr::filter(df, sf_starts("a"))`
+  - `[` – e.g. `x[20:30]`
+  - `dplyr::filter` – e.g. `dplyr::filter(df, sf_starts("a"))`
   - Etc.
 
 `stringfish` functions are not intended to exactly replicate their base

@@ -27,7 +27,8 @@ test_file <- "~/enwik8"
 if(!file.exists(test_file)) {
   test_folder <- tempdir()
   zip_file <- tempfile()
-  download.file("http://mattmahoney.net/dc/enwik8.zip", zip_file)
+  options(timeout = 1000)
+  download.file("https://data.deepai.org/enwik8.zip", zip_file)
   unzip(zip_file, "enwik8", exdir = test_folder, overwrite=T)
   test_file <- paste0(test_folder, "/enwik8")
 }

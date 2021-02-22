@@ -6,16 +6,65 @@
 #include <vector>
 #include <cstring>
 
+#if defined (__AVX2__)
+#include "immintrin.h"
+inline bool checkAscii(const void * ptr, size_t len) {
+  const uint8_t * p8 = reinterpret_cast<const uint8_t*>(ptr);
+  size_t i=0;
+  if(len >= 32) {
+    __m256i sum = _mm256_setzero_si256();
+    for(; i+32<len; i+=32) {
+      __m256i load = _mm256_lddqu_si256(reinterpret_cast<const __m256i*>(p8+i));
+      sum = _mm256_or_si256(sum, load);
+    }
+    int msb = _mm256_movemask_epi8(sum);
+    if(msb != 0) return false;
+  }
+  if(len >= i+16) {
+    __m128i load = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p8+i));
+    int msb = _mm_movemask_epi8(load);
+    if(msb != 0) return false;
+    i += 16;
+  }
+  for(; i<len; ++i) {
+    if(p8[i] > 127) {
+      return false;
+    }
+  }
+  return true;
+}
+// #elif defined(__SSE3__)
+// #include "emmintrin.h"
+// inline bool checkAscii(const void * ptr, size_t len) {
+//   const uint8_t * p8 = reinterpret_cast<const uint8_t*>(ptr);
+//   size_t i=0;
+//   if(len >= 16) {
+//     __m128i sum = _mm_setzero_si128();
+//     for(; i+16<len; i+=16) {
+//       __m128i load = _mm_lddqu_si128(reinterpret_cast<const __m128i*>(p8+i));
+//       sum = _mm_or_si128(sum, load);
+//     }
+//     int msb = _mm_movemask_epi8(sum);
+//     if(msb != 0) return false;
+//   }
+//   for(; i<len; ++i) {
+//     if(p8[i] > 127) {
+//       return false;
+//     }
+//   }
+//   return true;
+// }
+#else
 inline bool checkAscii(const void * ptr, size_t len) {
   const uint8_t * qp = reinterpret_cast<const uint8_t*>(ptr);
   for(size_t j=0; j<len; j++) {
     if(qp[j] > 127) {
       return false;
-      break;
     }
   }
   return true;
 }
+#endif
 
 
 // defined in Rinternals.h, very unlikely to change

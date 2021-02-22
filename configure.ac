@@ -65,7 +65,7 @@ AC_ARG_WITH([pcre2-lib],
             
 AC_ARG_WITH([simd],
             AC_HELP_STRING([--with-simd],
-                           [Manually select SIMD support (options: AVX2, SSE2)]),
+                           [Manually select SIMD support (options: AVX2)]),
             [with_simd=$withval])
        
 
@@ -168,10 +168,10 @@ fi
 
 if test xx$with_simd = "xxAVX2"; then
   echo "Using AVX2"
-  INCLUDE_PATHS="$INCLUDE_PATHS -mavx2 -msse2"
-elif test xx$with_simd = "xxSSE2"; then
-  echo "Using SSE2"
-  INCLUDE_PATHS="$INCLUDE_PATHS -msse2"
+  INCLUDE_PATHS="$INCLUDE_PATHS -mavx2 -msse3 -msse2"
+# elif test xx$with_simd = "xxSSE3"; then
+#   echo "Using SSE3"
+#   INCLUDE_PATHS="$INCLUDE_PATHS -msse3 -msse2"
 fi
 
 echo $ADD_LIBS

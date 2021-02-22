@@ -11,7 +11,8 @@ check: $(BUILD)
 check-cran: $(BUILD)
 	# R --interactive --no-save --args $< <<<'rhub::check_for_cran(commandArgs(T)[1])'
 	# Rscript -e "rhub::check_on_solaris()"
-	Rscript -e 'rhub::check("$(BUILD)", platform = c("solaris-x86-patched"))'
+	# Rscript -e 'rhub::check("$(BUILD)", platform = c("solaris-x86-patched"))'
+	Rscript -e 'rhub::check("$(BUILD)", platform = c("ubuntu-gcc-devel", "windows-x86_64-devel", "solaris-x86-patched", "linux-x86_64-rocker-gcc-san"))'
 
 compile:
 	find src/ -type f -exec chmod 644 {} \;
@@ -50,7 +51,7 @@ install:
 	find . -iname "*.o" -exec rm {} \;
 	find . -iname "*.so" -exec rm {} \;
 	R CMD build . # --no-build-vignettes
-	R CMD INSTALL $(BUILD)
+	R CMD INSTALL $(BUILD) --configure-args="--with-simd=AVX2"
 
 vignette:
 	Rscript -e "rmarkdown::render(input='vignettes/vignette.rmd', output_format='all')"
