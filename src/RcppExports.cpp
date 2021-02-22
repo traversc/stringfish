@@ -30,6 +30,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// check_simd
+void check_simd();
+RcppExport SEXP _stringfish_check_simd() {
+BEGIN_RCPP
+    check_simd();
+    return R_NilValue;
+END_RCPP
+}
 // get_string_type
 std::string get_string_type(SEXP x);
 RcppExport SEXP _stringfish_get_string_type(SEXP xSEXP) {
@@ -282,6 +290,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_set_is_utf8_locale", (DL_FUNC) &_stringfish_set_is_utf8_locale, 0},
     {"_stringfish_unset_is_utf8_locale", (DL_FUNC) &_stringfish_unset_is_utf8_locale, 0},
     {"_stringfish_is_tbb", (DL_FUNC) &_stringfish_is_tbb, 0},
+    {"_stringfish_check_simd", (DL_FUNC) &_stringfish_check_simd, 0},
     {"_stringfish_get_string_type", (DL_FUNC) &_stringfish_get_string_type, 1},
     {"_stringfish_materialize", (DL_FUNC) &_stringfish_materialize, 1},
     {"_stringfish_sf_vector", (DL_FUNC) &_stringfish_sf_vector, 1},

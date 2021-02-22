@@ -1,32 +1,17 @@
-#include <unordered_map>
-#include <fstream>
-
-// xxhash can be used as "header only" library
-// v0.74 XXH3 doesn't compile on Solaris due to restrict keyword? -- check back later
-#include "xxhash/xxhash.c"
-
-// Parallel stuff
+#include <Rcpp.h>
 #include <RcppParallel.h>
-#include <atomic>
-
+// TRUE and FALSE is defined in a windows header as 1 and 0; conflicts with #define in R headers
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef FALSE
+#undef FALSE
+#endif
 #if RCPP_PARALLEL_USE_TBB
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/task_arena.h>
 #endif
-
-#include <Rcpp.h>
-#include <R_ext/Rdynload.h>
-#include <R_ext/Riconv.h>
-
-#ifndef PCRE2_CODE_UNIT_WIDTH
-#define PCRE2_CODE_UNIT_WIDTH 8
-#endif
-#ifndef HAVE_CONFIG_H
-#define HAVE_CONFIG_H
-#endif
-#include "PCRE2/pcre2.h"
-
-#include "sf_altrep.h"
+#include <atomic>
 
 using namespace Rcpp;
 using namespace RcppParallel;
@@ -44,29 +29,23 @@ void set_is_utf8_locale() {is_utf8_locale = true;}
 // [[Rcpp::export(rng = false)]]
 void unset_is_utf8_locale() {is_utf8_locale = false;}
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // tbb helper functions
 
 #if RCPP_PARALLEL_USE_TBB
-// inline void parallelFor2(std::size_t begin, std::size_t end, Worker& worker, std::size_t grainSize = 1, int nthreads = 1) {
-//   int max_threads = tbb::task_scheduler_init::default_num_threads();
-//   if(nthreads > max_threads) nthreads = max_threads;
-//   tbb::task_arena limited(nthreads);
-//   tbb::task_group tg;
-//   limited.execute([&]{
-//     tg.run([&]{
-//       parallelFor(begin, end, worker, grainSize);
-//     });
-//   });
-//   limited.execute([&]{ tg.wait(); });
-// }
-
 inline void parallelFor2(std::size_t begin, std::size_t end, Worker& worker, std::size_t grainSize = 1, int nthreads = 1) {
-  parallelFor(begin, end, worker, grainSize);
+  int max_threads = tbb::task_scheduler_init::default_num_threads();
+  if(nthreads > max_threads) nthreads = max_threads;
+  tbb::task_arena limited(nthreads);
+  tbb::task_group tg;
+  limited.execute([&]{
+    tg.run([&]{
+      parallelFor(begin, end, worker, grainSize);
+    });
+  });
+  limited.execute([&]{ tg.wait(); });
 }
 #endif
-
 
 // [[Rcpp::export(rng = false)]]
 bool is_tbb() {
@@ -76,6 +55,44 @@ bool is_tbb() {
   return false;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// SIMD check utility
+// [[Rcpp::export(rng = false)]]
+void check_simd() {
+#if defined (__AVX2__)
+  Rcpp::Rcerr << "AVX2" << std::endl;
+#elif defined (__SSE2__)
+  Rcpp::Rcerr << "SSE2" << std::endl;
+#else
+  Rcpp::Rcerr << "no SIMD" << std::endl;
+#endif
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Disable functions if not ALTREP support
+#if R_VERSION < R_Version(3, 5, 0) // no AlTREP support before 3.5
+#include "sf_disabled.h"
+#else
+#include <R_ext/Rdynload.h>
+#include <R_ext/Riconv.h>
+#include "sf_altrep.h"
+
+#include <unordered_map>
+#include <fstream>
+
+// xxhash can be used as "header only" library
+// v0.74 XXH3 doesn't compile on Solaris due to restrict keyword? -- check back later
+// #define XXH_INLINE_ALL -- doesn't seem to improve performance
+#include "xxhash/xxhash.c"
+
+#ifndef PCRE2_CODE_UNIT_WIDTH
+#define PCRE2_CODE_UNIT_WIDTH 8
+#endif
+#ifndef HAVE_CONFIG_H
+#define HAVE_CONFIG_H
+#endif
+#include "PCRE2/pcre2.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // iconv helper class
@@ -179,7 +196,6 @@ struct iconv_wrapper {
     if(cd != nullptr) Riconv_close(cd);
   }
 };
-
 static const std::string iconv_utf8_string = "UTF-8";
 static const std::string iconv_latin1_string = "latin1";
 static const std::string iconv_native_string = "";
@@ -483,7 +499,7 @@ struct iconv_worker : public Worker {
   
   void operator()(std::size_t begin, std::size_t end) {
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_local = iw.local();
-    for(size_t i=begin; i<end; i++) {
+    for(size_t i=begin; i<end; ++i) {
       auto q = rsi->getCharLenCE(i);
       if(q.ptr == nullptr) {
         ref[i] = sfstring(NA_STRING);
@@ -523,7 +539,7 @@ SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads
     throw std::runtime_error("RcppParallel TBB not supported");
 #endif
   }
-  for(size_t i=0; i<len; i++) {
+  for(size_t i=0; i<len; ++i) {
     auto q = rsi.getCharLenCE(i);
     if(q.ptr == nullptr) {
       ref[i] = sfstring(NA_STRING);
@@ -547,7 +563,7 @@ SEXP convert_to_sf(SEXP x) {
   size_t len = Rf_xlength(x);
   SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
-  for(size_t i=0; i<len; i++) {
+  for(size_t i=0; i<len; ++i) {
     ref[i] = sfstring(STRING_ELT(x,i));
   }
   UNPROTECT(1);
@@ -565,7 +581,7 @@ struct nchar_worker : public Worker {
   
   void operator()(std::size_t begin, std::size_t end) {
     if(type == "chars") {
-      for(size_t i=begin; i<end; i++) {
+      for(size_t i=begin; i<end; ++i) {
         auto q = rsi->getCharLenCE(i);
         if(q.ptr == nullptr) {
           optr[i] = NA_INTEGER;
@@ -576,7 +592,7 @@ struct nchar_worker : public Worker {
         }
       }
     } else if(type == "bytes") {
-      for(size_t i=begin; i<end; i++) {
+      for(size_t i=begin; i<end; ++i) {
         auto q = rsi->getCharLenCE(i);
         if(q.ptr == nullptr) {
           optr[i] = NA_INTEGER;
@@ -608,7 +624,7 @@ IntegerVector sf_nchar(SEXP x, const std::string type = "chars", const int nthre
 #endif
   } else {
     if(type == "chars") {
-      for(size_t i=0; i<len; i++) {
+      for(size_t i=0; i<len; ++i) {
         auto q = rsi.getCharLenCE(i);
         if(q.ptr == nullptr) {
           optr[i] = NA_INTEGER;
@@ -619,7 +635,7 @@ IntegerVector sf_nchar(SEXP x, const std::string type = "chars", const int nthre
         }
       }
     } else if(type == "bytes") {
-      for(size_t i=0; i<len; i++) {
+      for(size_t i=0; i<len; ++i) {
         auto q = rsi.getCharLenCE(i);
         if(q.ptr == nullptr) {
           optr[i] = NA_INTEGER;
@@ -700,7 +716,7 @@ struct substr_worker : public Worker {
     rsi(r), start_size(start_s), stop_size(stop_s), start_ptr(start_p), stop_ptr(stop_p), ref(ref) {}
   
   void operator()(std::size_t begin, std::size_t end) {
-    for(size_t i=begin; i<end; i++) {
+    for(size_t i=begin; i<end; ++i) {
       auto q = rsi->getCharLenCE(i);
       ref[i] = sf_substr_internal(q.ptr, q.len, q.enc, start_ptr[start_size == 1 ? 0 : i], stop_ptr[stop_size == 1 ? 0 : i]);
     }
@@ -714,11 +730,11 @@ SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthrea
   int * start_ptr = INTEGER(start);
   int * stop_ptr = INTEGER(stop);
   
-  for(size_t i=0; i<start_size; i++) {
+  for(size_t i=0; i<start_size; ++i) {
     if(start_ptr[i] == NA_INTEGER) throw std::runtime_error("no NA start values allowed");
   }
   
-  for(size_t i=0; i<start_size; i++) {
+  for(size_t i=0; i<start_size; ++i) {
     if(stop_ptr[i] == NA_INTEGER) throw std::runtime_error("no NA stop values allowed");
   }
   
@@ -737,7 +753,7 @@ SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthrea
     throw std::runtime_error("RcppParallel TBB not supported");
 #endif
   } else {
-    for(size_t i=0; i<len; i++) {
+    for(size_t i=0; i<len; ++i) {
       auto q = rsi.getCharLenCE(i);
       ref[i] = sf_substr_internal(q.ptr, q.len, q.enc, start_ptr[start_size == 1 ? 0 : i], stop_ptr[stop_size == 1 ? 0 : i]);
     }
@@ -762,11 +778,11 @@ struct paste_worker : public Worker {
     dotlen(dotlen), sep_string(sep_string), rs(rs), lens(lens), singles(singles), ref(ref) {}
   
   void operator()(std::size_t begin, std::size_t end) {
-    for(size_t i=begin; i<end; i++) {
+    for(size_t i=begin; i<end; ++i) {
       std::string temp;
       cetype_t enc = CE_NATIVE;
       bool is_na = false;
-      for(size_t j=0; j<dotlen; j++) {
+      for(size_t j=0; j<dotlen; ++j) {
         RStringIndexer::rstring_info q = lens[j] == 1 ? singles[j] : rs[j].getCharLenCE(i);
         if(q.ptr == nullptr) {
           is_na = true;
@@ -801,7 +817,7 @@ SEXP c_sf_paste(List dots, SEXP sep, const int nthreads = 1) {
   std::vector<RStringIndexer> rs;
   std::vector<size_t> lens(dotlen);
   std::vector<RStringIndexer::rstring_info> singles(dotlen);
-  for(size_t i=0; i<dotlen; i++) {
+  for(size_t i=0; i<dotlen; ++i) {
     SEXP d = dots[i];
     rs.emplace_back(d); // no copy constructor called, since it s deleted
     lens[i] = rs[i].size();
@@ -824,11 +840,11 @@ SEXP c_sf_paste(List dots, SEXP sep, const int nthreads = 1) {
     throw std::runtime_error("RcppParallel TBB not supported");
 #endif
   } else {
-    for(size_t i=0; i<maxlen; i++) {
+    for(size_t i=0; i<maxlen; ++i) {
       std::string temp;
       cetype_t enc = CE_NATIVE;
       bool is_na = false;
-      for(size_t j=0; j<dotlen; j++) {
+      for(size_t j=0; j<dotlen; ++j) {
         RStringIndexer::rstring_info q = lens[j] == 1 ? singles[j] : rs[j].getCharLenCE(i);
         if(q.ptr == nullptr) {
           is_na = true;
@@ -863,7 +879,7 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
   size_t len = xr.size();
   std::string temp;
   cetype_t enc = cr_element.enc;
-  for(size_t i=0; i<len; i++) {
+  for(size_t i=0; i<len; ++i) {
     auto q = xr.getCharLenCE(i);
     if(q.ptr == nullptr) return NA_STRING;
     enc = choose_enc(enc, q.enc);
@@ -930,7 +946,7 @@ void sf_writeLines(SEXP text, const std::string file, const std::string sep = "\
   RStringIndexer xr(text);
   size_t len = xr.size();
   
-  for(size_t i=0; i<len; i++) {
+  for(size_t i=0; i<len; ++i) {
     auto q = xr.getCharLenCE(i);
     if(q.ptr == nullptr) {
       myFile.write(na_value.c_str(), na_value.size());
@@ -985,7 +1001,7 @@ struct grepl_worker : public Worker {
     tbb::enumerable_thread_specific<pcre2_match_wrapper>::reference pm_local = pm.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
-    for(size_t i=begin; i<end; i++) {
+    for(size_t i=begin; i<end; ++i) {
       auto q = cr->getCharLenCE(i);
       if(q.ptr == nullptr) {
         outptr[i] = NA_LOGICAL;
@@ -1070,7 +1086,7 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode
 #endif
   } else {
     std::string outstring;
-    for(size_t i=0; i<len; i++) {
+    for(size_t i=0; i<len; ++i) {
       auto q = cr.getCharLenCE(i);
       if(q.ptr == nullptr) {
         outptr[i] = NA_LOGICAL;
@@ -1146,7 +1162,7 @@ struct split_worker : public Worker {
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
     tbb::enumerable_thread_specific<pcre2_match_wrapper>::reference pm_local = pm.local();
     std::string outstring;
-    for(size_t i=begin; i<end; i++) {
+    for(size_t i=begin; i<end; ++i) {
       auto & ref = *refs[i];
       auto q = cr->getCharLenCE(i);
       if(q.ptr == nullptr) {
@@ -1224,7 +1240,7 @@ SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", 
   if(nthreads > 1) {
 #if RCPP_PARALLEL_USE_TBB
     std::vector<sf_vec_data*> refs(len);
-    for(size_t i=0; i<len; i++) {
+    for(size_t i=0; i<len; ++i) {
       SEXP svec = PROTECT(sf_vector(0));
       SET_VECTOR_ELT(ret, i, svec);
       UNPROTECT(1);
@@ -1237,7 +1253,7 @@ SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", 
 #endif
   } else {
     std::string outstring;
-    for(size_t i=0; i<len; i++) {
+    for(size_t i=0; i<len; ++i) {
       auto q = cr.getCharLenCE(i);
       SEXP svec = PROTECT(sf_vector(0));
       SET_VECTOR_ELT(ret, i, svec);
@@ -1304,7 +1320,7 @@ struct gsub_worker : public Worker {
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
     std::string outstring;
-    for(size_t i=begin; i<end; i++) {
+    for(size_t i=begin; i<end; ++i) {
       auto q = cr->getCharLenCE(i);
       if(q.ptr == nullptr) {
         ref[i] = sfstring(NA_STRING);
@@ -1401,7 +1417,7 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string enc
 #endif
   } else {
     std::string outstring;
-    for(size_t i=0; i<len; i++) {
+    for(size_t i=0; i<len; ++i) {
       auto q = cr.getCharLenCE(i);
       if(q.ptr == nullptr) {
         ref[i] = sfstring(NA_STRING);
@@ -1451,9 +1467,9 @@ SEXP random_strings(const int N, const int string_size = 50,
     sf_vec_data & ref = sf_vec_data_ref(ret);
     std::string str;
     str.resize(string_size);
-    for(int i=0; i<N; i++) {
+    for(int i=0; i<N; ++i) {
       std::vector<int> r = Rcpp::as< std::vector<int> >(Rcpp::sample(charset.size(), string_size, true, R_NilValue, false));
-      for(int j=0; j<string_size; j++) str[j] = charset[r[j]];
+      for(int j=0; j<string_size; ++j) str[j] = charset[r[j]];
       ref[i] = sfstring(str, CE_NATIVE);
     }
     UNPROTECT(1);
@@ -1462,9 +1478,9 @@ SEXP random_strings(const int N, const int string_size = 50,
     CharacterVector ret(N);
     std::string str;
     str.resize(string_size);
-    for(int i=0; i<N; i++) {
+    for(int i=0; i<N; ++i) {
       std::vector<int> r = Rcpp::as< std::vector<int> >(Rcpp::sample(charset.size(), string_size, true, R_NilValue, false));
-      for(int j=0; j<string_size; j++) str[j] = charset[r[j]];
+      for(int j=0; j<string_size; ++j) str[j] = charset[r[j]];
       ret[i] = str;
     }
     return ret;
@@ -1482,10 +1498,10 @@ SEXP sf_tolower(SEXP x) {
   SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
   std::string temp;
-  for(size_t i=0; i<len; i++) {
+  for(size_t i=0; i<len; ++i) {
     auto q = xr.getCharLenCE(i);
     temp.resize(q.len);
-    for(int j=0; j<q.len; j++) {
+    for(int j=0; j<q.len; ++j) {
       if((q.ptr[j] >= 65) & (q.ptr[j] <= 90)) { // char j is upper case
         temp[j] = q.ptr[j] + 32;
       } else {
@@ -1505,10 +1521,10 @@ SEXP sf_toupper(SEXP x) {
   SEXP ret = PROTECT(sf_vector(len));
   sf_vec_data & ref = sf_vec_data_ref(ret);
   std::string temp;
-  for(size_t i=0; i<len; i++) {
+  for(size_t i=0; i<len; ++i) {
     auto q = xr.getCharLenCE(i);
     temp.resize(q.len);
-    for(int j=0; j<q.len; j++) {
+    for(int j=0; j<q.len; ++j) {
       if((q.ptr[j] >= 97) & (q.ptr[j] <= 122)) { // char j is lower case
         temp[j] = q.ptr[j] - 32;
       } else {
@@ -1524,9 +1540,10 @@ SEXP sf_toupper(SEXP x) {
 ////////////////////////////////////////////////////////////////////////////////
 
 struct rstring_info_hash { 
-  size_t operator()(const RStringIndexer::rstring_info & s) const
-  { 
-    return XXH64(s.ptr, s.len, 0);
+  size_t operator()(const RStringIndexer::rstring_info & s) const {
+    // return std::hash<std::string>{}(std::string(s.ptr, s.len)); // slower
+    // return XXH64(s.ptr, s.lin, 0); // slower
+    return XXH3_64bits(s.ptr, s.len);
   }
 };
 using tbb_rstring_map = tbb::concurrent_unordered_map<RStringIndexer::rstring_info, tbb::atomic<int>, rstring_info_hash>;
@@ -1539,7 +1556,7 @@ struct hash_fill_worker : public Worker {
     table_hash(t), fillit(f) {}
   
   void operator()(std::size_t begin, std::size_t end) {
-    for (std::size_t i = begin; i < end; i++) {
+    for (std::size_t i = begin; i < end; ++i) {
       auto q = fillit->getCharLenCE(i);
       auto p = table_hash->insert(tbb_rstring_map::value_type(q,i));
       if(!p.second) {
@@ -1561,7 +1578,7 @@ struct hash_search_worker : public Worker {
     table_hash(t), searchit(s), output(o) {}
   
   void operator()(std::size_t begin, std::size_t end) {
-    for (std::size_t i = begin; i < end; i++) {
+    for (std::size_t i = begin; i < end; ++i) {
       auto q = searchit->getCharLenCE(i);
       auto it = table_hash->find(q);
       if(it != table_hash->end()) {
@@ -1597,11 +1614,11 @@ IntegerVector sf_match(SEXP x, SEXP table, const int nthreads = 1) {
 #endif
   } else {
     std::unordered_map<RStringIndexer::rstring_info, int, rstring_info_hash> table_hash;
-    for(size_t i=0; i<len; i++) {
+    for(size_t i=0; i<len; ++i) {
       auto q = cr.getCharLenCE(i);
       table_hash.insert(std::make_pair(q, static_cast<int>(i)));
     }
-    for(size_t i=0; i<xlen; i++) {
+    for(size_t i=0; i<xlen; ++i) {
       auto q = xr.getCharLenCE(i);
       auto it = table_hash.find(q);
       if(it != table_hash.end()) {
@@ -1626,7 +1643,7 @@ struct compare_worker : public Worker {
     xr(xr), yr(yr), xlen(xlen), ylen(ylen), out(out) {}
   
   void operator()(std::size_t begin, std::size_t end) {
-    for (std::size_t i = begin; i < end; i++) {
+    for (std::size_t i = begin; i < end; ++i) {
       auto qx = xr.getCharLenCE(xlen == 1 ? 0 : i);
       if(qx.ptr == nullptr) {
         out[i] = NA_LOGICAL;
@@ -1664,7 +1681,7 @@ LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads = 1) {
     throw std::runtime_error("RcppParallel TBB not supported");
 #endif
   } else {
-    for(size_t i=0; i<outlen; i++) {
+    for(size_t i=0; i<outlen; ++i) {
       auto qx = xr.getCharLenCE(xlen == 1 ? 0 : i);
       if(qx.ptr == nullptr) {
         out[i] = NA_LOGICAL;
@@ -1689,7 +1706,7 @@ SEXP c_sf_concat(SEXP x) {
   std::vector<RStringIndexer> indexers(xlen);
   std::vector<size_t> sizes(xlen);
   size_t total_size = 0;
-  for(size_t i=0; i<xlen; i++) {
+  for(size_t i=0; i<xlen; ++i) {
     SEXP xi = VECTOR_ELT(x, i);
     indexers[i] = RStringIndexer(xi);
     sizes[i] = indexers[i].size();
@@ -1698,7 +1715,7 @@ SEXP c_sf_concat(SEXP x) {
   SEXP ret = PROTECT(sf_vector(total_size));
   auto & ref = sf_vec_data_ref(ret);
   size_t count = 0;
-  for(size_t i=0; i<xlen; i++) {
+  for(size_t i=0; i<xlen; ++i) {
     switch(indexers[i].getType()) {
     case rstring_type::SF_VEC:
     {
@@ -1711,7 +1728,7 @@ SEXP c_sf_concat(SEXP x) {
     default:
     {
       SEXP rp = reinterpret_cast<SEXP>(indexers[i].getData());
-      for(size_t j = 0; j < sizes[i]; j++) {
+      for(size_t j = 0; j < sizes[i]; ++j) {
         ref[count++] = sfstring(STRING_ELT(rp, j));
       }
     }
@@ -1723,6 +1740,7 @@ SEXP c_sf_concat(SEXP x) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
 
 // [[Rcpp::init]]
 void sf_export_functions(DllInfo* dll) {
@@ -1748,6 +1766,8 @@ void sf_export_functions(DllInfo* dll) {
   R_RegisterCCallable("stringfish", "sf_tolower", (DL_FUNC) &sf_tolower);
   R_RegisterCCallable("stringfish", "sf_match", (DL_FUNC) &sf_match);
 }
+
+#endif // #if R_VERSION < R_Version(3, 5, 0)
 
 // END OF SF_FUNCTIONS.CPP
 

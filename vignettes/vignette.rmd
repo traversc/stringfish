@@ -25,7 +25,7 @@ Using normal R functions to process string data (e.g. `substr`, `gsub`, `paste`,
 
 ## Installation:
 ```{r eval=FALSE}
-install.packages("stringfish")
+install.packages("stringfish", type="source", configure.args="--with-simd=AVX2")
 ```
 
 ## Benchmark

@@ -13,6 +13,10 @@ is_tbb <- function() {
     .Call(`_stringfish_is_tbb`)
 }
 
+check_simd <- function() {
+    invisible(.Call(`_stringfish_check_simd`))
+}
+
 get_string_type <- function(x) {
     .Call(`_stringfish_get_string_type`, x)
 }
