@@ -10,7 +10,7 @@ SEXP materialize(SEXP x) {NO_ALTREP_SUPPORT();}
 SEXP sf_vector(size_t len) {NO_ALTREP_SUPPORT();}
 void sf_assign(SEXP x, size_t i, SEXP e) {NO_ALTREP_SUPPORT();}
 SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads=1) {NO_ALTREP_SUPPORT();}
-convert_to_sf(SEXP x) {NO_ALTREP_SUPPORT();}
+SEXP convert_to_sf(SEXP x) {NO_ALTREP_SUPPORT();}
 IntegerVector sf_nchar(SEXP x, const std::string type = "chars", const int nthreads = 1) {NO_ALTREP_SUPPORT();}
 SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthreads = 1) {NO_ALTREP_SUPPORT();}
 SEXP c_sf_paste(List dots, SEXP sep, const int nthreads = 1) {NO_ALTREP_SUPPORT();}
