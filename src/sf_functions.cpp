@@ -71,7 +71,7 @@ void check_simd() {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Disable functions if not ALTREP support
-#if R_VERSION < R_Version(3, 5, 0) // no AlTREP support before 3.5
+#if (R_VERSION < R_Version(3, 5, 0)) || (defined(__APPLE__) && defined(__arm64__)) // no AlTREP support before 3.5
 #include "sf_disabled.h"
 #else
 #include <R_ext/Rdynload.h>
