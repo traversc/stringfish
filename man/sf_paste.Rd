@@ -23,9 +23,11 @@ Pastes a series of strings together
 This works the same way as `paste0(..., sep=sep)`
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- letters
 y <- LETTERS
 sf_paste(x,y, sep = ":")
+}
 }
 \seealso{
 paste0, paste

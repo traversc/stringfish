@@ -21,10 +21,12 @@ Pastes a series of strings together separated by the `collapse` parameter
 This works the same way as `paste0(x, collapse=collapse)`
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- c("hello", "\\\\xe4\\\\xb8\\\\x96\\\\xe7\\\\x95\\\\x8c")
 Encoding(x) <- "UTF-8"
 sf_collapse(x, " ") # "hello world" in Japanese
 sf_collapse(letters, "") # returns the alphabet
+}
 }
 \seealso{
 paste0, paste

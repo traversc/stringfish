@@ -27,10 +27,12 @@
 #' @details 
 #' This function creates a new stringfish vector, an alt-rep character vector backed by a C++ "std::vector" as the internal memory representation. 
 #' The vector type is "sfstring", which is a simple C++ class containing a "std::string" and a single byte (uint8_t) representing the encoding. 
-#' @examples 
+#' @examples
+#' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
 #' sf_assign(x, 2, "another string")
+#' }
 #' @name sf_vector
 NULL
 
@@ -45,9 +47,11 @@ NULL
 #' @details 
 #' A function to assign a new element to an existing character vector. If the the vector is a stringfish vector, it does so without materialization. 
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
 #' sf_assign(x, 2, "another string")
+#' }
 #' @name sf_assign
 NULL
 
@@ -60,10 +64,12 @@ NULL
 #' @details 
 #' A function that returns the type of character vector. Possible values are "normal vector", "stringfish vector", "stringfish vector (materialized)" or "other alt-rep vector"
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' get_string_type(x) # returns "stringfish vector"
 #' x <- character(10)
 #' get_string_type(x) # returns "normal vector"
+#' }
 #' @name get_string_type
 NULL
 
@@ -77,10 +83,12 @@ NULL
 #' Materializes any alt-rep object and then returns it. 
 #' Note: the object is materialized regardless of whether the return value is assigned to a variable. 
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
 #' sf_assign(x, 2, "another string")
 #' x <- materialize(x)
+#' }
 #' @name materialize
 NULL
 
@@ -93,7 +101,9 @@ NULL
 #' @details 
 #' Converts a character vector to a stringfish vector. The opposite of `materialize`.
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- convert_to_sf(letters)
+#' }
 #' @name convert_to_sf
 NULL
 
@@ -113,9 +123,11 @@ sf_convert <- convert_to_sf
 #' This is an analogue to the base R function `iconv`. It converts a string from one encoding (e.g. latin1 or UTF-8) to another
 #' @seealso iconv
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- "fa\xE7ile"
 #' Encoding(x) <- "latin1"
 #' sf_iconv(x, "latin1", "UTF-8")
+#' }
 #' @name sf_iconv
 NULL
 
@@ -131,9 +143,11 @@ NULL
 #' Returns the number of characters per string. The type of counting only matters for UTF-8 strings, where a character can be represented by multiple bytes. 
 #' @seealso nchar
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- "fa\xE7ile"
 #' Encoding(x) <- "latin1"
 #' x <- sf_iconv(x, "latin1", "UTF-8")
+#' }
 #' @name sf_nchar
 NULL
 
@@ -151,11 +165,13 @@ NULL
 #' Negative indicies count backwards from the end of the string, with -1 being the last character. 
 #' @seealso substr
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- c("fa\xE7ile", "hello world")
 #' Encoding(x) <- "latin1"
 #' x <- sf_iconv(x, "latin1", "UTF-8")
 #' sf_substr(x, 4, -1) # extracts from the 4th character to the last
 #' ## [1] "ile"  "lo world"
+#' }
 #' @name sf_substr
 NULL
 
@@ -170,10 +186,12 @@ NULL
 #' This works the same way as `paste0(x, collapse=collapse)`
 #' @seealso paste0, paste
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- c("hello", "\\xe4\\xb8\\x96\\xe7\\x95\\x8c")
 #' Encoding(x) <- "UTF-8"
 #' sf_collapse(x, " ") # "hello world" in Japanese
 #' sf_collapse(letters, "") # returns the alphabet
+#' }
 #' @name sf_collapse
 NULL
 
@@ -189,9 +207,11 @@ NULL
 #' This works the same way as `paste0(..., sep=sep)`
 #' @seealso paste0, paste
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- letters
 #' y <- LETTERS
 #' sf_paste(x,y, sep = ":")
+#' }
 #' @name sf_paste
 NULL
 
@@ -207,9 +227,11 @@ NULL
 #' A function for reading in text data using `std::ifstream`.
 #' @seealso readLines
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' file <- tempfile()
 #' sf_writeLines(letters, file)
 #' sf_readLines(file)
+#' }
 #' @name sf_readLines
 NULL
 
@@ -226,9 +248,11 @@ NULL
 #' A function for writing text data using `std::ofstream`.
 #' @seealso writeLines
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' file <- tempfile()
 #' sf_writeLines(letters, file)
 #' sf_readLines(file)
+#' }
 #' @name sf_writeLines
 NULL
 
@@ -249,10 +273,12 @@ NULL
 #' See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax. 
 #' @seealso grepl
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
 #' pattern <- "^hello"
 #' sf_grepl(x, pattern)
+#' }
 #' @name sf_grepl
 NULL
 
@@ -276,10 +302,12 @@ NULL
 #' See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax. 
 #' @seealso gsub
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- "hello world"
 #' pattern <- "^hello (.+)"
 #' replacement <- "goodbye $1"
 #' sf_gsub(x, pattern, replacement)
+#' }
 #' @name sf_gsub
 NULL
 
@@ -299,8 +327,10 @@ NULL
 #' See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax. 
 #' @seealso gsub
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' set.seed(1)
 #' x <- random_strings(1e6, 80, "ACGT", vector_mode = "stringfish")
+#' }
 #' @name random_strings
 NULL
 
@@ -314,8 +344,10 @@ NULL
 #' Note: the function only converts ASCII characters. 
 #' @seealso toupper
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- letters
 #' sf_toupper(x)
+#' }
 #' @name sf_toupper
 NULL
 
@@ -329,8 +361,10 @@ NULL
 #' Note: the function only converts ASCII characters. 
 #' @seealso tolower
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- LETTERS
 #' sf_tolower(x)
+#' }
 #' @name sf_tolower
 NULL
 
@@ -345,8 +379,10 @@ NULL
 #' @return A logical vector true if there is a match, false if no match, NA is the subject was NA
 #' @seealso startsWith, sf_ends
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- c("alpha", "beta", "gamma", "delta", "epsilon")
 #' sf_starts(x, "a")
+#' }
 #' @name sf_starts
 NULL
 
@@ -360,8 +396,10 @@ NULL
 #' @return A logical vector true if there is a match, false if no match, NA is the subject was NA
 #' @seealso endsWith, sf_starts
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- c("alpha", "beta", "gamma", "delta", "epsilon")
 #' sf_ends(x, "a")
+#' }
 #' @name sf_ends
 NULL
 
@@ -376,8 +414,10 @@ NULL
 #' @return A stringfish vector of trimmed whitespace
 #' @seealso trimws
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' x <- c(" alpha ", " beta", " gamma ", "delta ", "epsilon ")
 #' sf_trim(x)
+#' }
 #' @name sf_trim
 NULL
 
@@ -392,7 +432,9 @@ NULL
 #' @seealso match
 #' @details Note: similarly to the base R function, long "table" vectors are not supported. This is due to the maximum integer value that can be returned (`.Machine$integer.max`)
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' sf_match("c", letters)
+#' }
 #' @name sf_match
 NULL
 
@@ -408,7 +450,9 @@ NULL
 #' @return A list of stringfish character vectors
 #' @seealso strsplit
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' sf_split(datasets::state.name, "\\s") # split U.S. state names by any space character
+#' }
 #' @name sf_split
 NULL
 
@@ -422,7 +466,9 @@ NULL
 #' @return A logical vector
 #' @details Note: the function tests for both string and encoding equality
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' sf_compare(letters, "a")
+#' }
 #' @name sf_compare
 NULL
 
@@ -453,7 +499,9 @@ NULL
 #' @param ... Any number of vectors, coerced to character vector if necessary
 #' @return A concatenated stringfish vector
 #' @examples 
+#' if(getRversion() >= "3.5.0") {
 #' sf_concat(letters, 1:5)
+#' }
 #' @name sf_concat
 NULL
 

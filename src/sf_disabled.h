@@ -16,7 +16,7 @@ SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthrea
 SEXP c_sf_paste(List dots, SEXP sep, const int nthreads = 1) {NO_ALTREP_SUPPORT();}
 SEXP sf_collapse(SEXP x, SEXP collapse) {NO_ALTREP_SUPPORT();}
 SEXP sf_readLines(const std::string file, const std::string encoding = "UTF-8") {NO_ALTREP_SUPPORT();}
-sf_writeLines(SEXP text, const std::string file, const std::string sep = "\n", const std::string na_value = "NA", const std::string encode_mode = "UTF-8") {NO_ALTREP_SUPPORT();}
+void sf_writeLines(SEXP text, const std::string file, const std::string sep = "\n", const std::string na_value = "NA", const std::string encode_mode = "UTF-8") {NO_ALTREP_SUPPORT();}
 LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode = "auto", const bool fixed = false ,const int nthreads = 1) {NO_ALTREP_SUPPORT();}
 SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {NO_ALTREP_SUPPORT();}
 SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {NO_ALTREP_SUPPORT();}

@@ -19,5 +19,7 @@ A concatenated stringfish vector
 Appends vectors together
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 sf_concat(letters, 1:5)
+}
 }

@@ -26,5 +26,7 @@ Returns a logical vector testing equality of strings from two string vectors
 Note: the function tests for both string and encoding equality
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 sf_compare(letters, "a")
+}
 }

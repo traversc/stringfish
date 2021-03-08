@@ -22,8 +22,10 @@ A stringfish vector of trimmed whitespace
 A function to remove leading/trailing whitespace
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- c(" alpha ", " beta", " gamma ", "delta ", "epsilon ")
 sf_trim(x)
+}
 }
 \seealso{
 trimws

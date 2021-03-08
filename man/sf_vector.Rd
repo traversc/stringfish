@@ -20,7 +20,9 @@ This function creates a new stringfish vector, an alt-rep character vector backe
 The vector type is "sfstring", which is a simple C++ class containing a "std::string" and a single byte (uint8_t) representing the encoding.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- sf_vector(10)
 sf_assign(x, 1, "hello world")
 sf_assign(x, 2, "another string")
+}
 }

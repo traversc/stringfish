@@ -19,8 +19,10 @@ A function converting a string to all uppercase
 Note: the function only converts ASCII characters.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- letters
 sf_toupper(x)
+}
 }
 \seealso{
 toupper

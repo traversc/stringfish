@@ -20,8 +20,10 @@ Materializes any alt-rep object and then returns it.
 Note: the object is materialized regardless of whether the return value is assigned to a variable.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- sf_vector(10)
 sf_assign(x, 1, "hello world")
 sf_assign(x, 2, "another string")
 x <- materialize(x)
+}
 }

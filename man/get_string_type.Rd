@@ -19,8 +19,10 @@ Returns the type of the character vector
 A function that returns the type of character vector. Possible values are "normal vector", "stringfish vector", "stringfish vector (materialized)" or "other alt-rep vector"
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- sf_vector(10)
 get_string_type(x) # returns "stringfish vector"
 x <- character(10)
 get_string_type(x) # returns "normal vector"
+}
 }

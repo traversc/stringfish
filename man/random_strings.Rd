@@ -28,8 +28,10 @@ Note: the order of paramters is switched compared to the `gsub` base R function,
 See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 set.seed(1)
 x <- random_strings(1e6, 80, "ACGT", vector_mode = "stringfish")
+}
 }
 \seealso{
 gsub

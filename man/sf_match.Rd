@@ -23,7 +23,9 @@ Returns a vector of the positions of x in table
 Note: similarly to the base R function, long "table" vectors are not supported. This is due to the maximum integer value that can be returned (`.Machine$integer.max`)
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 sf_match("c", letters)
+}
 }
 \seealso{
 match
