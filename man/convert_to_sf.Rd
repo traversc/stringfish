@@ -22,5 +22,7 @@ Converts a character vector to a stringfish vector
 Converts a character vector to a stringfish vector. The opposite of `materialize`.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- convert_to_sf(letters)
+}
 }

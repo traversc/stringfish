@@ -34,10 +34,12 @@ Note: the order of paramters is switched compared to the `gsub` base R function,
 See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- "hello world"
 pattern <- "^hello (.+)"
 replacement <- "goodbye $1"
 sf_gsub(x, pattern, replacement)
+}
 }
 \seealso{
 gsub

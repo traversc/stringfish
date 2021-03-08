@@ -24,7 +24,9 @@ A list of stringfish character vectors
 A function to split strings by a delimiter
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 sf_split(datasets::state.name, "\\\\s") # split U.S. state names by any space character
+}
 }
 \seealso{
 strsplit

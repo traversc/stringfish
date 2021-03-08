@@ -23,7 +23,9 @@ Assigns a new string to a stringfish vector or any other character vector
 A function to assign a new element to an existing character vector. If the the vector is a stringfish vector, it does so without materialization.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- sf_vector(10)
 sf_assign(x, 1, "hello world")
 sf_assign(x, 2, "another string")
+}
 }

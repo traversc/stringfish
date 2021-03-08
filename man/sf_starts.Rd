@@ -20,8 +20,10 @@ A logical vector true if there is a match, false if no match, NA is the subject 
 A function for detecting a pattern at the start of a string
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- c("alpha", "beta", "gamma", "delta", "epsilon")
 sf_starts(x, "a")
+}
 }
 \seealso{
 startsWith, sf_ends

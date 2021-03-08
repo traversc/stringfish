@@ -25,9 +25,11 @@ Converts encoding of one character vector to another
 This is an analogue to the base R function `iconv`. It converts a string from one encoding (e.g. latin1 or UTF-8) to another
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- "fa\xE7ile"
 Encoding(x) <- "latin1"
 sf_iconv(x, "latin1", "UTF-8")
+}
 }
 \seealso{
 iconv

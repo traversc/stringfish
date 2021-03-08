@@ -26,11 +26,13 @@ This works the same way as `substr`, but in addition allows negative indexing.
 Negative indicies count backwards from the end of the string, with -1 being the last character.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- c("fa\xE7ile", "hello world")
 Encoding(x) <- "latin1"
 x <- sf_iconv(x, "latin1", "UTF-8")
 sf_substr(x, 4, -1) # extracts from the 4th character to the last
 ## [1] "ile"  "lo world"
+}
 }
 \seealso{
 substr

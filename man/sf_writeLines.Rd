@@ -24,9 +24,11 @@ A function that reads a file line by line
 A function for writing text data using `std::ofstream`.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 file <- tempfile()
 sf_writeLines(letters, file)
 sf_readLines(file)
+}
 }
 \seealso{
 writeLines

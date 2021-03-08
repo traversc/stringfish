@@ -23,9 +23,11 @@ Counts the number of characters in a character vector
 Returns the number of characters per string. The type of counting only matters for UTF-8 strings, where a character can be represented by multiple bytes.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- "fa\xE7ile"
 Encoding(x) <- "latin1"
 x <- sf_iconv(x, "latin1", "UTF-8")
+}
 }
 \seealso{
 nchar

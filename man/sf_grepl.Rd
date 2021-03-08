@@ -30,10 +30,12 @@ Note: the order of paramters is switched compared to the `grepl` base R function
 See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax.
 }
 \examples{
+if(getRversion() >= "3.5.0") {
 x <- sf_vector(10)
 sf_assign(x, 1, "hello world")
 pattern <- "^hello"
 sf_grepl(x, pattern)
+}
 }
 \seealso{
 grepl
