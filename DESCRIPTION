@@ -21,7 +21,7 @@ LinkingTo:
 Imports: 
     Rcpp, RcppParallel
 Suggests:
-    qs, knitr, rmarkdown
+    qs, knitr, rmarkdown, usethis
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
 Copyright: Copyright for the bundled 'PCRE2' library is held by University of Cambridge, Zoltan Herczeg and Tilera Coporation (Stack-less Just-In-Time compiler); Copyright for the bundled 'xxHash' code is held by Yann Collet. 
