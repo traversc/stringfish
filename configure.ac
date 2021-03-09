@@ -8,43 +8,9 @@ echo "stringfish configure script"
 ADD_LIBS="-L."
 INCLUDE_PATHS=""
 ADD_CFLAGS=""
+PCRE2_SHLIB=""
+PCRE2_CLEAN=""
 
-PCRE2_COMPILE_STRING='LIBPCRE2 = PCRE2/pcre2_chartables.o \
-	PCRE2/pcre2_auto_possess.o \
-	PCRE2/pcre2_compile.o \
-	PCRE2/pcre2_config.o \
-	PCRE2/pcre2_context.o \
-	PCRE2/pcre2_convert.o \
-	PCRE2/pcre2_dfa_match.o \
-	PCRE2/pcre2_error.o \
-	PCRE2/pcre2_extuni.o \
-	PCRE2/pcre2_find_bracket.o \
-	PCRE2/pcre2_jit_compile.o \
-	PCRE2/pcre2_maketables.o \
-	PCRE2/pcre2_match.o \
-	PCRE2/pcre2_match_data.o \
-	PCRE2/pcre2_newline.o \
-	PCRE2/pcre2_ord2utf.o \
-	PCRE2/pcre2_pattern_info.o \
-	PCRE2/pcre2_script_run.o \
-	PCRE2/pcre2_serialize.o \
-	PCRE2/pcre2_string_utils.o \
-	PCRE2/pcre2_study.o \
-	PCRE2/pcre2_substitute.o \
-	PCRE2/pcre2_substring.o \
-	PCRE2/pcre2_tables.o \
-	PCRE2/pcre2_ucd.o \
-	PCRE2/pcre2_valid_utf.o \
-	PCRE2/pcre2_xclass.o
-
-$(SHLIB): libSFPCRE2.a
-
-libSFPCRE2.a: $(LIBPCRE2)
-	$(AR) rcs libSFPCRE2.a $(LIBPCRE2)
-
-clean:
-	rm -f $(SHLIB) $(OBJECTS) $(LIBPCRE2) libSFPCRE2.a'
-	
 ########################################################
 ### Configure args
 
@@ -160,10 +126,9 @@ fi
 
 if test xx$COMPILE_PCRE2 = "xxtrue"; then
   INCLUDE_PATHS="${INCLUDE_PATHS} -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -IPCRE2"
-  COMPILE_STRING=$PCRE2_COMPILE_STRING
+  PCRE2_SHLIB="libSFPCRE2.a"
+  PCRE2_CLEAN="\$(LIBPCRE2) libSFPCRE2.a"
   ADD_LIBS="${ADD_LIBS} -lSFPCRE2"
-else
-  COMPILE_STRING=""
 fi
 
 if test xx$with_simd = "xxAVX2"; then
@@ -176,12 +141,14 @@ fi
 
 echo $ADD_LIBS
 echo $INCLUDE_PATHS
-echo $COMPILE_STRING
+echo $PCRE2_SHLIB
+echo $PCRE2_CLEAN
 echo $ADD_CFLAGS
 
 AC_SUBST([ADD_CFLAGS], $ADD_CFLAGS)
 AC_SUBST([ADD_LIBS], $ADD_LIBS)
-AC_SUBST([COMPILE_STRING], $COMPILE_STRING)
 AC_SUBST([INCLUDE_PATHS], $INCLUDE_PATHS)
+AC_SUBST([PCRE2_SHLIB], $PCRE2_SHLIB)
+AC_SUBST([PCRE2_CLEAN], $PCRE2_CLEAN)
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT
