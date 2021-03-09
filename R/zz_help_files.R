@@ -46,7 +46,7 @@ NULL
 #' @return No return value, the function assigns an element to an existing stringfish vector
 #' @details 
 #' A function to assign a new element to an existing character vector. If the the vector is a stringfish vector, it does so without materialization. 
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
@@ -63,7 +63,7 @@ NULL
 #' @return The type of vector
 #' @details 
 #' A function that returns the type of character vector. Possible values are "normal vector", "stringfish vector", "stringfish vector (materialized)" or "other alt-rep vector"
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' get_string_type(x) # returns "stringfish vector"
@@ -82,7 +82,7 @@ NULL
 #' @details 
 #' Materializes any alt-rep object and then returns it. 
 #' Note: the object is materialized regardless of whether the return value is assigned to a variable. 
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
@@ -100,7 +100,7 @@ NULL
 #' @return The converted character vector
 #' @details 
 #' Converts a character vector to a stringfish vector. The opposite of `materialize`.
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- convert_to_sf(letters)
 #' }
@@ -122,7 +122,7 @@ sf_convert <- convert_to_sf
 #' @details 
 #' This is an analogue to the base R function `iconv`. It converts a string from one encoding (e.g. latin1 or UTF-8) to another
 #' @seealso iconv
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- "fa\xE7ile"
 #' Encoding(x) <- "latin1"
@@ -142,7 +142,7 @@ NULL
 #' @details 
 #' Returns the number of characters per string. The type of counting only matters for UTF-8 strings, where a character can be represented by multiple bytes. 
 #' @seealso nchar
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- "fa\xE7ile"
 #' Encoding(x) <- "latin1"
@@ -164,7 +164,7 @@ NULL
 #' This works the same way as `substr`, but in addition allows negative indexing. 
 #' Negative indicies count backwards from the end of the string, with -1 being the last character. 
 #' @seealso substr
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- c("fa\xE7ile", "hello world")
 #' Encoding(x) <- "latin1"
@@ -185,7 +185,7 @@ NULL
 #' @details 
 #' This works the same way as `paste0(x, collapse=collapse)`
 #' @seealso paste0, paste
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- c("hello", "\\xe4\\xb8\\x96\\xe7\\x95\\x8c")
 #' Encoding(x) <- "UTF-8"
@@ -206,7 +206,7 @@ NULL
 #' @details 
 #' This works the same way as `paste0(..., sep=sep)`
 #' @seealso paste0, paste
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- letters
 #' y <- LETTERS
@@ -226,7 +226,7 @@ NULL
 #' @details 
 #' A function for reading in text data using `std::ifstream`.
 #' @seealso readLines
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' file <- tempfile()
 #' sf_writeLines(letters, file)
@@ -247,7 +247,7 @@ NULL
 #' @details 
 #' A function for writing text data using `std::ofstream`.
 #' @seealso writeLines
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' file <- tempfile()
 #' sf_writeLines(letters, file)
@@ -272,7 +272,7 @@ NULL
 #' Note: the order of paramters is switched compared to the `grepl` base R function, with subject being first. 
 #' See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax. 
 #' @seealso grepl
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- sf_vector(10)
 #' sf_assign(x, 1, "hello world")
@@ -301,7 +301,7 @@ NULL
 #' Note: the order of paramters is switched compared to the `gsub` base R function, with subject being first. 
 #' See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax. 
 #' @seealso gsub
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- "hello world"
 #' pattern <- "^hello (.+)"
@@ -326,7 +326,7 @@ NULL
 #' Note: the order of paramters is switched compared to the `gsub` base R function, with subject being first. 
 #' See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax. 
 #' @seealso gsub
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' set.seed(1)
 #' x <- random_strings(1e6, 80, "ACGT", vector_mode = "stringfish")
@@ -343,7 +343,7 @@ NULL
 #' @details 
 #' Note: the function only converts ASCII characters. 
 #' @seealso toupper
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- letters
 #' sf_toupper(x)
@@ -360,7 +360,7 @@ NULL
 #' @details 
 #' Note: the function only converts ASCII characters. 
 #' @seealso tolower
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- LETTERS
 #' sf_tolower(x)
@@ -378,7 +378,7 @@ NULL
 #' @param ... Parameters passed to sf_grepl
 #' @return A logical vector true if there is a match, false if no match, NA is the subject was NA
 #' @seealso startsWith, sf_ends
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- c("alpha", "beta", "gamma", "delta", "epsilon")
 #' sf_starts(x, "a")
@@ -395,7 +395,7 @@ NULL
 #' @param ... Parameters passed to sf_grepl
 #' @return A logical vector true if there is a match, false if no match, NA is the subject was NA
 #' @seealso endsWith, sf_starts
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- c("alpha", "beta", "gamma", "delta", "epsilon")
 #' sf_ends(x, "a")
@@ -413,7 +413,7 @@ NULL
 #' @param ... Parameters passed to sf_gsub
 #' @return A stringfish vector of trimmed whitespace
 #' @seealso trimws
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' x <- c(" alpha ", " beta", " gamma ", "delta ", "epsilon ")
 #' sf_trim(x)
@@ -431,7 +431,7 @@ NULL
 #' @return An integer vector of the indicies of each x element's position in table
 #' @seealso match
 #' @details Note: similarly to the base R function, long "table" vectors are not supported. This is due to the maximum integer value that can be returned (`.Machine$integer.max`)
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' sf_match("c", letters)
 #' }
@@ -449,7 +449,7 @@ NULL
 #' @param nthreads Number of threads to use
 #' @return A list of stringfish character vectors
 #' @seealso strsplit
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' sf_split(datasets::state.name, "\\s") # split U.S. state names by any space character
 #' }
@@ -465,7 +465,7 @@ NULL
 #' @param nthreads Number of threads to use
 #' @return A logical vector
 #' @details Note: the function tests for both string and encoding equality
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' sf_compare(letters, "a")
 #' }
@@ -483,7 +483,7 @@ sf_equals <- sf_compare
 #' @param y Another character to compare to x
 #' @return TRUE if strings are identical, including encoding
 #' @seealso identical
-#' @examples 
+#' @examples
 # x <- "fa\xE7ile"
 # Encoding(x) <- "latin1"
 # y <- iconv(x, "latin1", "UTF-8")
@@ -498,7 +498,7 @@ NULL
 #' @usage sf_concat(...)
 #' @param ... Any number of vectors, coerced to character vector if necessary
 #' @return A concatenated stringfish vector
-#' @examples 
+#' @examples
 #' if(getRversion() >= "3.5.0") {
 #' sf_concat(letters, 1:5)
 #' }

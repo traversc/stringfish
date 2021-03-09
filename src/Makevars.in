@@ -2,4 +2,39 @@ PKG_CFLAGS=@ADD_CFLAGS@
 CXX_STD=CXX11
 PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -I. @INCLUDE_PATHS@
 PKG_LIBS=-lpthread @ADD_LIBS@ $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")
-@COMPILE_STRING@
+
+LIBPCRE2 = PCRE2/pcre2_chartables.o \
+	PCRE2/pcre2_auto_possess.o \
+	PCRE2/pcre2_compile.o \
+	PCRE2/pcre2_config.o \
+	PCRE2/pcre2_context.o \
+	PCRE2/pcre2_convert.o \
+	PCRE2/pcre2_dfa_match.o \
+	PCRE2/pcre2_error.o \
+	PCRE2/pcre2_extuni.o \
+	PCRE2/pcre2_find_bracket.o \
+	PCRE2/pcre2_jit_compile.o \
+	PCRE2/pcre2_maketables.o \
+	PCRE2/pcre2_match.o \
+	PCRE2/pcre2_match_data.o \
+	PCRE2/pcre2_newline.o \
+	PCRE2/pcre2_ord2utf.o \
+	PCRE2/pcre2_pattern_info.o \
+	PCRE2/pcre2_script_run.o \
+	PCRE2/pcre2_serialize.o \
+	PCRE2/pcre2_string_utils.o \
+	PCRE2/pcre2_study.o \
+	PCRE2/pcre2_substitute.o \
+	PCRE2/pcre2_substring.o \
+	PCRE2/pcre2_tables.o \
+	PCRE2/pcre2_ucd.o \
+	PCRE2/pcre2_valid_utf.o \
+	PCRE2/pcre2_xclass.o
+
+$(SHLIB): @PCRE2_SHLIB@
+
+libSFPCRE2.a: $(LIBPCRE2)
+	$(AR) rcs libSFPCRE2.a $(LIBPCRE2)
+
+clean:
+	rm -f $(SHLIB) $(OBJECTS) @PCRE2_CLEAN@
