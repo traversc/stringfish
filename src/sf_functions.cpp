@@ -81,9 +81,6 @@ void check_simd() {
 #include <unordered_map>
 #include <fstream>
 
-// xxhash can be used as "header only" library
-// v0.74 XXH3 doesn't compile on Solaris due to restrict keyword? -- check back later
-// #define XXH_INLINE_ALL -- doesn't seem to improve performance
 #include "xxhash/xxhash.c"
 
 #ifndef PCRE2_CODE_UNIT_WIDTH
@@ -222,14 +219,23 @@ struct pcre2_match_wrapper {
       pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
       throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
     }
+    #ifdef SUPPORT_JIT
     pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+    // errorcode = pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+    // if(errorcode < 0) {
+    //  if(errorcode == PCRE2_ERROR_JIT_BADOPTION) throw std::runtime_error("PCRE2_ERROR_JIT_BADOPTION");
+    //  if(errorcode == PCRE2_ERROR_NOMEMORY) throw std::runtime_error("PCRE2_ERROR_NOMEMORY");
+    // }
+    #endif
     match_data = pcre2_match_data_create_from_pattern(re, NULL);
   }
   pcre2_match_wrapper() : re(nullptr), match_data(nullptr) {}
   
   pcre2_match_wrapper(const pcre2_match_wrapper& other) : 
     re(pcre2_code_copy_with_tables(other.re)), match_data(pcre2_match_data_create_from_pattern(other.re, NULL)) { // copy constructor
+    #ifdef SUPPORT_JIT
     pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+    #endif
   }
   pcre2_match_wrapper(pcre2_match_wrapper && other) { // move constructor
     re = other.re;
@@ -241,7 +247,9 @@ struct pcre2_match_wrapper {
     if(&other == this) return *this;
     if(re != nullptr) pcre2_code_free(re);
     re = pcre2_code_copy_with_tables(other.re);
+    #ifdef SUPPORT_JIT
     pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+    #endif
     match_data = pcre2_match_data_create_from_pattern(re, NULL);
     return *this;
   }
@@ -261,6 +269,7 @@ struct pcre2_match_wrapper {
     if(match_data != nullptr) pcre2_match_data_free(match_data);
   }
   inline int match(const char * subject_ptr, const int len) {
+    #ifdef SUPPORT_JIT
     int rc = pcre2_jit_match(re, // compiled pattern
                          (PCRE2_SPTR)subject_ptr, // subject
                          PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
@@ -269,6 +278,16 @@ struct pcre2_match_wrapper {
                          match_data,  // match data block
                          NULL // match context
     );
+    #else
+    int rc = pcre2_match(re, // compiled pattern
+                      (PCRE2_SPTR)subject_ptr, // subject
+                      PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
+                      0, // start offset
+                      0, // options
+                      match_data,  // match data block
+                      NULL // match context
+    );
+    #endif
     if(rc == PCRE2_ERROR_NOMATCH) {
       return 0;
     } else if(rc < 0) {
@@ -278,6 +297,7 @@ struct pcre2_match_wrapper {
     }
   }
   inline int match_for_split(const char * subject_ptr, const int len) {
+    #ifdef SUPPORT_JIT
     int rc = pcre2_jit_match(re, // compiled pattern
                          (PCRE2_SPTR)subject_ptr, // subject
                          PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
@@ -286,6 +306,16 @@ struct pcre2_match_wrapper {
                          match_data,  // match data block
                          NULL // match context
     );
+    #else
+    int rc = pcre2_match(re, // compiled pattern
+                         (PCRE2_SPTR)subject_ptr, // subject
+                         PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
+                         0, // start offset
+                         PCRE2_NOTEMPTY_ATSTART, // disallows empty match at the start, so while loop doesn't go infinitely
+                         match_data,  // match data block
+                         NULL // match context
+    );
+    #endif
     if(rc == PCRE2_ERROR_NOMATCH) {
       return 0;
     } else if(rc < 0) {
@@ -323,7 +353,9 @@ struct pcre2_sub_wrapper {
       pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
       throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
     }
+    #ifdef SUPPORT_JIT
     pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+    #endif
     match_data = pcre2_match_data_create_from_pattern(re, NULL);
     replacement = (PCRE2_SPTR)replacement_ptr;
   }
@@ -331,7 +363,9 @@ struct pcre2_sub_wrapper {
   pcre2_sub_wrapper & operator=(const pcre2_sub_wrapper & other) { // copy assignment
     if(&other == this) return *this;
     re = pcre2_code_copy_with_tables(other.re);
+    #ifdef SUPPORT_JIT
     pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+    #endif
     output = other.output;
     match_data = pcre2_match_data_create_from_pattern(re, NULL);
     replacement = other.replacement;
@@ -349,7 +383,9 @@ struct pcre2_sub_wrapper {
   }
   pcre2_sub_wrapper(const pcre2_sub_wrapper& other) { // copy constructor
     re = pcre2_code_copy_with_tables(other.re);
+    #ifdef SUPPORT_JIT
     pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+    #endif
     output = other.output;
     match_data = pcre2_match_data_create_from_pattern(re, NULL);
     replacement = other.replacement;
