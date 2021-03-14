@@ -1,5 +1,6 @@
-Version 0.15.1 (2021-3-8)
-   * Quick fix for missing return type in src/sf_disabled.h
+Version 0.15.1 (2021-3-13)
+   * Fix PCRE2 issue on Apple M1
+   * Fix for missing return type in src/sf_disabled.h
 
 Version 0.15.0 (2021-2-20)
    * Reduce requirement for R 3.5 so packages depending on `stringfish` don't require R 3.5. Most functionality will not be available in R < 3.5.
