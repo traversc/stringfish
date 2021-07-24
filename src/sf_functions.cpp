@@ -470,7 +470,7 @@ std::string get_string_type(SEXP x) {
 // [[Rcpp::export(rng = false)]]
 SEXP materialize(SEXP x) {
   if(ALTREP(x)) {
-    ALTVEC_DATAPTR(x);
+    DATAPTR(x);
   }
   return x;
 }

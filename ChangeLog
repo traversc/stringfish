@@ -1,3 +1,6 @@
+Version 0.15.2 (2021-7-23)
+   * Change ALTVEC_DATAPTR to DATAPTR to conform to changes in the API
+
 Version 0.15.1 (2021-3-13)
    * Fix PCRE2 issue on Apple M1
    * Fix for missing return type in src/sf_disabled.h

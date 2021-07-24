@@ -272,7 +272,7 @@ public:
       len = Rf_xlength(obj);
       break;
     case rstring_type::OTHER_ALT_REP:
-      ALTVEC_DATAPTR(obj);
+      DATAPTR(obj);
       dptr = R_altrep_data2(obj);
       len = Rf_xlength(reinterpret_cast<SEXP>(dptr));
       break;
