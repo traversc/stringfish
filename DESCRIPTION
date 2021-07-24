@@ -1,7 +1,7 @@
 Package: stringfish
 Title: Alt String Implementation
-Version: 0.15.1
-Date: 2021-3-13
+Version: 0.15.2
+Date: 2021-7-23
 Authors@R: c(
     person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre", "cph")),
     person("Phillip", "Hazel", role = c("ctb"), comment = "Bundled PCRE2 code"),
