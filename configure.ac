@@ -123,6 +123,7 @@ else
 fi
 
 if test xx$COMPILE_PCRE2 = "xxtrue"; then
+  INCLUDE_PATHS="${INCLUDE_PATHS} -IPCRE2"
   LIBPCRE2="\$(LIBPCRE2)"
 fi
 
