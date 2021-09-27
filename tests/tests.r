@@ -6,25 +6,25 @@ suppressMessages(library(stringr, quietly = T))
 suppressMessages(library(rlang, quietly = T))
 
 
-# encode_source <- function(file, width = 160) {
-#   n <- file.info(file)$size
-#   x <- readChar(con = file, nchars=n, useBytes = T)
-#   x <- qserialize(x, preset = "custom", algorithm = "zstd", compress_level = 22)
-#   x <- base91_encode(x)
-#   starts <- seq(1,nchar(x), by=width)
-#   x <- sapply(starts, function(i) {
-#     substr(x, i, i+width-1)
-#   })
-#   x <- gsub('\\"', "\'", x)
-#   dput(x)
-# }
-# 
-# decode_source <- function(x) {
-#   x <- paste0(x, collapse = "")
-#   x <- gsub("\\'", '\\"', x)
-#   x <- base91_decode(x)
-#   qdeserialize(x)
-# }
+encode_source <- function(file, width = 160) {
+  n <- file.info(file)$size
+  x <- readChar(con = file, nchars=n, useBytes = T)
+  x <- qserialize(x, preset = "custom", algorithm = "zstd", compress_level = 22)
+  x <- base91_encode(x)
+  starts <- seq(1,nchar(x), by=width)
+  x <- sapply(starts, function(i) {
+    substr(x, i, i+width-1)
+  })
+  x <- gsub('\\"', "\'", x)
+  dput(x)
+}
+
+decode_source <- function(x) {
+  x <- paste0(x, collapse = "")
+  x <- gsub("\\'", '\\"', x)
+  x <- base91_decode(x)
+  qdeserialize(x)
+}
 
 myfile <- tempfile()
 print(myfile)
