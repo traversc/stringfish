@@ -3,7 +3,6 @@
 .travis.yml
 rebuild.sh
 .*\.tar\.gz
-^tests
 ^local
 ^benchmark_results
 rticle

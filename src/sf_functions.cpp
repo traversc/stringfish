@@ -83,13 +83,7 @@ void check_simd() {
 
 #include "xxhash/xxhash.c"
 
-#ifndef PCRE2_CODE_UNIT_WIDTH
-#define PCRE2_CODE_UNIT_WIDTH 8
-#endif
-#ifndef HAVE_CONFIG_H
-#define HAVE_CONFIG_H
-#endif
-#include "PCRE2/pcre2.h"
+#include "PCRE2_wrapper/pcre2_wrapper.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // iconv helper class
@@ -197,254 +191,6 @@ static const std::string iconv_utf8_string = "UTF-8";
 static const std::string iconv_latin1_string = "latin1";
 static const std::string iconv_native_string = "";
 
-////////////////////////////////////////////////////////////////////////////////
-// pcre helper classes
-
-struct pcre2_match_wrapper {
-  pcre2_code * re;
-  pcre2_match_data * match_data;
-  pcre2_match_wrapper(const char * pattern_ptr, bool utf8, bool literal = false) {
-    int errorcode;
-    PCRE2_SIZE erroroffset;
-    uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
-    re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
-                       PCRE2_ZERO_TERMINATED, // length
-                       flags,
-                       &errorcode, // error reporting
-                       &erroroffset, // error reporting
-                       NULL // compile context
-    );
-    if(re == NULL) {
-      PCRE2_UCHAR buffer[256];
-      pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
-      throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
-    }
-    #ifdef SUPPORT_JIT
-    pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-    // errorcode = pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-    // if(errorcode < 0) {
-    //  if(errorcode == PCRE2_ERROR_JIT_BADOPTION) throw std::runtime_error("PCRE2_ERROR_JIT_BADOPTION");
-    //  if(errorcode == PCRE2_ERROR_NOMEMORY) throw std::runtime_error("PCRE2_ERROR_NOMEMORY");
-    // }
-    #endif
-    match_data = pcre2_match_data_create_from_pattern(re, NULL);
-  }
-  pcre2_match_wrapper() : re(nullptr), match_data(nullptr) {}
-  
-  pcre2_match_wrapper(const pcre2_match_wrapper& other) : 
-    re(pcre2_code_copy_with_tables(other.re)), match_data(pcre2_match_data_create_from_pattern(other.re, NULL)) { // copy constructor
-    #ifdef SUPPORT_JIT
-    pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-    #endif
-  }
-  pcre2_match_wrapper(pcre2_match_wrapper && other) { // move constructor
-    re = other.re;
-    match_data = other.match_data;
-    other.re = nullptr;
-    other.match_data = nullptr;
-  }
-  pcre2_match_wrapper & operator=(const pcre2_match_wrapper & other) { // copy assignment
-    if(&other == this) return *this;
-    if(re != nullptr) pcre2_code_free(re);
-    re = pcre2_code_copy_with_tables(other.re);
-    #ifdef SUPPORT_JIT
-    pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-    #endif
-    match_data = pcre2_match_data_create_from_pattern(re, NULL);
-    return *this;
-  }
-  pcre2_match_wrapper & operator=(pcre2_match_wrapper && other) { // move assignment
-    if(&other == this) return *this;
-    if(re != nullptr) pcre2_code_free(re);
-    if(match_data != nullptr) pcre2_match_data_free(match_data);
-    re = other.re;
-    match_data = other.match_data;
-    other.re = nullptr;
-    other.match_data = nullptr;
-    return *this;
-  }
-  
-  ~pcre2_match_wrapper() {
-    if(re != nullptr) pcre2_code_free(re);
-    if(match_data != nullptr) pcre2_match_data_free(match_data);
-  }
-  inline int match(const char * subject_ptr, const int len) {
-    #ifdef SUPPORT_JIT
-    int rc = pcre2_jit_match(re, // compiled pattern
-                         (PCRE2_SPTR)subject_ptr, // subject
-                         PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
-                         0, // start offset
-                         0, // options
-                         match_data,  // match data block
-                         NULL // match context
-    );
-    #else
-    int rc = pcre2_match(re, // compiled pattern
-                      (PCRE2_SPTR)subject_ptr, // subject
-                      PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
-                      0, // start offset
-                      0, // options
-                      match_data,  // match data block
-                      NULL // match context
-    );
-    #endif
-    if(rc == PCRE2_ERROR_NOMATCH) {
-      return 0;
-    } else if(rc < 0) {
-      throw std::runtime_error("error matching string");
-    } else {
-      return 1;
-    }
-  }
-  inline int match_for_split(const char * subject_ptr, const int len) {
-    #ifdef SUPPORT_JIT
-    int rc = pcre2_jit_match(re, // compiled pattern
-                         (PCRE2_SPTR)subject_ptr, // subject
-                         PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
-                         0, // start offset
-                         PCRE2_NOTEMPTY_ATSTART, // disallows empty match at the start, so while loop doesn't go infinitely
-                         match_data,  // match data block
-                         NULL // match context
-    );
-    #else
-    int rc = pcre2_match(re, // compiled pattern
-                         (PCRE2_SPTR)subject_ptr, // subject
-                         PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
-                         0, // start offset
-                         PCRE2_NOTEMPTY_ATSTART, // disallows empty match at the start, so while loop doesn't go infinitely
-                         match_data,  // match data block
-                         NULL // match context
-    );
-    #endif
-    if(rc == PCRE2_ERROR_NOMATCH) {
-      return 0;
-    } else if(rc < 0) {
-      throw std::runtime_error("error matching string");
-    } else {
-      return 1;
-    }
-  }
-  inline PCRE2_SIZE * match_ovector() {
-    return pcre2_get_ovector_pointer(match_data);
-  }
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct pcre2_sub_wrapper {
-  pcre2_code * re;
-  pcre2_match_data * match_data;
-  PCRE2_SPTR replacement;
-  std::vector<char> output;
-  pcre2_sub_wrapper(const char * pattern_ptr, const char * replacement_ptr, bool utf8, bool literal = false) : 
-    output(std::vector<char>(20)) {
-    int errorcode;
-    PCRE2_SIZE erroroffset;
-    uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
-    re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
-                       PCRE2_ZERO_TERMINATED, // length
-                       flags,
-                       &errorcode, // error reporting
-                       &erroroffset, // error reporting
-                       NULL // compile context
-    );
-    if(re == NULL) {
-      PCRE2_UCHAR buffer[256];
-      pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
-      throw std::runtime_error("PCRE2 pattern error: " + std::to_string((int)erroroffset) + std::string((char*)buffer));
-    }
-    #ifdef SUPPORT_JIT
-    pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-    #endif
-    match_data = pcre2_match_data_create_from_pattern(re, NULL);
-    replacement = (PCRE2_SPTR)replacement_ptr;
-  }
-  pcre2_sub_wrapper() : re(nullptr), match_data(nullptr), replacement(nullptr) {}
-  pcre2_sub_wrapper & operator=(const pcre2_sub_wrapper & other) { // copy assignment
-    if(&other == this) return *this;
-    re = pcre2_code_copy_with_tables(other.re);
-    #ifdef SUPPORT_JIT
-    pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-    #endif
-    output = other.output;
-    match_data = pcre2_match_data_create_from_pattern(re, NULL);
-    replacement = other.replacement;
-    return *this;
-  }
-  pcre2_sub_wrapper & operator=(pcre2_sub_wrapper && other) { // move assignment
-    if(&other == this) return *this;
-    re = other.re;
-    replacement = other.replacement;
-    output = std::move(other.output);
-    match_data = other.match_data;
-    other.re = nullptr;
-    other.match_data = nullptr;
-    return *this;
-  }
-  pcre2_sub_wrapper(const pcre2_sub_wrapper& other) { // copy constructor
-    re = pcre2_code_copy_with_tables(other.re);
-    #ifdef SUPPORT_JIT
-    pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-    #endif
-    output = other.output;
-    match_data = pcre2_match_data_create_from_pattern(re, NULL);
-    replacement = other.replacement;
-  }
-  pcre2_sub_wrapper(pcre2_sub_wrapper && other) { // move constructor
-    re = other.re;
-    replacement = other.replacement;
-    output = std::move(other.output);
-    match_data = other.match_data;
-    other.re = nullptr;
-    other.match_data = nullptr;
-  }
-  ~pcre2_sub_wrapper() {
-    if(re != nullptr) pcre2_code_free(re);
-    if(match_data != nullptr) pcre2_match_data_free(match_data);
-  }
-  const char * gsub(const char * subject_ptr) {
-    PCRE2_SIZE output_len = (PCRE2_SIZE)(output.size() - 1);
-    int rc = pcre2_substitute(
-      re,                       // Points to the compiled pattern
-      (PCRE2_SPTR)subject_ptr,  // Points to the subject string
-      PCRE2_ZERO_TERMINATED,    // Length of the subject string
-      0,                        // Offset in the subject at which to start matching
-      PCRE2_SUBSTITUTE_GLOBAL | PCRE2_SUBSTITUTE_OVERFLOW_LENGTH, // Option bits
-      match_data,                     // Points to a match data block, or is NULL
-      NULL,                     // Points to a match context, or is NULL
-      replacement,              // Points to the replacement string
-      PCRE2_ZERO_TERMINATED,    // Length of the replacement string
-      (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
-      &output_len
-    );
-    // std::cout << PCRE2_ERROR_NOMEMORY << std::endl;
-    // std::cout << rc << " " << output_len << std::endl;
-    // std::string errmsg;
-    // errmsg.resize(300);
-    // pcre2_get_error_message(rc, (PCRE2_UCHAR *)&errmsg[0], (PCRE2_SIZE)300);
-    // std::cout << errmsg << std::endl;
-    if(rc == PCRE2_ERROR_NOMEMORY) {
-      output.resize(output_len + 1);
-      rc = pcre2_substitute(
-        re,                       // Points to the compiled pattern
-        (PCRE2_SPTR)subject_ptr,  // Points to the subject string
-        PCRE2_ZERO_TERMINATED,    // Length of the subject string
-        0,                        // Offset in the subject at which to start matching
-        PCRE2_SUBSTITUTE_GLOBAL,  // Option bits
-        match_data,                // Points to a match data block, or is NULL
-        NULL,                     // Points to a match context, or is NULL
-        replacement,              // Points to the replacement string
-        PCRE2_ZERO_TERMINATED,    // Length of the replacement string
-        (PCRE2_UCHAR*)output.data(), //  Points to the output buffer
-        &output_len
-      );
-    }
-    if(rc < 0) {
-      throw std::runtime_error("error matching string: check for matching encoding and proper regex syntax");
-    }
-    return output.data();
-  }
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1025,16 +771,16 @@ struct grepl_worker : public Worker {
   const std::string encode_mode;
   tbb::enumerable_thread_specific<iconv_wrapper> iw_latin1;
   tbb::enumerable_thread_specific<iconv_wrapper> iw_native;
-  tbb::enumerable_thread_specific<pcre2_match_wrapper> pm;
+  tbb::enumerable_thread_specific<sf::pcre2_match_wrapper> pm;
   RStringIndexer * cr;
   int * outptr;
   
   grepl_worker(const std::string encode_mode, iconv_wrapper iw_latin1, iconv_wrapper iw_native, 
-               const pcre2_match_wrapper & pm, RStringIndexer * cr, int * outptr) : 
+               const sf::pcre2_match_wrapper & pm, RStringIndexer * cr, int * outptr) : 
     encode_mode(encode_mode), iw_latin1(iw_latin1), iw_native(iw_native), pm(pm), cr(cr), outptr(outptr) {}
   
   void operator()(std::size_t begin, std::size_t end) {
-    tbb::enumerable_thread_specific<pcre2_match_wrapper>::reference pm_local = pm.local();
+    tbb::enumerable_thread_specific<sf::pcre2_match_wrapper>::reference pm_local = pm.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
     for(size_t i=begin; i<end; ++i) {
@@ -1086,7 +832,7 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode
   
   iconv_wrapper iw_latin1;
   iconv_wrapper iw_native;
-  pcre2_match_wrapper pm;
+  sf::pcre2_match_wrapper pm;
   std::string pattern_str;
   if((encode_mode == "auto")) {
     iw_latin1 = iconv_wrapper("UTF-8", "latin1");
@@ -1099,11 +845,11 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode
       pattern_str = iw_latin1.convertToString(pattern_ptr).second;
       pattern_ptr = pattern_str.c_str();
     }
-    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
+    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
   } else if(encode_mode == "UTF-8") {
-    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
+    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
   }else if(encode_mode == "byte") {
-    pm = pcre2_match_wrapper(pattern_ptr, false, fixed);
+    pm = sf::pcre2_match_wrapper(pattern_ptr, false, fixed);
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
@@ -1163,15 +909,16 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void sf_split_internal(sf_vec_data & ref, pcre2_match_wrapper & p, const char * sptr, int len, cetype_t enc) {
+void sf_split_internal(sf_vec_data & ref, sf::pcre2_match_wrapper & p, const char * sptr, int len, cetype_t enc) {
   int rc = 0;
   bool is_zero_match = false;
-  while((rc = p.match_for_split(sptr, len)) && (*sptr != 0)) {
-    PCRE2_SIZE * ovec = p.match_ovector();
-    ref.emplace_back(sptr, ovec[0], enc);
-    sptr += ovec[1];
-    len -= ovec[1];
-    if(ovec[0] == ovec[1]) is_zero_match = true;
+  size_t begin;
+  size_t end;
+  while((rc = p.match_get_interval(sptr, len, begin, end)) && (*sptr != 0)) {
+    ref.emplace_back(sptr, begin, enc);
+    sptr += end;
+    len -= end;
+    if(begin == end) is_zero_match = true;
   }
   if(!is_zero_match) { // prevents empty match at the end of string
     ref.emplace_back(sptr, enc);
@@ -1184,11 +931,11 @@ struct split_worker : public Worker {
   cetype_t pattern_enc;
   tbb::enumerable_thread_specific<iconv_wrapper> iw_latin1;
   tbb::enumerable_thread_specific<iconv_wrapper> iw_native;
-  tbb::enumerable_thread_specific<pcre2_match_wrapper> pm;
+  tbb::enumerable_thread_specific<sf::pcre2_match_wrapper> pm;
   std::vector<sf_vec_data*> refs;
   RStringIndexer * cr;
   
-  split_worker(const std::string encode_mode, cetype_t pattern_enc, iconv_wrapper iw_latin1, iconv_wrapper iw_native, pcre2_match_wrapper pm,
+  split_worker(const std::string encode_mode, cetype_t pattern_enc, iconv_wrapper iw_latin1, iconv_wrapper iw_native, sf::pcre2_match_wrapper pm,
                std::vector<sf_vec_data*> refs, RStringIndexer * cr) : 
     encode_mode(encode_mode), pattern_enc(pattern_enc), iw_latin1(iw_latin1), iw_native(iw_native), 
     pm(pm), refs(refs), cr(cr) {}
@@ -1196,7 +943,7 @@ struct split_worker : public Worker {
   void operator()(std::size_t begin, std::size_t end) {
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
-    tbb::enumerable_thread_specific<pcre2_match_wrapper>::reference pm_local = pm.local();
+    tbb::enumerable_thread_specific<sf::pcre2_match_wrapper>::reference pm_local = pm.local();
     std::string outstring;
     for(size_t i=begin; i<end; ++i) {
       auto & ref = *refs[i];
@@ -1248,7 +995,7 @@ SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", 
   
   iconv_wrapper iw_latin1;
   iconv_wrapper iw_native;
-  pcre2_match_wrapper pm;
+  sf::pcre2_match_wrapper pm;
   
   if((encode_mode == "auto")) {
     iw_latin1 = iconv_wrapper("UTF-8", "latin1");
@@ -1260,11 +1007,11 @@ SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", 
       pattern_str = iw_latin1.convertToString(pattern_ptr).second;
       pattern_ptr = pattern_str.c_str();
     }
-    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
+    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
   } else if(encode_mode == "UTF-8") {
-    pm = pcre2_match_wrapper(pattern_ptr, true, fixed);
+    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
   }else if(encode_mode == "byte") {
-    pm = pcre2_match_wrapper(pattern_ptr, false, fixed);
+    pm = sf::pcre2_match_wrapper(pattern_ptr, false, fixed);
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
@@ -1303,7 +1050,7 @@ SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", 
         sf_split_internal(ref, pm, q.ptr, q.len, CE_UTF8);
       } else if(encode_mode == "byte") {
         cetype_t new_enc = choose_enc(q.enc, pattern_enc);
-        sf_split_internal(ref, pm, q.ptr,  q.len,new_enc);
+        sf_split_internal(ref, pm, q.ptr, q.len, new_enc);
       } else { // auto
         if(q.enc == CE_NATIVE) {
           if(!is_utf8_locale && !cr.is_ASCII(i)) {
@@ -1340,19 +1087,19 @@ struct gsub_worker : public Worker {
   const std::string encode_mode;
   tbb::enumerable_thread_specific<iconv_wrapper> iw_latin1;
   tbb::enumerable_thread_specific<iconv_wrapper> iw_native;
-  tbb::enumerable_thread_specific<pcre2_sub_wrapper> ps;
+  tbb::enumerable_thread_specific<sf::pcre2_sub_wrapper> ps;
   cetype_t pattern_enc;
   cetype_t replacement_enc;
   RStringIndexer * cr;
   sf_vec_data & ref;
   
   gsub_worker(const std::string encode_mode, iconv_wrapper iw_latin1, iconv_wrapper iw_native, 
-               const pcre2_sub_wrapper & ps, cetype_t pattern_enc, cetype_t replacement_enc, RStringIndexer * cr, sf_vec_data & ref) : 
+               const sf::pcre2_sub_wrapper & ps, cetype_t pattern_enc, cetype_t replacement_enc, RStringIndexer * cr, sf_vec_data & ref) : 
     encode_mode(encode_mode), iw_latin1(iw_latin1), iw_native(iw_native), ps(ps), pattern_enc(pattern_enc), replacement_enc(replacement_enc), 
     cr(cr), ref(ref) {}
   
   void operator()(std::size_t begin, std::size_t end) {
-    tbb::enumerable_thread_specific<pcre2_sub_wrapper>::reference ps_local = ps.local();
+    tbb::enumerable_thread_specific<sf::pcre2_sub_wrapper>::reference ps_local = ps.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
     tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
     std::string outstring;
@@ -1409,7 +1156,7 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string enc
   
   iconv_wrapper iw_latin1;
   iconv_wrapper iw_native;
-  pcre2_sub_wrapper ps;
+  sf::pcre2_sub_wrapper ps;
   
   if((encode_mode == "auto")) {
     iw_latin1 = iconv_wrapper("UTF-8", "latin1");
@@ -1429,11 +1176,11 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string enc
       replacement_str = iw_latin1.convertToString(replacement_ptr).second;
       replacement_ptr = replacement_str.c_str();
     }
-    ps = pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
+    ps = sf::pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
   } else if(encode_mode == "UTF-8") {
-    ps = pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
+    ps = sf::pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
   }else if(encode_mode == "byte") {
-    ps = pcre2_sub_wrapper(pattern_ptr, replacement_ptr, false, fixed);
+    ps = sf::pcre2_sub_wrapper(pattern_ptr, replacement_ptr, false, fixed);
   } else {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }

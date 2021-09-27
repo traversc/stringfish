@@ -5,11 +5,9 @@ echo "stringfish configure script"
 ########################################################
 ### Predefined compile strings for different cases
 
-ADD_LIBS="-L."
+ADD_LIBS=""
 INCLUDE_PATHS=""
-ADD_CFLAGS=""
-PCRE2_SHLIB=""
-PCRE2_CLEAN=""
+LIBPCRE2=""
 
 ########################################################
 ### Configure args
@@ -125,10 +123,7 @@ else
 fi
 
 if test xx$COMPILE_PCRE2 = "xxtrue"; then
-  INCLUDE_PATHS="${INCLUDE_PATHS} -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -IPCRE2"
-  PCRE2_SHLIB="libSFPCRE2.a"
-  PCRE2_CLEAN="\$(LIBPCRE2) libSFPCRE2.a"
-  ADD_LIBS="${ADD_LIBS} -lSFPCRE2"
+  LIBPCRE2="\$(LIBPCRE2)"
 fi
 
 if test xx$with_simd = "xxAVX2"; then
@@ -141,14 +136,10 @@ fi
 
 echo $ADD_LIBS
 echo $INCLUDE_PATHS
-echo $PCRE2_SHLIB
-echo $PCRE2_CLEAN
-echo $ADD_CFLAGS
+echo $LIBPCRE2
 
-AC_SUBST([ADD_CFLAGS], $ADD_CFLAGS)
 AC_SUBST([ADD_LIBS], $ADD_LIBS)
 AC_SUBST([INCLUDE_PATHS], $INCLUDE_PATHS)
-AC_SUBST([PCRE2_SHLIB], $PCRE2_SHLIB)
-AC_SUBST([PCRE2_CLEAN], $PCRE2_CLEAN)
+AC_SUBST([LIBPCRE2], $LIBPCRE2)
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT

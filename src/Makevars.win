@@ -1,5 +1,5 @@
 CXX_STD      = CXX11
-PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT -I. -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -IPCRE2
+PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -I.
 PKG_CXXFLAGS = -DRCPP_PARALLEL_USE_TBB=1
 PKG_LIBS     = -lpthread -L. -lSFPCRE2 $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "RcppParallel::RcppParallelLibs()")
 
@@ -31,10 +31,12 @@ LIBPCRE2 = PCRE2/pcre2_chartables.o \
 	PCRE2/pcre2_valid_utf.o \
 	PCRE2/pcre2_xclass.o
 
+PCRE2_wrapper = PCRE2_wrapper/pcre2_wrapper.o
+	
 $(SHLIB): libSFPCRE2.a
 
-libSFPCRE2.a: $(LIBPCRE2)
-	$(AR) rcs libSFPCRE2.a $(LIBPCRE2)
+libSFPCRE2.a: $(LIBPCRE2) $(PCRE2_wrapper)
+	$(AR) rcs libSFPCRE2.a $(LIBPCRE2) $(PCRE2_wrapper)
 
 clean:
-	rm -f $(SHLIB) $(OBJECTS) $(LIBPCRE2) libSFPCRE2.a
+	rm -f $(SHLIB) $(OBJECTS) $(LIBPCRE2) $(PCRE2_wrapper) libSFPCRE2.a

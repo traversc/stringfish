@@ -1,7 +1,6 @@
-PKG_CFLAGS=@ADD_CFLAGS@
 CXX_STD=CXX11
-PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -I. @INCLUDE_PATHS@
-PKG_LIBS=-lpthread @ADD_LIBS@ $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")
+PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -I. @INCLUDE_PATHS@
+PKG_LIBS=-lpthread -L. -lSFPCRE2 @ADD_LIBS@ $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")
 
 LIBPCRE2 = PCRE2/pcre2_chartables.o \
 	PCRE2/pcre2_auto_possess.o \
@@ -30,11 +29,13 @@ LIBPCRE2 = PCRE2/pcre2_chartables.o \
 	PCRE2/pcre2_ucd.o \
 	PCRE2/pcre2_valid_utf.o \
 	PCRE2/pcre2_xclass.o
+	
+PCRE2_wrapper = PCRE2_wrapper/pcre2_wrapper.o
 
-$(SHLIB): @PCRE2_SHLIB@
+$(SHLIB): libSFPCRE2.a
 
-libSFPCRE2.a: $(LIBPCRE2)
-	$(AR) rcs libSFPCRE2.a $(LIBPCRE2)
+libSFPCRE2.a: @LIBPCRE2@ $(PCRE2_wrapper)
+	$(AR) rcs libSFPCRE2.a @LIBPCRE2@ $(PCRE2_wrapper)
 
 clean:
-	rm -f $(SHLIB) $(OBJECTS) @PCRE2_CLEAN@
+	rm -f $(SHLIB) $(OBJECTS) @LIBPCRE2@ $(PCRE2_wrapper) libSFPCRE2.a
