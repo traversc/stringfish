@@ -6,17 +6,46 @@ suppressMessages(library(stringr, quietly = T))
 suppressMessages(library(rlang, quietly = T))
 
 
+encode_source <- function(file, width = 160) {
+  n <- file.info(file)$size
+  x <- readChar(con = file, nchars=n, useBytes = T)
+  x <- qserialize(x, preset = "custom", algorithm = "zstd", compress_level = 22)
+  x <- base91_encode(x)
+  starts <- seq(1,nchar(x), by=width)
+  x <- sapply(starts, function(i) {
+    substr(x, i, i+width-1)
+  })
+  x <- gsub('\\"', "\'", x)
+  dput(x)
+}
+
+decode_source <- function(x) {
+  x <- paste0(x, collapse = "")
+  x <- gsub("\\'", '\\"', x)
+  x <- base91_decode(x)
+  qdeserialize(x)
+}
+
 myfile <- tempfile()
+print(myfile)
 # qserialize(readLines("~/GoogleDrive/stringfish/tests/tests.cpp"), preset = "custom", compress_level = 22) %>% base91_encode %>% catquo
-qdeserialize(base91_decode('un]"BAAA@QRtHACAAAAAAAY4*AAAv7#aT)WujXRAH#x:&(C@GA*7Phnmjzl;:s3qU>"2Etf<z(=l>C^"X/oWv&e^2CUQT3H7z(lA*_9K2FN8awk&A5{]$,k=`+eNCh$#^5Q*}C"f6s]3.&l9+?L$ZOwXDcewq*Ot.ot;j0L+R%(.K[.&&cI3S}i>.^"J%GRhNYL]Fv<E_~++zWrdZPZI.]s$hOu#^6/E=k;(A3sQ)X=k#Fg/XzFJ[u]_4(4x=jc*z<XH.H+Jb}Y0*dwq1/3T@uJWdmNK/N5qZKTI^|H>$c)&3]ab#,@_fS]|/*`<?|3l$,V+Q|%@}58}[54/25r3Z:Y+srvSJw#[~({|SRkrW%nb/H6je^0qMS{}H`Ngey3dlE?u!c%L{$^v1Wy|mdFKWX{p]kT2./ozv<_nDoz.hkX>40H|6Tz^DP$+;o.$49Eo+i%;=g|Ks[n`"uj6MJuHt.=98RFV/Fk9^4XH"~qfpETtIu}Vm2A"B21JHdi0%2A[R,/MG4Tdp~)B{$@&Th8RSV.?V6G[>(Kxl68&B"E~bNY&xhS0Zs"xa%zE@~^rq9l]B!2_,s>d%:wP;1+H#KLSafoRg%8Tvt@0,wT_v/_n8R=.WVH}]oG&p@1|{F3oE#x!V~:_;2yI2TdzL%~CnMC/GI:as8{(6@0vl~4ivK`*bEzBA2CeNzk?4`X`t2"dqxMmDH8y{ONXLSXZ3W,7bv.H)Oiflr;u_apCApb&x^g`/J!UiV]fDM`jnS=j>yv)>~abGRJ*gP:CYL]tLV"vRd]&>7>D;$V(Fb,M;j.V)PCi,:@.cDmWLly$b{Y_9|ye_v.QT&x9F?1hlq7dX`6X4x1dZPK1n~*!bHJ#)%DZDAaITG)L:LJ.pNsAnGW""FUE1X1CR@K.}z{CTto48LWhSK8ozX85&6VFnW$G3t1xInMjv@|e99U#jQWUIXUYaS$Olipt`[Dm*4ms_Ws6CB|jkpZ]mv~~J<"=nNwHwisOnf#Kq9xkbOkD^$/<M.3UC_&=z9>Kp1X%frR;22h:hM3fCM>krGF:s)23nU?L~V[J=.Mq4KLg&I%&d}Om|sJ/0qFEcxCFe]LhAYgFS*J<]Fi1$qL?w8|vy;H>WSbE[WmTtqNt)DZZ#tOqs1.YI8w_To[1{clMaCdpsH0TUfh*iRq2}46PvbAy`_ynO=3)(7({_]dLG_tD[a[h0vrSPvLgpa&n7]xJV,sJrcEtV*)Uye&kV_s@CB^I0$i$(d$T&e]i`;MBq{i"Nt!YB=,8Iw}n#@bC*F^iX]s{KF+#>wQEN0Tc<ZL5#1X74XsG[WY/(mqj8;,/Dm{),#*HLV0OxWt)=7)7P}d~kMW~aq"w.qu~7m6o,0(|p]S,:.?$KqB:UIl5T$o:Nn5wzj9B5;R@|:}ju6W')) %>% writeLines(con = paste0(myfile, ".cpp"))
-sourceCpp(paste0(myfile, ".cpp"))
+src <- c("un]'BAAA@QRtHACAAAAAAA*h%AAAv7#aT)3t*RQAD;!)+W(7mAAAAABtl5D6in`zuG3Oq}n@dWajczz9yI|Bz5M}2e*hSa0*tJ)AqqDXgr6yEtdA2rh3}=e1B|ok7[/ZFsi[pk~Wpge{v!E1yTQP(pz!FSo!fN[X", 
+  "!n83TP:x.{C(SQv?H[A.~u3|PlL%hO<@eS{e:bzq>30jCFdB$E#rT.hCMD#zl;6[IQ%+tnxm@vFH)KHYf/r2qfDznf}B+,qL%AEASKwWU;6`hRx3F6v`HC=}I35:D/cEY7>Bo])5~8@qJJ%>+$|#=r`4$pJHcYyN", 
+  "Yw9BAfV??<.&+{f6P!W}Fz3&,pYkTkH1]^pZ&Rx$X(4n2n.gHNQuZ]o}$6jJ~5jzFG}F_oE;>{7bnw8U^VO}#ISz7(lE#F+5t,<2V!Bje.D/gz(u<m(@7[ffhRmlp5cua1^{l#c;yy0};34+&NxYp4#^`9f5H|@2", 
+  "(p|<KnBozgLcpnO1[+Ad^SC72^9IpZ2=&s=GqUS#>(5GG$Y=P|_Hx5Xz)M<.n`;wML?K;vaL7KQf>2mr#[htsv=MYXjG}avX~c7:lp$jRDaODn5p&F=7iC6HJ(S+^yd&he99LxcXpa8m{D8|jDzKht//_Ef`mF]t", 
+  "^_N_>&1{l&=dJS%z<p=(+Pl&~%akl@Wu@tMEO:]Q'6+TfS(PXtF[[T'k|3S}DjszM'EZtgo+ZlGA*HAA:CQA/FP#djTD;oAwXO*5|We/;Ux(`QzZYb(e$>?D#pe2jwk'r46m]M{FomM_jz8&#P:+`Nx={+r4q4k,", 
+  "'lxqeYbI[0rjwI4+l+nKdZDhc%Q;]CR|?,HCS!<*zQRTIU_r+s}O8wf,^T$!z%s;m70ehLHQ{cbFhm:ZG99vT0]B>,C|ZB<@i,_|)K;ls<5r&O}@I2!4el_2fIlz=vp1J{{nHi$3`6WdGoC49xPYu@}v&c=rd~e9", 
+  "$TIt'W{L:Jr1[kqu{+uQHOaOk&Jg4/A^A,{NhBu%AM]^wIzi9$C2,HjXAGj3az1bj1CMKNdD')NU/kSt4N9%z40:NpxR#NEXG+W%>+vQcwa&6&XcM=wL5{>LViK;Pie#e4DW.gs@?6$emLK?5vq7]kn5t#=l.g!@", 
+  "$8a^V39@<PuHk{YpMs_.X@7tJ',vT#MPnw?/5v/]edAGh`Fdzxcuz](&FuQn'_W4wa,e?m~v4ce>]=Tjqhh+~`+8sR]$X&Z`jUSH[9CGNXbE]vJw|SNv|&^0VHzb;p|&};vJ2&e@h)GS'LrO@=%M,l]UW;DWK7M.", 
+  "B6JU[B),'0QLzjk<2)4mrz1MRx^Ea/1<I7?Y(OB")
+sourceCpp(code = decode_source(src))
 
 # For a test set, we are using the 500 most common Icelandic words
 # This is a pretty good test set because all Icelandic words can be encoded as either UTF-8 or latin1. It also contains a mix of ASCII and non-ASCII strings
 # https://www.101languages.net/french/most-common-french-words/
 # https://en.wikipedia.org/wiki/ISO/IEC_8859-1
 # qserialize(x[1:500], preset = "custom", compress_level = 22, check_hash=F) %>% base91_encode %>% catquo
-i500_utf8 <- qdeserialize(base91_decode('un]"BAAA@QBtHACAAAAAAAY4TBAABdk1kure+B3AwoFYdc"lM?hVjfxq5F^5OXd&}iic*u6aS*TsW0{Ur6@MdueBh+g1us}b/1]FhtGOG"/1xj=x/iL}2,4f#H8v+r_qDxuL3U2jD!9.@z%wUvNyLRYr4SugnxE`=hw2L+NI<X8w<q*MV&?(?V:FE!?+CimfUy<&u/Bk7xer7/u;syo9Cu:qx7J57?*_/6I@)xs[J;fXOK0B_l"[4EKyF#:{7z_>g.MhpqTM[&1_P.E@i&,j(3{?d|qu!g,fl:gUcJ;U#KwdN,_?zyzU~K@dwS}Evq&qWYNl(?xqk$j/L#s#{3^H)BXxo`t["IA+j+JLI*yEkS0<p4a3PV6<~N!f3v7HyE$j@/I@W0d[sy)p&z)?(k>qJoTLq#eE)}t8G:F`@bQJHYvHND{eS"@QH)m6Rgv,|a)@nV=!*%=<jElUsK5k}4,axCwZ~NB(+e|XA1OKDJ^@koTm4YAx#I8oCQOq}fyfqL>?loMXRva2k*4.V&`n?1j~MzQ1J[9t?IH1jV})PLT^,GA0J#8|VB=n9=cy91B.#J$m{SgJ=mk(5x*ml:j%u.(+_Nk8#/@w]C~PyEVk+tlU.iicD2hk^dYc2am&6_@ges.x$lbUZcTidf.IoKPnSUJp!gab|bS61!4U_u&XTPnEo%eUP&0J.OisuVyZ:|}b|Nl1[pZ:.7wOOS+*I`ojDvw6E#rq"){8i7Pt{.auL+`GVyZ&w!NKtp3k09J+K?;<:}#O/9+N#5DYF<{|cy7P_*9GzY(f4<qR$a&EaGeQ.fIo7_o#X?"_M$d[S]3;vJzM8Eg!;x(]~Nzn<d9`rCeJwn"5zd(npX_UA)yk=F!ue51ac;#>j6wnSlb,/9|fc|Um|^rb7+nr$w0P^x^nKZvO{Sg%@8{?VwNQgF<+cb@)Tf$3Zu(Oou,fN=EpfnqLI{s3$sp62;L!~x_*]5}`cIwJKDXWgY,/09Ft*;xn2,0KDrz/F.S[:)YJ:vsn{?EgMh`)#ss)1OiU9uAdZ6|bH+m6+x]?y;pq7ralfX;>Y?_h<YRdh7we_WP0{8|ft_oAbTodGh.cT9j&~5EgOVX.njZtoMu>f?0f~>9W0Y?K4+t#nNS(qOKox0"x>Tv|WP4vw|~XTlA]=SNJXdDpQdJbv*PL&8yGGEI%2$kqO1S)1i6?BmI,fTJ:=it_P,2.Mb/DeHFKMrTyB&oUjmpJ/SM^/A<{>g1HTVevQ7MeXcr)st{>AD;OQ)5Vwst^1xwdMa?g>?|yFSh9za`XtRat<xL@Pe7boGp6TaNQbu:bPFO7^S}CuzeR~YN5/_r04C:DOQ;KV?"xbkeU%OE814d~wg;FngvPgD$MCo"Oy|V)?6UXQJ!jPK0VqLjoCo9o[nxCOw"S3?;x$(24kGK,q+IkGAgAuW3L{C+WvL;^7tTH9C|2ID"V*3"az8.U&4{RW)2E5(NcJ#q=`[a7XzsUi;FJMv;G]Z@(mj4"_^5)il{eTT"/`r8)QuwW]Wlzm.XMI|$W~$OZ<L6>hV*2M.F(!o/e?&CEF>PK)z:prsTfugRCp(=%K!%hu.BL;*5tkY60XaMxD7rTc^rGIM#0,c*OD$^?,*2vlB%p11+;_gq]CPyXF4P:F#|WW}6nH,_z~l7bz[1n:m|]Nh[>k)A6Y).!U>w"AC}z1EB@AQ)qsB)oX2+N<a&e+@uCjenbJDZ~kqY7J)i7*+y/4B:pR/MbS{|Pgoi<4yzrymz2u(Hqg(`GNdLS{674]i^NIIHz$MVzw/&iJbn^4r0$)4G_<"A:yq<41d^+l/D^11}vs#LY|)1ghwz.6@&qE0!E[GCK[!"HWZxw1{N%IM2[W7X.A&L)u=E;GjSKo;l&}7W/*g<;E,tv[ZFzXCzd47&afxl]96H/Z?[i&YvmbxiMJeCG^Aaa|?j%`2*,@i#1#W!xfvG@/h+Fi{oGa;|c51I8C8wd:HDBosoF)n$IHioJa`RX.b{/KMM{y~N>}w]SjR<!KXER}h`e]WqHRV23+V;}SIx=N<#*xddZ;%wo?L|HnnOppxwc_[Lh.DG+`X4Nc1v{4;0]5$ufCd$vk}b+eLW,PsPc8E$GKSG$R:VznhU$t,kTg+?f"Z<R~:M=B9igR+DVzULgg8$!2^~T"RcU9:ln<8Jd4i$50@^s1{R9lVwJ^Pll*t>TN!=Lee,!77)G){k&p"C)_}`H&B|^B'))
+i500_utf8 <- decode_source('un]"BAAA@QBtHACAAAAAAAY4TBAABdk1kure+B3AwoFYdc"lM?hVjfxq5F^5OXd&}iic*u6aS*TsW0{Ur6@MdueBh+g1us}b/1]FhtGOG"/1xj=x/iL}2,4f#H8v+r_qDxuL3U2jD!9.@z%wUvNyLRYr4SugnxE`=hw2L+NI<X8w<q*MV&?(?V:FE!?+CimfUy<&u/Bk7xer7/u;syo9Cu:qx7J57?*_/6I@)xs[J;fXOK0B_l"[4EKyF#:{7z_>g.MhpqTM[&1_P.E@i&,j(3{?d|qu!g,fl:gUcJ;U#KwdN,_?zyzU~K@dwS}Evq&qWYNl(?xqk$j/L#s#{3^H)BXxo`t["IA+j+JLI*yEkS0<p4a3PV6<~N!f3v7HyE$j@/I@W0d[sy)p&z)?(k>qJoTLq#eE)}t8G:F`@bQJHYvHND{eS"@QH)m6Rgv,|a)@nV=!*%=<jElUsK5k}4,axCwZ~NB(+e|XA1OKDJ^@koTm4YAx#I8oCQOq}fyfqL>?loMXRva2k*4.V&`n?1j~MzQ1J[9t?IH1jV})PLT^,GA0J#8|VB=n9=cy91B.#J$m{SgJ=mk(5x*ml:j%u.(+_Nk8#/@w]C~PyEVk+tlU.iicD2hk^dYc2am&6_@ges.x$lbUZcTidf.IoKPnSUJp!gab|bS61!4U_u&XTPnEo%eUP&0J.OisuVyZ:|}b|Nl1[pZ:.7wOOS+*I`ojDvw6E#rq"){8i7Pt{.auL+`GVyZ&w!NKtp3k09J+K?;<:}#O/9+N#5DYF<{|cy7P_*9GzY(f4<qR$a&EaGeQ.fIo7_o#X?"_M$d[S]3;vJzM8Eg!;x(]~Nzn<d9`rCeJwn"5zd(npX_UA)yk=F!ue51ac;#>j6wnSlb,/9|fc|Um|^rb7+nr$w0P^x^nKZvO{Sg%@8{?VwNQgF<+cb@)Tf$3Zu(Oou,fN=EpfnqLI{s3$sp62;L!~x_*]5}`cIwJKDXWgY,/09Ft*;xn2,0KDrz/F.S[:)YJ:vsn{?EgMh`)#ss)1OiU9uAdZ6|bH+m6+x]?y;pq7ralfX;>Y?_h<YRdh7we_WP0{8|ft_oAbTodGh.cT9j&~5EgOVX.njZtoMu>f?0f~>9W0Y?K4+t#nNS(qOKox0"x>Tv|WP4vw|~XTlA]=SNJXdDpQdJbv*PL&8yGGEI%2$kqO1S)1i6?BmI,fTJ:=it_P,2.Mb/DeHFKMrTyB&oUjmpJ/SM^/A<{>g1HTVevQ7MeXcr)st{>AD;OQ)5Vwst^1xwdMa?g>?|yFSh9za`XtRat<xL@Pe7boGp6TaNQbu:bPFO7^S}CuzeR~YN5/_r04C:DOQ;KV?"xbkeU%OE814d~wg;FngvPgD$MCo"Oy|V)?6UXQJ!jPK0VqLjoCo9o[nxCOw"S3?;x$(24kGK,q+IkGAgAuW3L{C+WvL;^7tTH9C|2ID"V*3"az8.U&4{RW)2E5(NcJ#q=`[a7XzsUi;FJMv;G]Z@(mj4"_^5)il{eTT"/`r8)QuwW]Wlzm.XMI|$W~$OZ<L6>hV*2M.F(!o/e?&CEF>PK)z:prsTfugRCp(=%K!%hu.BL;*5tkY60XaMxD7rTc^rGIM#0,c*OD$^?,*2vlB%p11+;_gq]CPyXF4P:F#|WW}6nH,_z~l7bz[1n:m|]Nh[>k)A6Y).!U>w"AC}z1EB@AQ)qsB)oX2+N<a&e+@uCjenbJDZ~kqY7J)i7*+y/4B:pR/MbS{|Pgoi<4yzrymz2u(Hqg(`GNdLS{674]i^NIIHz$MVzw/&iJbn^4r0$)4G_<"A:yq<41d^+l/D^11}vs#LY|)1ghwz.6@&qE0!E[GCK[!"HWZxw1{N%IM2[W7X.A&L)u=E;GjSKo;l&}7W/*g<;E,tv[ZFzXCzd47&afxl]96H/Z?[i&YvmbxiMJeCG^Aaa|?j%`2*,@i#1#W!xfvG@/h+Fi{oGa;|c51I8C8wd:HDBosoF)n$IHioJa`RX.b{/KMM{y~N>}w]SjR<!KXER}h`e]WqHRV23+V;}SIx=N<#*xddZ;%wo?L|HnnOppxwc_[Lh.DG+`X4Nc1v{4;0]5$ufCd$vk}b+eLW,PsPc8E$GKSG$R:VznhU$t,kTg+?f"Z<R~:M=B9igR+DVzULgg8$!2^~T"RcU9:ln<8Jd4i$50@^s1{R9lVwJ^Pll*t>TN!=Lee,!77)G){k&p"C)_}`H&B|^B')
 i500_latin1 <- iconv(i500_utf8, "UTF-8", "latin1")
 
 utf8_chars <- i500_utf8 %>% strsplit("") %>% unlist %>% unique
