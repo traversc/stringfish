@@ -1,44 +1,44 @@
 suppressMessages(library(stringfish, quietly = T))
 suppressMessages(library(qs, quietly = T))
 suppressMessages(library(dplyr, quietly = T))
-suppressMessages(library(Rcpp, quietly = T))
+# suppressMessages(library(Rcpp, quietly = T))
 suppressMessages(library(stringr, quietly = T))
 suppressMessages(library(rlang, quietly = T))
 
 
-encode_source <- function(file, width = 160) {
-  n <- file.info(file)$size
-  x <- readChar(con = file, nchars=n, useBytes = T)
-  x <- qserialize(x, preset = "custom", algorithm = "zstd", compress_level = 22)
-  x <- base91_encode(x)
-  starts <- seq(1,nchar(x), by=width)
-  x <- sapply(starts, function(i) {
-    substr(x, i, i+width-1)
-  })
-  x <- gsub('\\"', "\'", x)
-  dput(x)
-}
-
-decode_source <- function(x) {
-  x <- paste0(x, collapse = "")
-  x <- gsub("\\'", '\\"', x)
-  x <- base91_decode(x)
-  qdeserialize(x)
-}
+# encode_source <- function(file, width = 160) {
+#   n <- file.info(file)$size
+#   x <- readChar(con = file, nchars=n, useBytes = T)
+#   x <- qserialize(x, preset = "custom", algorithm = "zstd", compress_level = 22)
+#   x <- base91_encode(x)
+#   starts <- seq(1,nchar(x), by=width)
+#   x <- sapply(starts, function(i) {
+#     substr(x, i, i+width-1)
+#   })
+#   x <- gsub('\\"', "\'", x)
+#   dput(x)
+# }
+# 
+# decode_source <- function(x) {
+#   x <- paste0(x, collapse = "")
+#   x <- gsub("\\'", '\\"', x)
+#   x <- base91_decode(x)
+#   qdeserialize(x)
+# }
 
 myfile <- tempfile()
 print(myfile)
 # qserialize(readLines("~/GoogleDrive/stringfish/tests/tests.cpp"), preset = "custom", compress_level = 22) %>% base91_encode %>% catquo
-src <- c("un]'BAAA@QRtHACAAAAAAA*h%AAAv7#aT)3t*RQAD;!)+W(7mAAAAABtl5D6in`zuG3Oq}n@dWajczz9yI|Bz5M}2e*hSa0*tJ)AqqDXgr6yEtdA2rh3}=e1B|ok7[/ZFsi[pk~Wpge{v!E1yTQP(pz!FSo!fN[X", 
-  "!n83TP:x.{C(SQv?H[A.~u3|PlL%hO<@eS{e:bzq>30jCFdB$E#rT.hCMD#zl;6[IQ%+tnxm@vFH)KHYf/r2qfDznf}B+,qL%AEASKwWU;6`hRx3F6v`HC=}I35:D/cEY7>Bo])5~8@qJJ%>+$|#=r`4$pJHcYyN", 
-  "Yw9BAfV??<.&+{f6P!W}Fz3&,pYkTkH1]^pZ&Rx$X(4n2n.gHNQuZ]o}$6jJ~5jzFG}F_oE;>{7bnw8U^VO}#ISz7(lE#F+5t,<2V!Bje.D/gz(u<m(@7[ffhRmlp5cua1^{l#c;yy0};34+&NxYp4#^`9f5H|@2", 
-  "(p|<KnBozgLcpnO1[+Ad^SC72^9IpZ2=&s=GqUS#>(5GG$Y=P|_Hx5Xz)M<.n`;wML?K;vaL7KQf>2mr#[htsv=MYXjG}avX~c7:lp$jRDaODn5p&F=7iC6HJ(S+^yd&he99LxcXpa8m{D8|jDzKht//_Ef`mF]t", 
-  "^_N_>&1{l&=dJS%z<p=(+Pl&~%akl@Wu@tMEO:]Q'6+TfS(PXtF[[T'k|3S}DjszM'EZtgo+ZlGA*HAA:CQA/FP#djTD;oAwXO*5|We/;Ux(`QzZYb(e$>?D#pe2jwk'r46m]M{FomM_jz8&#P:+`Nx={+r4q4k,", 
-  "'lxqeYbI[0rjwI4+l+nKdZDhc%Q;]CR|?,HCS!<*zQRTIU_r+s}O8wf,^T$!z%s;m70ehLHQ{cbFhm:ZG99vT0]B>,C|ZB<@i,_|)K;ls<5r&O}@I2!4el_2fIlz=vp1J{{nHi$3`6WdGoC49xPYu@}v&c=rd~e9", 
-  "$TIt'W{L:Jr1[kqu{+uQHOaOk&Jg4/A^A,{NhBu%AM]^wIzi9$C2,HjXAGj3az1bj1CMKNdD')NU/kSt4N9%z40:NpxR#NEXG+W%>+vQcwa&6&XcM=wL5{>LViK;Pie#e4DW.gs@?6$emLK?5vq7]kn5t#=l.g!@", 
-  "$8a^V39@<PuHk{YpMs_.X@7tJ',vT#MPnw?/5v/]edAGh`Fdzxcuz](&FuQn'_W4wa,e?m~v4ce>]=Tjqhh+~`+8sR]$X&Z`jUSH[9CGNXbE]vJw|SNv|&^0VHzb;p|&};vJ2&e@h)GS'LrO@=%M,l]UW;DWK7M.", 
-  "B6JU[B),'0QLzjk<2)4mrz1MRx^Ea/1<I7?Y(OB")
-sourceCpp(code = decode_source(src))
+# src <- c("un]'BAAA@QRtHACAAAAAAA*h%AAAv7#aT)3t*RQAD;!)+W(7mAAAAABtl5D6in`zuG3Oq}n@dWajczz9yI|Bz5M}2e*hSa0*tJ)AqqDXgr6yEtdA2rh3}=e1B|ok7[/ZFsi[pk~Wpge{v!E1yTQP(pz!FSo!fN[X", 
+#   "!n83TP:x.{C(SQv?H[A.~u3|PlL%hO<@eS{e:bzq>30jCFdB$E#rT.hCMD#zl;6[IQ%+tnxm@vFH)KHYf/r2qfDznf}B+,qL%AEASKwWU;6`hRx3F6v`HC=}I35:D/cEY7>Bo])5~8@qJJ%>+$|#=r`4$pJHcYyN", 
+#   "Yw9BAfV??<.&+{f6P!W}Fz3&,pYkTkH1]^pZ&Rx$X(4n2n.gHNQuZ]o}$6jJ~5jzFG}F_oE;>{7bnw8U^VO}#ISz7(lE#F+5t,<2V!Bje.D/gz(u<m(@7[ffhRmlp5cua1^{l#c;yy0};34+&NxYp4#^`9f5H|@2", 
+#   "(p|<KnBozgLcpnO1[+Ad^SC72^9IpZ2=&s=GqUS#>(5GG$Y=P|_Hx5Xz)M<.n`;wML?K;vaL7KQf>2mr#[htsv=MYXjG}avX~c7:lp$jRDaODn5p&F=7iC6HJ(S+^yd&he99LxcXpa8m{D8|jDzKht//_Ef`mF]t", 
+#   "^_N_>&1{l&=dJS%z<p=(+Pl&~%akl@Wu@tMEO:]Q'6+TfS(PXtF[[T'k|3S}DjszM'EZtgo+ZlGA*HAA:CQA/FP#djTD;oAwXO*5|We/;Ux(`QzZYb(e$>?D#pe2jwk'r46m]M{FomM_jz8&#P:+`Nx={+r4q4k,", 
+#   "'lxqeYbI[0rjwI4+l+nKdZDhc%Q;]CR|?,HCS!<*zQRTIU_r+s}O8wf,^T$!z%s;m70ehLHQ{cbFhm:ZG99vT0]B>,C|ZB<@i,_|)K;ls<5r&O}@I2!4el_2fIlz=vp1J{{nHi$3`6WdGoC49xPYu@}v&c=rd~e9", 
+#   "$TIt'W{L:Jr1[kqu{+uQHOaOk&Jg4/A^A,{NhBu%AM]^wIzi9$C2,HjXAGj3az1bj1CMKNdD')NU/kSt4N9%z40:NpxR#NEXG+W%>+vQcwa&6&XcM=wL5{>LViK;Pie#e4DW.gs@?6$emLK?5vq7]kn5t#=l.g!@", 
+#   "$8a^V39@<PuHk{YpMs_.X@7tJ',vT#MPnw?/5v/]edAGh`Fdzxcuz](&FuQn'_W4wa,e?m~v4ce>]=Tjqhh+~`+8sR]$X&Z`jUSH[9CGNXbE]vJw|SNv|&^0VHzb;p|&};vJ2&e@h)GS'LrO@=%M,l]UW;DWK7M.", 
+#   "B6JU[B),'0QLzjk<2)4mrz1MRx^Ea/1<I7?Y(OB")
+# sourceCpp(code = decode_source(src))
 
 # For a test set, we are using the 500 most common Icelandic words
 # This is a pretty good test set because all Icelandic words can be encoded as either UTF-8 or latin1. It also contains a mix of ASCII and non-ASCII strings
@@ -303,11 +303,12 @@ for(.j in 1:4) {
       # stopifnot(string_identical(x2, toupper(i500_utf8)))
     }
     
-    catn("Rcpp test with sf_alternate_case")
-    for(. in 1:ntests) {
-      x <- c("hello world", "HELLO WORLD")
-      string_identical(sf_alternate_case(x), c("hElLo wOrLd", "hElLo wOrLd"))
-    }
+    # can't compile Rcpp inline on github actions for some reason
+    # catn("Rcpp test with sf_alternate_case")
+    # for(. in 1:ntests) {
+    #   x <- c("hello world", "HELLO WORLD")
+    #   string_identical(sf_alternate_case(x), c("hElLo wOrLd", "hElLo wOrLd"))
+    # }
     
     catn("sf_trim")
     for(. in 1:ntests) {
