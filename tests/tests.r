@@ -199,6 +199,19 @@ for(.j in 1:4) {
       stopifnot(sf_grepl(i500_latin1, "[a-f]", nthreads = nt) == grepl("[a-f]", i500_latin1))
     }
     
+    catn("sf_grepl fixed")
+    for(. in 1:ntests) {
+      p <- rawToChar(as.raw(c(0xc3, 0xb6)))
+      Encoding(p) <- "UTF-8"
+      p2 <- rawToChar(as.raw(c(0xf6)))
+      Encoding(p2) <- "latin1"
+      stopifnot(all(sf_grepl(i500_utf8, p, fixed = T, nthreads = nt) == grepl(p, i500_utf8)))
+      stopifnot(all(sf_grepl(i500_latin1, p2, fixed = T,  nthreads = nt) == grepl(p2, i500_latin1)))
+      
+      stopifnot(sf_grepl(i500_utf8, "[a-f]", nthreads = nt) == grepl("[a-f]", i500_utf8))
+      stopifnot(sf_grepl(i500_latin1, "[a-f]", nthreads = nt) == grepl("[a-f]", i500_latin1))
+    }
+    
     catn("sf_gsub")
     for(. in 1:ntests) {
       p <- rawToChar(as.raw(c(0x5e, 0xc3, 0xb6, 0x2e, 0x2b, 0x28, 0x2e, 0x29, 0x24)))
