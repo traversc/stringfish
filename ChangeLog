@@ -1,3 +1,6 @@
+Version 0.15.3 (2021-9-26)
+   * Fix to https://github.com/traversc/stringfish/issues/7
+
 Version 0.15.2 (2021-7-23)
    * Change ALTVEC_DATAPTR to DATAPTR to conform to changes in the API
 
