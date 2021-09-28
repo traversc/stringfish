@@ -29,6 +29,10 @@ void set_is_utf8_locale() {is_utf8_locale = true;}
 // [[Rcpp::export(rng = false)]]
 void unset_is_utf8_locale() {is_utf8_locale = false;}
 
+// [[Rcpp::export(rng = false)]]
+bool get_is_utf8_locale() {return is_utf8_locale;}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // tbb helper functions
 
@@ -84,6 +88,14 @@ void check_simd() {
 #include "xxhash/xxhash.c"
 
 #include "PCRE2_wrapper/pcre2_wrapper.h"
+// [[Rcpp::export(rng = false)]]
+List get_pcre2_info() {
+  auto result = sf::pcre2_info();
+  return List::create(
+    _["pcre2_header_version"] = IntegerVector::create(result.first),
+    _["is_bundled"] = LogicalVector::create(result.second)
+  );
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // iconv helper class

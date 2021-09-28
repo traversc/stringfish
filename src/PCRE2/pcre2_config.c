@@ -75,7 +75,7 @@ Returns:           0 if a numerical value is returned
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_config(uint32_t what, void *where)
+bundled_pcre2_config(uint32_t what, void *where)
 {
 if (where == NULL)  /* Requests a length */
   {
@@ -187,7 +187,7 @@ switch (what)
   break;
 
   /* This is now obsolete. The stack is no longer used via recursion for
-  handling backtracking in pcre2_match(). */
+  handling backtracking in bundled_pcre2_match(). */
 
   case PCRE2_CONFIG_STACKRECURSE:
   *((uint32_t *)where) = 0;

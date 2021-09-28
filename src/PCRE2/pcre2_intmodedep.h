@@ -601,7 +601,7 @@ typedef struct pcre2_real_convert_context {
 } pcre2_real_convert_context;
 
 /* The real compiled code structure. The type for the blocksize field is
-defined specially because it is required in pcre2_serialize_decode() when
+defined specially because it is required in bundled_pcre2_serialize_decode() when
 copying the size from possibly unaligned memory into a variable of the same
 type. Use a macro rather than a typedef to avoid compiler warnings when this
 file is included multiple times by pcre2test. LOOKBEHIND_MAX specifies the
@@ -622,7 +622,7 @@ typedef struct pcre2_real_code {
   uint8_t  start_bitmap[32];      /* Bitmap for starting code unit < 256 */
   CODE_BLOCKSIZE_TYPE blocksize;  /* Total (bytes) that was malloc-ed */
   uint32_t magic_number;          /* Paranoid and endianness check */
-  uint32_t compile_options;       /* Options passed to pcre2_compile() */
+  uint32_t compile_options;       /* Options passed to bundled_pcre2_compile() */
   uint32_t overall_options;       /* Options after processing the pattern */
   uint32_t extra_options;         /* Taken from compile_context */
   uint32_t flags;                 /* Various state flags */
@@ -643,7 +643,7 @@ typedef struct pcre2_real_code {
 
 /* The real match data structure. Define ovector as large as it can ever
 actually be so that array bound checkers don't grumble. Memory for this
-structure is obtained by calling pcre2_match_data_create(), which sets the size
+structure is obtained by calling bundled_pcre2_match_data_create(), which sets the size
 as the offset of ovector plus a pair of elements for each capturable string, so
 the size varies from call to call. As the maximum number of capturing
 subpatterns is 65535 we must allow for 65536 strings to include the overall
@@ -818,7 +818,7 @@ typedef struct heapframe {
   /* The rest have to be copied from the previous frame whenever a new frame
   becomes current. The final field is specified as a large vector so that
   runtime array bound checks don't catch references to it. However, for any
-  specific call to pcre2_match() the memory allocated for each frame structure
+  specific call to bundled_pcre2_match() the memory allocated for each frame structure
   allows for exactly the right size ovector for the number of capturing
   parentheses. (See also the comment for pcre2_real_match_data above.) */
 
@@ -839,7 +839,7 @@ typedef char check_heapframe_size[
   ((sizeof(heapframe) % sizeof(PCRE2_SIZE)) == 0)? (+1):(-1)];
 
 /* Structure for passing "static" information around between the functions
-doing traditional NFA matching (pcre2_match() and friends). */
+doing traditional NFA matching (bundled_pcre2_match() and friends). */
 
 typedef struct match_block {
   pcre2_memctl memctl;            /* For general use */

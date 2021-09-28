@@ -70,14 +70,14 @@ Returns:         if successful: zero
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_copy_byname(pcre2_match_data *match_data, PCRE2_SPTR stringname,
+bundled_pcre2_substring_copy_byname(pcre2_match_data *match_data, PCRE2_SPTR stringname,
   PCRE2_UCHAR *buffer, PCRE2_SIZE *sizeptr)
 {
 PCRE2_SPTR first, last, entry;
 int failrc, entrysize;
 if (match_data->matchedby == PCRE2_MATCHEDBY_DFA_INTERPRETER)
   return PCRE2_ERROR_DFA_UFUNC;
-entrysize = pcre2_substring_nametable_scan(match_data->code, stringname,
+entrysize = bundled_pcre2_substring_nametable_scan(match_data->code, stringname,
   &first, &last);
 if (entrysize < 0) return entrysize;
 failrc = PCRE2_ERROR_UNAVAILABLE;
@@ -87,7 +87,7 @@ for (entry = first; entry <= last; entry += entrysize)
   if (n < match_data->oveccount)
     {
     if (match_data->ovector[n*2] != PCRE2_UNSET)
-      return pcre2_substring_copy_bynumber(match_data, n, buffer, sizeptr);
+      return bundled_pcre2_substring_copy_bynumber(match_data, n, buffer, sizeptr);
     failrc = PCRE2_ERROR_UNSET;
     }
   }
@@ -118,12 +118,12 @@ Returns:         if successful: 0
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_copy_bynumber(pcre2_match_data *match_data,
+bundled_pcre2_substring_copy_bynumber(pcre2_match_data *match_data,
   uint32_t stringnumber, PCRE2_UCHAR *buffer, PCRE2_SIZE *sizeptr)
 {
 int rc;
 PCRE2_SIZE size;
-rc = pcre2_substring_length_bynumber(match_data, stringnumber, &size);
+rc = bundled_pcre2_substring_length_bynumber(match_data, stringnumber, &size);
 if (rc < 0) return rc;
 if (size + 1 > *sizeptr) return PCRE2_ERROR_NOMEMORY;
 memcpy(buffer, match_data->subject + match_data->ovector[stringnumber*2],
@@ -158,14 +158,14 @@ Returns:         if successful: zero
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_get_byname(pcre2_match_data *match_data,
+bundled_pcre2_substring_get_byname(pcre2_match_data *match_data,
   PCRE2_SPTR stringname, PCRE2_UCHAR **stringptr, PCRE2_SIZE *sizeptr)
 {
 PCRE2_SPTR first, last, entry;
 int failrc, entrysize;
 if (match_data->matchedby == PCRE2_MATCHEDBY_DFA_INTERPRETER)
   return PCRE2_ERROR_DFA_UFUNC;
-entrysize = pcre2_substring_nametable_scan(match_data->code, stringname,
+entrysize = bundled_pcre2_substring_nametable_scan(match_data->code, stringname,
   &first, &last);
 if (entrysize < 0) return entrysize;
 failrc = PCRE2_ERROR_UNAVAILABLE;
@@ -175,7 +175,7 @@ for (entry = first; entry <= last; entry += entrysize)
   if (n < match_data->oveccount)
     {
     if (match_data->ovector[n*2] != PCRE2_UNSET)
-      return pcre2_substring_get_bynumber(match_data, n, stringptr, sizeptr);
+      return bundled_pcre2_substring_get_bynumber(match_data, n, stringptr, sizeptr);
     failrc = PCRE2_ERROR_UNSET;
     }
   }
@@ -206,13 +206,13 @@ Returns:         if successful: 0
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_get_bynumber(pcre2_match_data *match_data,
+bundled_pcre2_substring_get_bynumber(pcre2_match_data *match_data,
   uint32_t stringnumber, PCRE2_UCHAR **stringptr, PCRE2_SIZE *sizeptr)
 {
 int rc;
 PCRE2_SIZE size;
 PCRE2_UCHAR *yield;
-rc = pcre2_substring_length_bynumber(match_data, stringnumber, &size);
+rc = bundled_pcre2_substring_length_bynumber(match_data, stringnumber, &size);
 if (rc < 0) return rc;
 yield = PRIV(memctl_malloc)(sizeof(pcre2_memctl) +
   (size + 1)*PCRE2_CODE_UNIT_WIDTH, (pcre2_memctl *)match_data);
@@ -238,7 +238,7 @@ Returns:      nothing
 */
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_substring_free(PCRE2_UCHAR *string)
+bundled_pcre2_substring_free(PCRE2_UCHAR *string)
 {
 if (string != NULL)
   {
@@ -265,14 +265,14 @@ Returns:          0 if successful, else a negative error number
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_length_byname(pcre2_match_data *match_data,
+bundled_pcre2_substring_length_byname(pcre2_match_data *match_data,
   PCRE2_SPTR stringname, PCRE2_SIZE *sizeptr)
 {
 PCRE2_SPTR first, last, entry;
 int failrc, entrysize;
 if (match_data->matchedby == PCRE2_MATCHEDBY_DFA_INTERPRETER)
   return PCRE2_ERROR_DFA_UFUNC;
-entrysize = pcre2_substring_nametable_scan(match_data->code, stringname,
+entrysize = bundled_pcre2_substring_nametable_scan(match_data->code, stringname,
   &first, &last);
 if (entrysize < 0) return entrysize;
 failrc = PCRE2_ERROR_UNAVAILABLE;
@@ -282,7 +282,7 @@ for (entry = first; entry <= last; entry += entrysize)
   if (n < match_data->oveccount)
     {
     if (match_data->ovector[n*2] != PCRE2_UNSET)
-      return pcre2_substring_length_bynumber(match_data, n, sizeptr);
+      return bundled_pcre2_substring_length_bynumber(match_data, n, sizeptr);
     failrc = PCRE2_ERROR_UNSET;
     }
   }
@@ -312,7 +312,7 @@ Returns:         if successful: 0
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_length_bynumber(pcre2_match_data *match_data,
+bundled_pcre2_substring_length_bynumber(pcre2_match_data *match_data,
   uint32_t stringnumber, PCRE2_SIZE *sizeptr)
 {
 PCRE2_SIZE left, right;
@@ -333,7 +333,7 @@ if (match_data->matchedby != PCRE2_MATCHEDBY_DFA_INTERPRETER)
   if (match_data->ovector[stringnumber*2] == PCRE2_UNSET)
     return PCRE2_ERROR_UNSET;
   }
-else  /* Matched using pcre2_dfa_match() */
+else  /* Matched using bundled_pcre2_dfa_match() */
   {
   if (stringnumber >= match_data->oveccount) return PCRE2_ERROR_UNAVAILABLE;
   if (count != 0 && stringnumber >= (uint32_t)count) return PCRE2_ERROR_UNSET;
@@ -369,7 +369,7 @@ Returns:         if successful: 0
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_list_get(pcre2_match_data *match_data, PCRE2_UCHAR ***listptr,
+bundled_pcre2_substring_list_get(pcre2_match_data *match_data, PCRE2_UCHAR ***listptr,
   PCRE2_SIZE **lengthsptr)
 {
 int i, count, count2;
@@ -437,12 +437,12 @@ return 0;
 *************************************************/
 
 /*
-Argument:     the result of a previous pcre2_substring_list_get()
+Argument:     the result of a previous bundled_pcre2_substring_list_get()
 Returns:      nothing
 */
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_substring_list_free(PCRE2_SPTR *list)
+bundled_pcre2_substring_list_free(PCRE2_SPTR *list)
 {
 if (list != NULL)
   {
@@ -477,7 +477,7 @@ Returns:      PCRE2_ERROR_NOSUBSTRING if the name is not found
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_nametable_scan(const pcre2_code *code, PCRE2_SPTR stringname,
+bundled_pcre2_substring_nametable_scan(const pcre2_code *code, PCRE2_SPTR stringname,
   PCRE2_SPTR *firstptr, PCRE2_SPTR *lastptr)
 {
 uint16_t bot = 0;
@@ -524,7 +524,7 @@ return PCRE2_ERROR_NOSUBSTRING;
 *           Find number for named string         *
 *************************************************/
 
-/* This function is a convenience wrapper for pcre2_substring_nametable_scan()
+/* This function is a convenience wrapper for bundled_pcre2_substring_nametable_scan()
 when it is known that names are unique. If there are duplicate names, it is not
 defined which number is returned.
 
@@ -538,10 +538,10 @@ Returns:      the number of the named parenthesis, or a negative number
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substring_number_from_name(const pcre2_code *code,
+bundled_pcre2_substring_number_from_name(const pcre2_code *code,
   PCRE2_SPTR stringname)
 {
-return pcre2_substring_nametable_scan(code, stringname, NULL, NULL);
+return bundled_pcre2_substring_nametable_scan(code, stringname, NULL, NULL);
 }
 
 /* End of pcre2_substring.c */

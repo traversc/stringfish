@@ -144,10 +144,10 @@ property values. This must follow the setting of PCRE2_EXP_DECL above. */
 #include "pcre2_ucp.h"
 
 /* When PCRE2 is compiled as a C++ library, the subject pointer can be replaced
-with a custom type. This makes it possible, for example, to allow pcre2_match()
+with a custom type. This makes it possible, for example, to allow bundled_pcre2_match()
 to process subject strings that are discontinuous by using a smart pointer
 class. It must always be possible to inspect all of the subject string in
-pcre2_match() because of the way it backtracks. */
+bundled_pcre2_match() because of the way it backtracks. */
 
 /* WARNING: This is as yet untested for PCRE2. */
 
@@ -156,7 +156,7 @@ pcre2_match() because of the way it backtracks. */
 #define PCRE2_SPTR CUSTOM_SUBJECT_PTR
 #endif
 
-/* When checking for integer overflow in pcre2_compile(), we need to handle
+/* When checking for integer overflow in bundled_pcre2_compile(), we need to handle
 large integers. If a 64-bit integer type is available, we can use that.
 Otherwise we have to cast to double, which of course requires floating point
 arithmetic. Handle this by defining a macro for the appropriate type. */
@@ -221,7 +221,7 @@ not rely on this. */
 #define COMPILE_ERROR_BASE 100
 
 /* The initial frames vector for remembering backtracking points in
-pcre2_match() is allocated on the system stack, of this size (bytes). The size
+bundled_pcre2_match() is allocated on the system stack, of this size (bytes). The size
 must be a multiple of sizeof(PCRE2_SPTR) in all environments, so making it a
 multiple of 8 is best. Typical frame sizes are a few hundred bytes (it depends
 on the number of capturing parentheses) so 20KiB handles quite a few frames. A
@@ -534,9 +534,9 @@ bytes in a code unit in that mode. */
 
 /* Values for the matchedby field in a match data block. */
 
-enum { PCRE2_MATCHEDBY_INTERPRETER,     /* pcre2_match() */
-       PCRE2_MATCHEDBY_DFA_INTERPRETER, /* pcre2_dfa_match() */
-       PCRE2_MATCHEDBY_JIT };           /* pcre2_jit_match() */
+enum { PCRE2_MATCHEDBY_INTERPRETER,     /* bundled_pcre2_match() */
+       PCRE2_MATCHEDBY_DFA_INTERPRETER, /* bundled_pcre2_dfa_match() */
+       PCRE2_MATCHEDBY_JIT };           /* bundled_pcre2_jit_match() */
 
 /* Values for the flags field in a match data block. */
 

@@ -39,7 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-/* This module contains the external function pcre2_dfa_match(), which is an
+/* This module contains the external function bundled_pcre2_dfa_match(), which is an
 alternative matching function that uses a sort of DFA algorithm (not a true
 FSM). This is NOT Perl-compatible, but it has advantages in certain
 applications. */
@@ -3237,7 +3237,7 @@ Returns:        > 0 => number of match offset pairs placed in offsets
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_dfa_match(const pcre2_code *code, PCRE2_SPTR subject, PCRE2_SIZE length,
+bundled_pcre2_dfa_match(const pcre2_code *code, PCRE2_SPTR subject, PCRE2_SIZE length,
   PCRE2_SIZE start_offset, uint32_t options, pcre2_match_data *match_data,
   pcre2_match_context *mcontext, int *workspace, PCRE2_SIZE wscount)
 {
@@ -3327,7 +3327,7 @@ if ((re->flags & PCRE2_MODE_MASK) != PCRE2_CODE_UNIT_WIDTH/8)
 /* PCRE2_NOTEMPTY and PCRE2_NOTEMPTY_ATSTART are match-time flags in the
 options variable for this function. Users of PCRE2 who are not calling the
 function directly would like to have a way of setting these flags, in the same
-way that they can set pcre2_compile() flags like PCRE2_NO_AUTOPOSSESS with
+way that they can set bundled_pcre2_compile() flags like PCRE2_NO_AUTOPOSSESS with
 constructions like (*NO_AUTOPOSSESS). To enable this, (*NOTEMPTY) and
 (*NOTEMPTY_ATSTART) set bits in the pattern's "flag" function which can now be
 transferred to the options for this function. The bits are guaranteed to be

@@ -1,5 +1,5 @@
 CXX_STD=CXX11
-PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -I. @INCLUDE_PATHS@
+PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H @PCRE2_BUNDLED@ -I. @INCLUDE_PATHS@
 PKG_LIBS=-lpthread -L. -lSFPCRE2 @ADD_LIBS@ $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")
 
 LIBPCRE2 = PCRE2/pcre2_chartables.o \
@@ -28,7 +28,9 @@ LIBPCRE2 = PCRE2/pcre2_chartables.o \
 	PCRE2/pcre2_tables.o \
 	PCRE2/pcre2_ucd.o \
 	PCRE2/pcre2_valid_utf.o \
-	PCRE2/pcre2_xclass.o
+	PCRE2/pcre2_xclass.o \
+	PCRE2/pcre2_is_bundled.o
+
 	
 PCRE2_wrapper = PCRE2_wrapper/pcre2_wrapper.o
 

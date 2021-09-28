@@ -96,9 +96,13 @@ the relevant values must be provided by some other means. */
 #ifdef __cplusplus
 extern "C" {
 #endif
+  
 
-/* The following option bits can be passed to pcre2_compile(), pcre2_match(),
-or pcre2_dfa_match(). PCRE2_NO_UTF_CHECK affects only the function to which it
+// TC -- returns 1 or 0
+int pcre2_is_bundled();
+
+/* The following option bits can be passed to bundled_pcre2_compile(), bundled_pcre2_match(),
+or bundled_pcre2_dfa_match(). PCRE2_NO_UTF_CHECK affects only the function to which it
 is passed. Put these bits at the most significant end of the options word so
 others can be added next to them */
 
@@ -106,14 +110,14 @@ others can be added next to them */
 #define PCRE2_NO_UTF_CHECK        0x40000000u
 #define PCRE2_ENDANCHORED         0x20000000u
 
-/* The following option bits can be passed only to pcre2_compile(). However,
+/* The following option bits can be passed only to bundled_pcre2_compile(). However,
 they may affect compilation, JIT compilation, and/or interpretive execution.
 The following tags indicate which:
 
-C   alters what is compiled by pcre2_compile()
-J   alters what is compiled by pcre2_jit_compile()
-M   is inspected during pcre2_match() execution
-D   is inspected during pcre2_dfa_match() execution
+C   alters what is compiled by bundled_pcre2_compile()
+J   alters what is compiled by bundled_pcre2_jit_compile()
+M   is inspected during bundled_pcre2_match() execution
+D   is inspected during bundled_pcre2_dfa_match() execution
 */
 
 #define PCRE2_ALLOW_EMPTY_CLASS   0x00000001u  /* C       */
@@ -153,18 +157,18 @@ D   is inspected during pcre2_dfa_match() execution
 #define PCRE2_EXTRA_ESCAPED_CR_IS_LF         0x00000010u  /* C */
 #define PCRE2_EXTRA_ALT_BSUX                 0x00000020u  /* C */
 
-/* These are for pcre2_jit_compile(). */
+/* These are for bundled_pcre2_jit_compile(). */
 
 #define PCRE2_JIT_COMPLETE        0x00000001u  /* For full matching */
 #define PCRE2_JIT_PARTIAL_SOFT    0x00000002u
 #define PCRE2_JIT_PARTIAL_HARD    0x00000004u
 #define PCRE2_JIT_INVALID_UTF     0x00000100u
 
-/* These are for pcre2_match(), pcre2_dfa_match(), pcre2_jit_match(), and
-pcre2_substitute(). Some are allowed only for one of the functions, and in
+/* These are for bundled_pcre2_match(), bundled_pcre2_dfa_match(), bundled_pcre2_jit_match(), and
+bundled_pcre2_substitute(). Some are allowed only for one of the functions, and in
 these cases it is noted below. Note that PCRE2_ANCHORED, PCRE2_ENDANCHORED and
 PCRE2_NO_UTF_CHECK can also be passed to these functions (though
-pcre2_jit_match() ignores the latter since it bypasses all sanity checks). */
+bundled_pcre2_jit_match() ignores the latter since it bypasses all sanity checks). */
 
 #define PCRE2_NOTBOL                      0x00000001u
 #define PCRE2_NOTEOL                      0x00000002u
@@ -172,20 +176,20 @@ pcre2_jit_match() ignores the latter since it bypasses all sanity checks). */
 #define PCRE2_NOTEMPTY_ATSTART            0x00000008u  /* ) adjacent to each other. */
 #define PCRE2_PARTIAL_SOFT                0x00000010u
 #define PCRE2_PARTIAL_HARD                0x00000020u
-#define PCRE2_DFA_RESTART                 0x00000040u  /* pcre2_dfa_match() only */
-#define PCRE2_DFA_SHORTEST                0x00000080u  /* pcre2_dfa_match() only */
-#define PCRE2_SUBSTITUTE_GLOBAL           0x00000100u  /* pcre2_substitute() only */
-#define PCRE2_SUBSTITUTE_EXTENDED         0x00000200u  /* pcre2_substitute() only */
-#define PCRE2_SUBSTITUTE_UNSET_EMPTY      0x00000400u  /* pcre2_substitute() only */
-#define PCRE2_SUBSTITUTE_UNKNOWN_UNSET    0x00000800u  /* pcre2_substitute() only */
-#define PCRE2_SUBSTITUTE_OVERFLOW_LENGTH  0x00001000u  /* pcre2_substitute() only */
-#define PCRE2_NO_JIT                      0x00002000u  /* Not for pcre2_dfa_match() */
+#define PCRE2_DFA_RESTART                 0x00000040u  /* bundled_pcre2_dfa_match() only */
+#define PCRE2_DFA_SHORTEST                0x00000080u  /* bundled_pcre2_dfa_match() only */
+#define PCRE2_SUBSTITUTE_GLOBAL           0x00000100u  /* bundled_pcre2_substitute() only */
+#define PCRE2_SUBSTITUTE_EXTENDED         0x00000200u  /* bundled_pcre2_substitute() only */
+#define PCRE2_SUBSTITUTE_UNSET_EMPTY      0x00000400u  /* bundled_pcre2_substitute() only */
+#define PCRE2_SUBSTITUTE_UNKNOWN_UNSET    0x00000800u  /* bundled_pcre2_substitute() only */
+#define PCRE2_SUBSTITUTE_OVERFLOW_LENGTH  0x00001000u  /* bundled_pcre2_substitute() only */
+#define PCRE2_NO_JIT                      0x00002000u  /* Not for bundled_pcre2_dfa_match() */
 #define PCRE2_COPY_MATCHED_SUBJECT        0x00004000u
-#define PCRE2_SUBSTITUTE_LITERAL          0x00008000u  /* pcre2_substitute() only */
-#define PCRE2_SUBSTITUTE_MATCHED          0x00010000u  /* pcre2_substitute() only */
-#define PCRE2_SUBSTITUTE_REPLACEMENT_ONLY 0x00020000u  /* pcre2_substitute() only */
+#define PCRE2_SUBSTITUTE_LITERAL          0x00008000u  /* bundled_pcre2_substitute() only */
+#define PCRE2_SUBSTITUTE_MATCHED          0x00010000u  /* bundled_pcre2_substitute() only */
+#define PCRE2_SUBSTITUTE_REPLACEMENT_ONLY 0x00020000u  /* bundled_pcre2_substitute() only */
 
-/* Options for pcre2_pattern_convert(). */
+/* Options for bundled_pcre2_pattern_convert(). */
 
 #define PCRE2_CONVERT_UTF                    0x00000001u
 #define PCRE2_CONVERT_NO_UTF_CHECK           0x00000002u
@@ -209,8 +213,8 @@ greater than zero. */
 #define PCRE2_BSR_UNICODE         1
 #define PCRE2_BSR_ANYCRLF         2
 
-/* Error codes for pcre2_compile(). Some of these are also used by
-pcre2_pattern_convert(). */
+/* Error codes for bundled_pcre2_compile(). Some of these are also used by
+bundled_pcre2_pattern_convert(). */
 
 #define PCRE2_ERROR_END_BACKSLASH                  101
 #define PCRE2_ERROR_END_BACKSLASH_C                102
@@ -399,7 +403,7 @@ released, the numbers must not be changed. */
 #define PCRE2_ERROR_DFA_UINVALID_UTF  (-66)
 
 
-/* Request types for pcre2_pattern_info() */
+/* Request types for bundled_pcre2_pattern_info() */
 
 #define PCRE2_INFO_ALLOPTIONS            0
 #define PCRE2_INFO_ARGOPTIONS            1
@@ -430,7 +434,7 @@ released, the numbers must not be changed. */
 #define PCRE2_INFO_HEAPLIMIT            25
 #define PCRE2_INFO_EXTRAOPTIONS         26
 
-/* Request types for pcre2_config(). */
+/* Request types for bundled_pcre2_config(). */
 
 #define PCRE2_CONFIG_BSR                     0
 #define PCRE2_CONFIG_JIT                     1
@@ -564,64 +568,64 @@ expanded for each width below. Start with functions that give general
 information. */
 
 #define PCRE2_GENERAL_INFO_FUNCTIONS \
-PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION pcre2_config(uint32_t, void *);
+PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION bundled_pcre2_config(uint32_t, void *);
 
 
 /* Functions for manipulating contexts. */
 
 #define PCRE2_GENERAL_CONTEXT_FUNCTIONS \
 PCRE2_EXP_DECL pcre2_general_context PCRE2_CALL_CONVENTION \
-  *pcre2_general_context_copy(pcre2_general_context *); \
+  *bundled_pcre2_general_context_copy(pcre2_general_context *); \
 PCRE2_EXP_DECL pcre2_general_context PCRE2_CALL_CONVENTION \
-  *pcre2_general_context_create(void *(*)(PCRE2_SIZE, void *), \
+  *bundled_pcre2_general_context_create(void *(*)(PCRE2_SIZE, void *), \
     void (*)(void *, void *), void *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_general_context_free(pcre2_general_context *);
+  bundled_pcre2_general_context_free(pcre2_general_context *);
 
 #define PCRE2_COMPILE_CONTEXT_FUNCTIONS \
 PCRE2_EXP_DECL pcre2_compile_context PCRE2_CALL_CONVENTION \
-  *pcre2_compile_context_copy(pcre2_compile_context *); \
+  *bundled_pcre2_compile_context_copy(pcre2_compile_context *); \
 PCRE2_EXP_DECL pcre2_compile_context PCRE2_CALL_CONVENTION \
-  *pcre2_compile_context_create(pcre2_general_context *);\
+  *bundled_pcre2_compile_context_create(pcre2_general_context *);\
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_compile_context_free(pcre2_compile_context *); \
+  bundled_pcre2_compile_context_free(pcre2_compile_context *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_bsr(pcre2_compile_context *, uint32_t); \
+  bundled_pcre2_set_bsr(pcre2_compile_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_character_tables(pcre2_compile_context *, const uint8_t *); \
+  bundled_pcre2_set_character_tables(pcre2_compile_context *, const uint8_t *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_compile_extra_options(pcre2_compile_context *, uint32_t); \
+  bundled_pcre2_set_compile_extra_options(pcre2_compile_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_max_pattern_length(pcre2_compile_context *, PCRE2_SIZE); \
+  bundled_pcre2_set_max_pattern_length(pcre2_compile_context *, PCRE2_SIZE); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_newline(pcre2_compile_context *, uint32_t); \
+  bundled_pcre2_set_newline(pcre2_compile_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_parens_nest_limit(pcre2_compile_context *, uint32_t); \
+  bundled_pcre2_set_parens_nest_limit(pcre2_compile_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_compile_recursion_guard(pcre2_compile_context *, \
+  bundled_pcre2_set_compile_recursion_guard(pcre2_compile_context *, \
     int (*)(uint32_t, void *), void *);
 
 #define PCRE2_MATCH_CONTEXT_FUNCTIONS \
 PCRE2_EXP_DECL pcre2_match_context PCRE2_CALL_CONVENTION \
-  *pcre2_match_context_copy(pcre2_match_context *); \
+  *bundled_pcre2_match_context_copy(pcre2_match_context *); \
 PCRE2_EXP_DECL pcre2_match_context PCRE2_CALL_CONVENTION \
-  *pcre2_match_context_create(pcre2_general_context *); \
+  *bundled_pcre2_match_context_create(pcre2_general_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_match_context_free(pcre2_match_context *); \
+  bundled_pcre2_match_context_free(pcre2_match_context *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_callout(pcre2_match_context *, \
+  bundled_pcre2_set_callout(pcre2_match_context *, \
     int (*)(pcre2_callout_block *, void *), void *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_substitute_callout(pcre2_match_context *, \
+  bundled_pcre2_set_substitute_callout(pcre2_match_context *, \
     int (*)(pcre2_substitute_callout_block *, void *), void *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_depth_limit(pcre2_match_context *, uint32_t); \
+  bundled_pcre2_set_depth_limit(pcre2_match_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_heap_limit(pcre2_match_context *, uint32_t); \
+  bundled_pcre2_set_heap_limit(pcre2_match_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_match_limit(pcre2_match_context *, uint32_t); \
+  bundled_pcre2_set_match_limit(pcre2_match_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_offset_limit(pcre2_match_context *, PCRE2_SIZE); \
+  bundled_pcre2_set_offset_limit(pcre2_match_context *, PCRE2_SIZE); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
   pcre2_set_recursion_limit(pcre2_match_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
@@ -630,38 +634,38 @@ PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
 
 #define PCRE2_CONVERT_CONTEXT_FUNCTIONS \
 PCRE2_EXP_DECL pcre2_convert_context PCRE2_CALL_CONVENTION \
-  *pcre2_convert_context_copy(pcre2_convert_context *); \
+  *bundled_pcre2_convert_context_copy(pcre2_convert_context *); \
 PCRE2_EXP_DECL pcre2_convert_context PCRE2_CALL_CONVENTION \
-  *pcre2_convert_context_create(pcre2_general_context *); \
+  *bundled_pcre2_convert_context_create(pcre2_general_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_convert_context_free(pcre2_convert_context *); \
+  bundled_pcre2_convert_context_free(pcre2_convert_context *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_glob_escape(pcre2_convert_context *, uint32_t); \
+  bundled_pcre2_set_glob_escape(pcre2_convert_context *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_set_glob_separator(pcre2_convert_context *, uint32_t);
+  bundled_pcre2_set_glob_separator(pcre2_convert_context *, uint32_t);
 
 
 /* Functions concerned with compiling a pattern to PCRE internal code. */
 
 #define PCRE2_COMPILE_FUNCTIONS \
 PCRE2_EXP_DECL pcre2_code PCRE2_CALL_CONVENTION \
-  *pcre2_compile(PCRE2_SPTR, PCRE2_SIZE, uint32_t, int *, PCRE2_SIZE *, \
+  *bundled_pcre2_compile(PCRE2_SPTR, PCRE2_SIZE, uint32_t, int *, PCRE2_SIZE *, \
     pcre2_compile_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_code_free(pcre2_code *); \
+  bundled_pcre2_code_free(pcre2_code *); \
 PCRE2_EXP_DECL pcre2_code PCRE2_CALL_CONVENTION \
-  *pcre2_code_copy(const pcre2_code *); \
+  *bundled_pcre2_code_copy(const pcre2_code *); \
 PCRE2_EXP_DECL pcre2_code PCRE2_CALL_CONVENTION \
-  *pcre2_code_copy_with_tables(const pcre2_code *);
+  *bundled_pcre2_code_copy_with_tables(const pcre2_code *);
 
 
 /* Functions that give information about a compiled pattern. */
 
 #define PCRE2_PATTERN_INFO_FUNCTIONS \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_pattern_info(const pcre2_code *, uint32_t, void *); \
+  bundled_pcre2_pattern_info(const pcre2_code *, uint32_t, void *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_callout_enumerate(const pcre2_code *, \
+  bundled_pcre2_callout_enumerate(const pcre2_code *, \
     int (*)(pcre2_callout_enumerate_block *, void *), void *);
 
 
@@ -669,81 +673,81 @@ PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
 
 #define PCRE2_MATCH_FUNCTIONS \
 PCRE2_EXP_DECL pcre2_match_data PCRE2_CALL_CONVENTION \
-  *pcre2_match_data_create(uint32_t, pcre2_general_context *); \
+  *bundled_pcre2_match_data_create(uint32_t, pcre2_general_context *); \
 PCRE2_EXP_DECL pcre2_match_data PCRE2_CALL_CONVENTION \
-  *pcre2_match_data_create_from_pattern(const pcre2_code *, \
+  *bundled_pcre2_match_data_create_from_pattern(const pcre2_code *, \
     pcre2_general_context *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_dfa_match(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
+  bundled_pcre2_dfa_match(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
     uint32_t, pcre2_match_data *, pcre2_match_context *, int *, PCRE2_SIZE); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_match(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
+  bundled_pcre2_match(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
     uint32_t, pcre2_match_data *, pcre2_match_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_match_data_free(pcre2_match_data *); \
+  bundled_pcre2_match_data_free(pcre2_match_data *); \
 PCRE2_EXP_DECL PCRE2_SPTR PCRE2_CALL_CONVENTION \
-  pcre2_get_mark(pcre2_match_data *); \
+  bundled_pcre2_get_mark(pcre2_match_data *); \
 PCRE2_EXP_DECL PCRE2_SIZE PCRE2_CALL_CONVENTION \
-  pcre2_get_match_data_size(pcre2_match_data *); \
+  bundled_pcre2_get_match_data_size(pcre2_match_data *); \
 PCRE2_EXP_DECL uint32_t PCRE2_CALL_CONVENTION \
-  pcre2_get_ovector_count(pcre2_match_data *); \
+  bundled_pcre2_get_ovector_count(pcre2_match_data *); \
 PCRE2_EXP_DECL PCRE2_SIZE PCRE2_CALL_CONVENTION \
-  *pcre2_get_ovector_pointer(pcre2_match_data *); \
+  *bundled_pcre2_get_ovector_pointer(pcre2_match_data *); \
 PCRE2_EXP_DECL PCRE2_SIZE PCRE2_CALL_CONVENTION \
-  pcre2_get_startchar(pcre2_match_data *);
+  bundled_pcre2_get_startchar(pcre2_match_data *);
 
 
 /* Convenience functions for handling matched substrings. */
 
 #define PCRE2_SUBSTRING_FUNCTIONS \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_copy_byname(pcre2_match_data *, PCRE2_SPTR, PCRE2_UCHAR *, \
+  bundled_pcre2_substring_copy_byname(pcre2_match_data *, PCRE2_SPTR, PCRE2_UCHAR *, \
     PCRE2_SIZE *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_copy_bynumber(pcre2_match_data *, uint32_t, PCRE2_UCHAR *, \
+  bundled_pcre2_substring_copy_bynumber(pcre2_match_data *, uint32_t, PCRE2_UCHAR *, \
     PCRE2_SIZE *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_substring_free(PCRE2_UCHAR *); \
+  bundled_pcre2_substring_free(PCRE2_UCHAR *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_get_byname(pcre2_match_data *, PCRE2_SPTR, PCRE2_UCHAR **, \
+  bundled_pcre2_substring_get_byname(pcre2_match_data *, PCRE2_SPTR, PCRE2_UCHAR **, \
     PCRE2_SIZE *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_get_bynumber(pcre2_match_data *, uint32_t, PCRE2_UCHAR **, \
+  bundled_pcre2_substring_get_bynumber(pcre2_match_data *, uint32_t, PCRE2_UCHAR **, \
     PCRE2_SIZE *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_length_byname(pcre2_match_data *, PCRE2_SPTR, PCRE2_SIZE *); \
+  bundled_pcre2_substring_length_byname(pcre2_match_data *, PCRE2_SPTR, PCRE2_SIZE *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_length_bynumber(pcre2_match_data *, uint32_t, PCRE2_SIZE *); \
+  bundled_pcre2_substring_length_bynumber(pcre2_match_data *, uint32_t, PCRE2_SIZE *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_nametable_scan(const pcre2_code *, PCRE2_SPTR, PCRE2_SPTR *, \
+  bundled_pcre2_substring_nametable_scan(const pcre2_code *, PCRE2_SPTR, PCRE2_SPTR *, \
     PCRE2_SPTR *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_number_from_name(const pcre2_code *, PCRE2_SPTR); \
+  bundled_pcre2_substring_number_from_name(const pcre2_code *, PCRE2_SPTR); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_substring_list_free(PCRE2_SPTR *); \
+  bundled_pcre2_substring_list_free(PCRE2_SPTR *); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substring_list_get(pcre2_match_data *, PCRE2_UCHAR ***, PCRE2_SIZE **);
+  bundled_pcre2_substring_list_get(pcre2_match_data *, PCRE2_UCHAR ***, PCRE2_SIZE **);
 
 /* Functions for serializing / deserializing compiled patterns. */
 
 #define PCRE2_SERIALIZE_FUNCTIONS \
 PCRE2_EXP_DECL int32_t PCRE2_CALL_CONVENTION \
-  pcre2_serialize_encode(const pcre2_code **, int32_t, uint8_t **, \
+  bundled_pcre2_serialize_encode(const pcre2_code **, int32_t, uint8_t **, \
     PCRE2_SIZE *, pcre2_general_context *); \
 PCRE2_EXP_DECL int32_t PCRE2_CALL_CONVENTION \
-  pcre2_serialize_decode(pcre2_code **, int32_t, const uint8_t *, \
+  bundled_pcre2_serialize_decode(pcre2_code **, int32_t, const uint8_t *, \
     pcre2_general_context *); \
 PCRE2_EXP_DECL int32_t PCRE2_CALL_CONVENTION \
-  pcre2_serialize_get_number_of_codes(const uint8_t *); \
+  bundled_pcre2_serialize_get_number_of_codes(const uint8_t *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_serialize_free(uint8_t *);
+  bundled_pcre2_serialize_free(uint8_t *);
 
 
 /* Convenience function for match + substitute. */
 
 #define PCRE2_SUBSTITUTE_FUNCTION \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_substitute(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
+  bundled_pcre2_substitute(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
     uint32_t, pcre2_match_data *, pcre2_match_context *, PCRE2_SPTR, \
     PCRE2_SIZE, PCRE2_UCHAR *, PCRE2_SIZE *);
 
@@ -752,46 +756,46 @@ PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
 
 #define PCRE2_CONVERT_FUNCTIONS \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_pattern_convert(PCRE2_SPTR, PCRE2_SIZE, uint32_t, PCRE2_UCHAR **, \
+  bundled_pcre2_pattern_convert(PCRE2_SPTR, PCRE2_SIZE, uint32_t, PCRE2_UCHAR **, \
     PCRE2_SIZE *, pcre2_convert_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_converted_pattern_free(PCRE2_UCHAR *);
+  bundled_pcre2_converted_pattern_free(PCRE2_UCHAR *);
 
 
 /* Functions for JIT processing */
 
 #define PCRE2_JIT_FUNCTIONS \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_jit_compile(pcre2_code *, uint32_t); \
+  bundled_pcre2_jit_compile(pcre2_code *, uint32_t); \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_jit_match(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
+  bundled_pcre2_jit_match(const pcre2_code *, PCRE2_SPTR, PCRE2_SIZE, PCRE2_SIZE, \
     uint32_t, pcre2_match_data *, pcre2_match_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_jit_free_unused_memory(pcre2_general_context *); \
+  bundled_pcre2_jit_free_unused_memory(pcre2_general_context *); \
 PCRE2_EXP_DECL pcre2_jit_stack PCRE2_CALL_CONVENTION \
-  *pcre2_jit_stack_create(PCRE2_SIZE, PCRE2_SIZE, pcre2_general_context *); \
+  *bundled_pcre2_jit_stack_create(PCRE2_SIZE, PCRE2_SIZE, pcre2_general_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_jit_stack_assign(pcre2_match_context *, pcre2_jit_callback, void *); \
+  bundled_pcre2_jit_stack_assign(pcre2_match_context *, pcre2_jit_callback, void *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_jit_stack_free(pcre2_jit_stack *);
+  bundled_pcre2_jit_stack_free(pcre2_jit_stack *);
 
 
 /* Other miscellaneous functions. */
 
 #define PCRE2_OTHER_FUNCTIONS \
 PCRE2_EXP_DECL int PCRE2_CALL_CONVENTION \
-  pcre2_get_error_message(int, PCRE2_UCHAR *, PCRE2_SIZE); \
+  bundled_pcre2_get_error_message(int, PCRE2_UCHAR *, PCRE2_SIZE); \
 PCRE2_EXP_DECL const uint8_t PCRE2_CALL_CONVENTION \
-  *pcre2_maketables(pcre2_general_context *); \
+  *bundled_pcre2_maketables(pcre2_general_context *); \
 PCRE2_EXP_DECL void PCRE2_CALL_CONVENTION \
-  pcre2_maketables_free(pcre2_general_context *, const uint8_t *);
+  bundled_pcre2_maketables_free(pcre2_general_context *, const uint8_t *);
 
 /* Define macros that generate width-specific names from generic versions. The
 three-level macro scheme is necessary to get the macros expanded when we want
 them to be. First we get the width from PCRE2_LOCAL_WIDTH, which is used for
 generating three versions of everything below. After that, PCRE2_SUFFIX will be
 re-defined to use PCRE2_CODE_UNIT_WIDTH, for use when macros such as
-pcre2_compile are called by application code. */
+bundled_pcre2_compile are called by application code. */
 
 #define PCRE2_JOIN(a,b) a ## b
 #define PCRE2_GLUE(a,b) PCRE2_JOIN(a,b)
@@ -830,77 +834,77 @@ pcre2_compile are called by application code. */
 
 /* Functions: the complete list in alphabetical order */
 
-#define pcre2_callout_enumerate               PCRE2_SUFFIX(pcre2_callout_enumerate_)
-#define pcre2_code_copy                       PCRE2_SUFFIX(pcre2_code_copy_)
-#define pcre2_code_copy_with_tables           PCRE2_SUFFIX(pcre2_code_copy_with_tables_)
-#define pcre2_code_free                       PCRE2_SUFFIX(pcre2_code_free_)
-#define pcre2_compile                         PCRE2_SUFFIX(pcre2_compile_)
-#define pcre2_compile_context_copy            PCRE2_SUFFIX(pcre2_compile_context_copy_)
-#define pcre2_compile_context_create          PCRE2_SUFFIX(pcre2_compile_context_create_)
-#define pcre2_compile_context_free            PCRE2_SUFFIX(pcre2_compile_context_free_)
-#define pcre2_config                          PCRE2_SUFFIX(pcre2_config_)
-#define pcre2_convert_context_copy            PCRE2_SUFFIX(pcre2_convert_context_copy_)
-#define pcre2_convert_context_create          PCRE2_SUFFIX(pcre2_convert_context_create_)
-#define pcre2_convert_context_free            PCRE2_SUFFIX(pcre2_convert_context_free_)
-#define pcre2_converted_pattern_free          PCRE2_SUFFIX(pcre2_converted_pattern_free_)
-#define pcre2_dfa_match                       PCRE2_SUFFIX(pcre2_dfa_match_)
-#define pcre2_general_context_copy            PCRE2_SUFFIX(pcre2_general_context_copy_)
-#define pcre2_general_context_create          PCRE2_SUFFIX(pcre2_general_context_create_)
-#define pcre2_general_context_free            PCRE2_SUFFIX(pcre2_general_context_free_)
-#define pcre2_get_error_message               PCRE2_SUFFIX(pcre2_get_error_message_)
-#define pcre2_get_mark                        PCRE2_SUFFIX(pcre2_get_mark_)
-#define pcre2_get_match_data_size             PCRE2_SUFFIX(pcre2_get_match_data_size_)
-#define pcre2_get_ovector_pointer             PCRE2_SUFFIX(pcre2_get_ovector_pointer_)
-#define pcre2_get_ovector_count               PCRE2_SUFFIX(pcre2_get_ovector_count_)
-#define pcre2_get_startchar                   PCRE2_SUFFIX(pcre2_get_startchar_)
-#define pcre2_jit_compile                     PCRE2_SUFFIX(pcre2_jit_compile_)
-#define pcre2_jit_match                       PCRE2_SUFFIX(pcre2_jit_match_)
-#define pcre2_jit_free_unused_memory          PCRE2_SUFFIX(pcre2_jit_free_unused_memory_)
-#define pcre2_jit_stack_assign                PCRE2_SUFFIX(pcre2_jit_stack_assign_)
-#define pcre2_jit_stack_create                PCRE2_SUFFIX(pcre2_jit_stack_create_)
-#define pcre2_jit_stack_free                  PCRE2_SUFFIX(pcre2_jit_stack_free_)
-#define pcre2_maketables                      PCRE2_SUFFIX(pcre2_maketables_)
-#define pcre2_maketables_free                 PCRE2_SUFFIX(pcre2_maketables_free_)
-#define pcre2_match                           PCRE2_SUFFIX(pcre2_match_)
-#define pcre2_match_context_copy              PCRE2_SUFFIX(pcre2_match_context_copy_)
-#define pcre2_match_context_create            PCRE2_SUFFIX(pcre2_match_context_create_)
-#define pcre2_match_context_free              PCRE2_SUFFIX(pcre2_match_context_free_)
-#define pcre2_match_data_create               PCRE2_SUFFIX(pcre2_match_data_create_)
-#define pcre2_match_data_create_from_pattern  PCRE2_SUFFIX(pcre2_match_data_create_from_pattern_)
-#define pcre2_match_data_free                 PCRE2_SUFFIX(pcre2_match_data_free_)
-#define pcre2_pattern_convert                 PCRE2_SUFFIX(pcre2_pattern_convert_)
-#define pcre2_pattern_info                    PCRE2_SUFFIX(pcre2_pattern_info_)
-#define pcre2_serialize_decode                PCRE2_SUFFIX(pcre2_serialize_decode_)
-#define pcre2_serialize_encode                PCRE2_SUFFIX(pcre2_serialize_encode_)
-#define pcre2_serialize_free                  PCRE2_SUFFIX(pcre2_serialize_free_)
-#define pcre2_serialize_get_number_of_codes   PCRE2_SUFFIX(pcre2_serialize_get_number_of_codes_)
-#define pcre2_set_bsr                         PCRE2_SUFFIX(pcre2_set_bsr_)
-#define pcre2_set_callout                     PCRE2_SUFFIX(pcre2_set_callout_)
-#define pcre2_set_character_tables            PCRE2_SUFFIX(pcre2_set_character_tables_)
-#define pcre2_set_compile_extra_options       PCRE2_SUFFIX(pcre2_set_compile_extra_options_)
-#define pcre2_set_compile_recursion_guard     PCRE2_SUFFIX(pcre2_set_compile_recursion_guard_)
-#define pcre2_set_depth_limit                 PCRE2_SUFFIX(pcre2_set_depth_limit_)
-#define pcre2_set_glob_escape                 PCRE2_SUFFIX(pcre2_set_glob_escape_)
-#define pcre2_set_glob_separator              PCRE2_SUFFIX(pcre2_set_glob_separator_)
-#define pcre2_set_heap_limit                  PCRE2_SUFFIX(pcre2_set_heap_limit_)
-#define pcre2_set_match_limit                 PCRE2_SUFFIX(pcre2_set_match_limit_)
-#define pcre2_set_max_pattern_length          PCRE2_SUFFIX(pcre2_set_max_pattern_length_)
-#define pcre2_set_newline                     PCRE2_SUFFIX(pcre2_set_newline_)
-#define pcre2_set_parens_nest_limit           PCRE2_SUFFIX(pcre2_set_parens_nest_limit_)
-#define pcre2_set_offset_limit                PCRE2_SUFFIX(pcre2_set_offset_limit_)
-#define pcre2_set_substitute_callout          PCRE2_SUFFIX(pcre2_set_substitute_callout_)
-#define pcre2_substitute                      PCRE2_SUFFIX(pcre2_substitute_)
-#define pcre2_substring_copy_byname           PCRE2_SUFFIX(pcre2_substring_copy_byname_)
-#define pcre2_substring_copy_bynumber         PCRE2_SUFFIX(pcre2_substring_copy_bynumber_)
-#define pcre2_substring_free                  PCRE2_SUFFIX(pcre2_substring_free_)
-#define pcre2_substring_get_byname            PCRE2_SUFFIX(pcre2_substring_get_byname_)
-#define pcre2_substring_get_bynumber          PCRE2_SUFFIX(pcre2_substring_get_bynumber_)
-#define pcre2_substring_length_byname         PCRE2_SUFFIX(pcre2_substring_length_byname_)
-#define pcre2_substring_length_bynumber       PCRE2_SUFFIX(pcre2_substring_length_bynumber_)
-#define pcre2_substring_list_get              PCRE2_SUFFIX(pcre2_substring_list_get_)
-#define pcre2_substring_list_free             PCRE2_SUFFIX(pcre2_substring_list_free_)
-#define pcre2_substring_nametable_scan        PCRE2_SUFFIX(pcre2_substring_nametable_scan_)
-#define pcre2_substring_number_from_name      PCRE2_SUFFIX(pcre2_substring_number_from_name_)
+#define bundled_pcre2_callout_enumerate               PCRE2_SUFFIX(pcre2_callout_enumerate_)
+#define bundled_pcre2_code_copy                       PCRE2_SUFFIX(pcre2_code_copy_)
+#define bundled_pcre2_code_copy_with_tables           PCRE2_SUFFIX(pcre2_code_copy_with_tables_)
+#define bundled_pcre2_code_free                       PCRE2_SUFFIX(pcre2_code_free_)
+#define bundled_pcre2_compile                         PCRE2_SUFFIX(pcre2_compile_)
+#define bundled_pcre2_compile_context_copy            PCRE2_SUFFIX(pcre2_compile_context_copy_)
+#define bundled_pcre2_compile_context_create          PCRE2_SUFFIX(pcre2_compile_context_create_)
+#define bundled_pcre2_compile_context_free            PCRE2_SUFFIX(pcre2_compile_context_free_)
+#define bundled_pcre2_config                          PCRE2_SUFFIX(pcre2_config_)
+#define bundled_pcre2_convert_context_copy            PCRE2_SUFFIX(pcre2_convert_context_copy_)
+#define bundled_pcre2_convert_context_create          PCRE2_SUFFIX(pcre2_convert_context_create_)
+#define bundled_pcre2_convert_context_free            PCRE2_SUFFIX(pcre2_convert_context_free_)
+#define bundled_pcre2_converted_pattern_free          PCRE2_SUFFIX(pcre2_converted_pattern_free_)
+#define bundled_pcre2_dfa_match                       PCRE2_SUFFIX(pcre2_dfa_match_)
+#define bundled_pcre2_general_context_copy            PCRE2_SUFFIX(pcre2_general_context_copy_)
+#define bundled_pcre2_general_context_create          PCRE2_SUFFIX(pcre2_general_context_create_)
+#define bundled_pcre2_general_context_free            PCRE2_SUFFIX(pcre2_general_context_free_)
+#define bundled_pcre2_get_error_message               PCRE2_SUFFIX(pcre2_get_error_message_)
+#define bundled_pcre2_get_mark                        PCRE2_SUFFIX(pcre2_get_mark_)
+#define bundled_pcre2_get_match_data_size             PCRE2_SUFFIX(pcre2_get_match_data_size_)
+#define bundled_pcre2_get_ovector_pointer             PCRE2_SUFFIX(pcre2_get_ovector_pointer_)
+#define bundled_pcre2_get_ovector_count               PCRE2_SUFFIX(pcre2_get_ovector_count_)
+#define bundled_pcre2_get_startchar                   PCRE2_SUFFIX(pcre2_get_startchar_)
+#define bundled_pcre2_jit_compile                     PCRE2_SUFFIX(pcre2_jit_compile_)
+#define bundled_pcre2_jit_match                       PCRE2_SUFFIX(pcre2_jit_match_)
+#define bundled_pcre2_jit_free_unused_memory          PCRE2_SUFFIX(pcre2_jit_free_unused_memory_)
+#define bundled_pcre2_jit_stack_assign                PCRE2_SUFFIX(pcre2_jit_stack_assign_)
+#define bundled_pcre2_jit_stack_create                PCRE2_SUFFIX(pcre2_jit_stack_create_)
+#define bundled_pcre2_jit_stack_free                  PCRE2_SUFFIX(pcre2_jit_stack_free_)
+#define bundled_pcre2_maketables                      PCRE2_SUFFIX(pcre2_maketables_)
+#define bundled_pcre2_maketables_free                 PCRE2_SUFFIX(pcre2_maketables_free_)
+#define bundled_pcre2_match                           PCRE2_SUFFIX(pcre2_match_)
+#define bundled_pcre2_match_context_copy              PCRE2_SUFFIX(pcre2_match_context_copy_)
+#define bundled_pcre2_match_context_create            PCRE2_SUFFIX(pcre2_match_context_create_)
+#define bundled_pcre2_match_context_free              PCRE2_SUFFIX(pcre2_match_context_free_)
+#define bundled_pcre2_match_data_create               PCRE2_SUFFIX(pcre2_match_data_create_)
+#define bundled_pcre2_match_data_create_from_pattern  PCRE2_SUFFIX(pcre2_match_data_create_from_pattern_)
+#define bundled_pcre2_match_data_free                 PCRE2_SUFFIX(pcre2_match_data_free_)
+#define bundled_pcre2_pattern_convert                 PCRE2_SUFFIX(pcre2_pattern_convert_)
+#define bundled_pcre2_pattern_info                    PCRE2_SUFFIX(pcre2_pattern_info_)
+#define bundled_pcre2_serialize_decode                PCRE2_SUFFIX(pcre2_serialize_decode_)
+#define bundled_pcre2_serialize_encode                PCRE2_SUFFIX(pcre2_serialize_encode_)
+#define bundled_pcre2_serialize_free                  PCRE2_SUFFIX(pcre2_serialize_free_)
+#define bundled_pcre2_serialize_get_number_of_codes   PCRE2_SUFFIX(pcre2_serialize_get_number_of_codes_)
+#define bundled_pcre2_set_bsr                         PCRE2_SUFFIX(pcre2_set_bsr_)
+#define bundled_pcre2_set_callout                     PCRE2_SUFFIX(pcre2_set_callout_)
+#define bundled_pcre2_set_character_tables            PCRE2_SUFFIX(pcre2_set_character_tables_)
+#define bundled_pcre2_set_compile_extra_options       PCRE2_SUFFIX(pcre2_set_compile_extra_options_)
+#define bundled_pcre2_set_compile_recursion_guard     PCRE2_SUFFIX(pcre2_set_compile_recursion_guard_)
+#define bundled_pcre2_set_depth_limit                 PCRE2_SUFFIX(pcre2_set_depth_limit_)
+#define bundled_pcre2_set_glob_escape                 PCRE2_SUFFIX(pcre2_set_glob_escape_)
+#define bundled_pcre2_set_glob_separator              PCRE2_SUFFIX(pcre2_set_glob_separator_)
+#define bundled_pcre2_set_heap_limit                  PCRE2_SUFFIX(pcre2_set_heap_limit_)
+#define bundled_pcre2_set_match_limit                 PCRE2_SUFFIX(pcre2_set_match_limit_)
+#define bundled_pcre2_set_max_pattern_length          PCRE2_SUFFIX(pcre2_set_max_pattern_length_)
+#define bundled_pcre2_set_newline                     PCRE2_SUFFIX(pcre2_set_newline_)
+#define bundled_pcre2_set_parens_nest_limit           PCRE2_SUFFIX(pcre2_set_parens_nest_limit_)
+#define bundled_pcre2_set_offset_limit                PCRE2_SUFFIX(pcre2_set_offset_limit_)
+#define bundled_pcre2_set_substitute_callout          PCRE2_SUFFIX(pcre2_set_substitute_callout_)
+#define bundled_pcre2_substitute                      PCRE2_SUFFIX(pcre2_substitute_)
+#define bundled_pcre2_substring_copy_byname           PCRE2_SUFFIX(pcre2_substring_copy_byname_)
+#define bundled_pcre2_substring_copy_bynumber         PCRE2_SUFFIX(pcre2_substring_copy_bynumber_)
+#define bundled_pcre2_substring_free                  PCRE2_SUFFIX(pcre2_substring_free_)
+#define bundled_pcre2_substring_get_byname            PCRE2_SUFFIX(pcre2_substring_get_byname_)
+#define bundled_pcre2_substring_get_bynumber          PCRE2_SUFFIX(pcre2_substring_get_bynumber_)
+#define bundled_pcre2_substring_length_byname         PCRE2_SUFFIX(pcre2_substring_length_byname_)
+#define bundled_pcre2_substring_length_bynumber       PCRE2_SUFFIX(pcre2_substring_length_bynumber_)
+#define bundled_pcre2_substring_list_get              PCRE2_SUFFIX(pcre2_substring_list_get_)
+#define bundled_pcre2_substring_list_free             PCRE2_SUFFIX(pcre2_substring_list_free_)
+#define bundled_pcre2_substring_nametable_scan        PCRE2_SUFFIX(pcre2_substring_nametable_scan_)
+#define bundled_pcre2_substring_number_from_name      PCRE2_SUFFIX(pcre2_substring_number_from_name_)
 
 /* Keep this old function name for backwards compatibility */
 #define pcre2_set_recursion_limit PCRE2_SUFFIX(pcre2_set_recursion_limit_)

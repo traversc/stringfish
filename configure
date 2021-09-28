@@ -583,6 +583,7 @@ PACKAGE_URL=''
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+PCRE2_BUNDLED
 LIBPCRE2
 INCLUDE_PATHS
 ADD_LIBS
@@ -1741,6 +1742,7 @@ echo "stringfish configure script"
 ADD_LIBS=""
 INCLUDE_PATHS=""
 LIBPCRE2=""
+PCRE2_BUNDLED=""
 
 ########################################################
 ### Configure args
@@ -1866,6 +1868,7 @@ fi
 if test xx$COMPILE_PCRE2 = "xxtrue"; then
   INCLUDE_PATHS="${INCLUDE_PATHS} -IPCRE2"
   LIBPCRE2="\$(LIBPCRE2)"
+  PCRE2_BUNDLED="-DPCRE2_BUNDLED"
 fi
 
 if test xx$with_simd = "xxAVX2"; then
@@ -1885,6 +1888,8 @@ ADD_LIBS=$ADD_LIBS
 INCLUDE_PATHS=$INCLUDE_PATHS
 
 LIBPCRE2=$LIBPCRE2
+
+PCRE2_BUNDLED=$PCRE2_BUNDLED
 
 ac_config_files="$ac_config_files src/Makevars"
 
