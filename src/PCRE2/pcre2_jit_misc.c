@@ -104,7 +104,7 @@ SLJIT_FREE(functions, allocator_data);
 *************************************************/
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_jit_free_unused_memory(pcre2_general_context *gcontext)
+bundled_pcre2_jit_free_unused_memory(pcre2_general_context *gcontext)
 {
 #ifndef SUPPORT_JIT
 (void)gcontext;     /* Suppress warning */
@@ -121,7 +121,7 @@ sljit_free_unused_memory_exec();
 *************************************************/
 
 PCRE2_EXP_DEFN pcre2_jit_stack * PCRE2_CALL_CONVENTION
-pcre2_jit_stack_create(size_t startsize, size_t maxsize,
+bundled_pcre2_jit_stack_create(size_t startsize, size_t maxsize,
   pcre2_general_context *gcontext)
 {
 #ifndef SUPPORT_JIT
@@ -161,7 +161,7 @@ return jit_stack;
 *************************************************/
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_jit_stack_assign(pcre2_match_context *mcontext, pcre2_jit_callback callback,
+bundled_pcre2_jit_stack_assign(pcre2_match_context *mcontext, pcre2_jit_callback callback,
   void *callback_data)
 {
 #ifndef SUPPORT_JIT
@@ -183,7 +183,7 @@ mcontext->jit_callback_data = callback_data;
 *************************************************/
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_jit_stack_free(pcre2_jit_stack *jit_stack)
+bundled_pcre2_jit_stack_free(pcre2_jit_stack *jit_stack)
 {
 #ifndef SUPPORT_JIT
 (void)jit_stack;

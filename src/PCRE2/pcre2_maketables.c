@@ -39,7 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-/* This module contains the external function pcre2_maketables(), which builds
+/* This module contains the external function bundled_pcre2_maketables(), which builds
 character tables for PCRE2 in the current locale. The file is compiled on its
 own as part of the PCRE2 library. It is also included in the compilation of
 pcre2_dftables.c as a freestanding program, in which case the macro
@@ -79,7 +79,7 @@ uint8_t *yield = (uint8_t *)malloc(TABLES_LENGTH);
 
 #else  /* Not PCRE2_DFTABLES, that is, compiling the library */
 PCRE2_EXP_DEFN const uint8_t * PCRE2_CALL_CONVENTION
-pcre2_maketables(pcre2_general_context *gcontext)
+bundled_pcre2_maketables(pcre2_general_context *gcontext)
 {
 uint8_t *yield = (uint8_t *)((gcontext != NULL)?
   gcontext->memctl.malloc(TABLES_LENGTH, gcontext->memctl.memory_data) :
@@ -151,7 +151,7 @@ return yield;
 
 #ifndef PCRE2_DFTABLES   /* Compiling the library */
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_maketables_free(pcre2_general_context *gcontext, const uint8_t *tables)
+bundled_pcre2_maketables_free(pcre2_general_context *gcontext, const uint8_t *tables)
 {
   if (gcontext)
     gcontext->memctl.free((void *)tables, gcontext->memctl.memory_data);

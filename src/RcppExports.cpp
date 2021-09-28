@@ -26,6 +26,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// get_is_utf8_locale
+bool get_is_utf8_locale();
+RcppExport SEXP _stringfish_get_is_utf8_locale() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    rcpp_result_gen = Rcpp::wrap(get_is_utf8_locale());
+    return rcpp_result_gen;
+END_RCPP
+}
 // is_tbb
 bool is_tbb();
 RcppExport SEXP _stringfish_is_tbb() {
@@ -41,6 +50,15 @@ RcppExport SEXP _stringfish_check_simd() {
 BEGIN_RCPP
     check_simd();
     return R_NilValue;
+END_RCPP
+}
+// get_pcre2_info
+List get_pcre2_info();
+RcppExport SEXP _stringfish_get_pcre2_info() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    rcpp_result_gen = Rcpp::wrap(get_pcre2_info());
+    return rcpp_result_gen;
 END_RCPP
 }
 // get_string_type
@@ -294,8 +312,10 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_set_is_utf8_locale", (DL_FUNC) &_stringfish_set_is_utf8_locale, 0},
     {"_stringfish_unset_is_utf8_locale", (DL_FUNC) &_stringfish_unset_is_utf8_locale, 0},
+    {"_stringfish_get_is_utf8_locale", (DL_FUNC) &_stringfish_get_is_utf8_locale, 0},
     {"_stringfish_is_tbb", (DL_FUNC) &_stringfish_is_tbb, 0},
     {"_stringfish_check_simd", (DL_FUNC) &_stringfish_check_simd, 0},
+    {"_stringfish_get_pcre2_info", (DL_FUNC) &_stringfish_get_pcre2_info, 0},
     {"_stringfish_get_string_type", (DL_FUNC) &_stringfish_get_string_type, 1},
     {"_stringfish_materialize", (DL_FUNC) &_stringfish_materialize, 1},
     {"_stringfish_sf_vector", (DL_FUNC) &_stringfish_sf_vector, 1},

@@ -55,7 +55,7 @@ This used to be a table of strings, but in order to reduce the number of
 relocations needed when a shared library is loaded dynamically, it is now one
 long string. We cannot use a table of offsets, because the lengths of inserts
 such as XSTRING(MAX_NAME_SIZE) are not known. Instead,
-pcre2_get_error_message() counts through to the one it wants - this isn't a
+bundled_pcre2_get_error_message() counts through to the one it wants - this isn't a
 performance issue because these strings are used only when there is an error.
 
 Each substring ends with \0 to insert a null character. This includes the final
@@ -295,7 +295,7 @@ Returns:        length of message if all is well
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_get_error_message(int enumber, PCRE2_UCHAR *buffer, PCRE2_SIZE size)
+bundled_pcre2_get_error_message(int enumber, PCRE2_UCHAR *buffer, PCRE2_SIZE size)
 {
 const unsigned char *message;
 PCRE2_SIZE i;

@@ -57,7 +57,7 @@ for scripts that are commonly used together, and also special rules for digits.
 This function implements the appropriate checks, which is possible only when
 PCRE2 is compiled with Unicode support. The function returns TRUE if there is
 no Unicode support; however, it should never be called in that circumstance
-because an error is given by pcre2_compile() if a script run is called for in a
+because an error is given by bundled_pcre2_compile() if a script run is called for in a
 version of PCRE2 compiled without Unicode support.
 
 Arguments:

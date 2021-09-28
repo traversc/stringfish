@@ -12,7 +12,7 @@ pcre2_match_wrapper::pcre2_match_wrapper(const char * pattern_ptr, bool utf8, bo
   int errorcode;
   PCRE2_SIZE erroroffset;
   uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
-  re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
+  re = CALL_pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
                      PCRE2_ZERO_TERMINATED, // length
                      flags,
                      &errorcode, // error reporting
@@ -21,25 +21,25 @@ pcre2_match_wrapper::pcre2_match_wrapper(const char * pattern_ptr, bool utf8, bo
   );
   if(re == NULL) {
     PCRE2_UCHAR buffer[256];
-    pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
+    CALL_pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
     throw std::runtime_error("PCRE2 pattern error " + std::to_string((int)errorcode) + ": " + std::string((char*)buffer));
   }
 #ifdef SUPPORT_JIT
-  pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
-  // errorcode = pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  CALL_pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  // errorcode = CALL_pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
   // if(errorcode < 0) {
   //  if(errorcode == PCRE2_ERROR_JIT_BADOPTION) throw std::runtime_error("PCRE2_ERROR_JIT_BADOPTION");
   //  if(errorcode == PCRE2_ERROR_NOMEMORY) throw std::runtime_error("PCRE2_ERROR_NOMEMORY");
   // }
 #endif
-  match_data = pcre2_match_data_create_from_pattern(re, NULL);
+  match_data = CALL_pcre2_match_data_create_from_pattern(re, NULL);
 }
 pcre2_match_wrapper::pcre2_match_wrapper() : re(nullptr), match_data(nullptr) {}
   
 pcre2_match_wrapper::pcre2_match_wrapper(const pcre2_match_wrapper& other) : 
-  re(pcre2_code_copy_with_tables(other.re)), match_data(pcre2_match_data_create_from_pattern(other.re, NULL)) { // copy constructor
+  re(CALL_pcre2_code_copy_with_tables(other.re)), match_data(CALL_pcre2_match_data_create_from_pattern(other.re, NULL)) { // copy constructor
 #ifdef SUPPORT_JIT
-  pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  CALL_pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
 #endif
 }
 pcre2_match_wrapper::pcre2_match_wrapper(pcre2_match_wrapper && other) { // move constructor
@@ -50,18 +50,18 @@ pcre2_match_wrapper::pcre2_match_wrapper(pcre2_match_wrapper && other) { // move
 }
 pcre2_match_wrapper & pcre2_match_wrapper::operator=(const pcre2_match_wrapper & other) { // copy assignment
   if(&other == this) return *this;
-  if(re != nullptr) pcre2_code_free(re);
-  re = pcre2_code_copy_with_tables(other.re);
+  if(re != nullptr) CALL_pcre2_code_free(re);
+  re = CALL_pcre2_code_copy_with_tables(other.re);
 #ifdef SUPPORT_JIT
-  pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  CALL_pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
 #endif
-  match_data = pcre2_match_data_create_from_pattern(re, NULL);
+  match_data = CALL_pcre2_match_data_create_from_pattern(re, NULL);
   return *this;
 }
 pcre2_match_wrapper & pcre2_match_wrapper::operator=(pcre2_match_wrapper && other) { // move assignment
   if(&other == this) return *this;
-  if(re != nullptr) pcre2_code_free(re);
-  if(match_data != nullptr) pcre2_match_data_free(match_data);
+  if(re != nullptr) CALL_pcre2_code_free(re);
+  if(match_data != nullptr) CALL_pcre2_match_data_free(match_data);
   re = other.re;
   match_data = other.match_data;
   other.re = nullptr;
@@ -70,12 +70,12 @@ pcre2_match_wrapper & pcre2_match_wrapper::operator=(pcre2_match_wrapper && othe
 }
   
   pcre2_match_wrapper::~pcre2_match_wrapper() {
-  if(re != nullptr) pcre2_code_free(re);
-  if(match_data != nullptr) pcre2_match_data_free(match_data);
+  if(re != nullptr) CALL_pcre2_code_free(re);
+  if(match_data != nullptr) CALL_pcre2_match_data_free(match_data);
 }
 int pcre2_match_wrapper::match(const char * subject_ptr, const int len) {
 #ifdef SUPPORT_JIT
-  int rc = pcre2_jit_match(re, // compiled pattern
+  int rc = CALL_pcre2_jit_match(re, // compiled pattern
                            (PCRE2_SPTR)subject_ptr, // subject
                            PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
                            0, // start offset
@@ -84,7 +84,7 @@ int pcre2_match_wrapper::match(const char * subject_ptr, const int len) {
                            NULL // match context
   );
 #else
-  int rc = pcre2_match(re, // compiled pattern
+  int rc = CALL_pcre2_match(re, // compiled pattern
                        (PCRE2_SPTR)subject_ptr, // subject
                        PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
                        0, // start offset
@@ -103,7 +103,7 @@ int pcre2_match_wrapper::match(const char * subject_ptr, const int len) {
 }
 int pcre2_match_wrapper::match_get_interval(const char * subject_ptr, const int len, size_t & begin, size_t & end) {
 #ifdef SUPPORT_JIT
-  int rc = pcre2_jit_match(re, // compiled pattern
+  int rc = CALL_pcre2_jit_match(re, // compiled pattern
                            (PCRE2_SPTR)subject_ptr, // subject
                            PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
                            0, // start offset
@@ -112,7 +112,7 @@ int pcre2_match_wrapper::match_get_interval(const char * subject_ptr, const int 
                            NULL // match context
   );
 #else
-  int rc = pcre2_match(re, // compiled pattern
+  int rc = CALL_pcre2_match(re, // compiled pattern
                        (PCRE2_SPTR)subject_ptr, // subject
                        PCRE2_SIZE(len), // PCRE2_ZERO_TERMINATED, // length
                        0, // start offset
@@ -126,7 +126,7 @@ int pcre2_match_wrapper::match_get_interval(const char * subject_ptr, const int 
   } else if(rc < 0) {
     throw std::runtime_error("error matching string");
   } else {
-    PCRE2_SIZE * ovec = pcre2_get_ovector_pointer(match_data);
+    PCRE2_SIZE * ovec = CALL_pcre2_get_ovector_pointer(match_data);
     begin = ovec[0];
     end = ovec[1];
     return 1;
@@ -141,7 +141,7 @@ pcre2_sub_wrapper::pcre2_sub_wrapper(const char * pattern_ptr, const char * repl
   int errorcode;
   PCRE2_SIZE erroroffset;
   uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
-  re = pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
+  re = CALL_pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
                      PCRE2_ZERO_TERMINATED, // length
                      flags,
                      &errorcode, // error reporting
@@ -150,24 +150,24 @@ pcre2_sub_wrapper::pcre2_sub_wrapper(const char * pattern_ptr, const char * repl
   );
   if(re == NULL) {
     PCRE2_UCHAR buffer[256];
-    pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
+    CALL_pcre2_get_error_message(errorcode, buffer, sizeof(buffer));
     throw std::runtime_error("PCRE2 pattern error " + std::to_string((int)erroroffset) + ": " + std::string((char*)buffer));
   }
 #ifdef SUPPORT_JIT
-  pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  CALL_pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
 #endif
-  match_data = pcre2_match_data_create_from_pattern(re, NULL);
+  match_data = CALL_pcre2_match_data_create_from_pattern(re, NULL);
   replacement = (PCRE2_SPTR)replacement_ptr;
 }
 pcre2_sub_wrapper::pcre2_sub_wrapper() : re(nullptr), match_data(nullptr), replacement(nullptr) {}
 pcre2_sub_wrapper & pcre2_sub_wrapper::operator=(const pcre2_sub_wrapper & other) { // copy assignment
   if(&other == this) return *this;
-  re = pcre2_code_copy_with_tables(other.re);
+  re = CALL_pcre2_code_copy_with_tables(other.re);
 #ifdef SUPPORT_JIT
-  pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  CALL_pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
 #endif
   output = other.output;
-  match_data = pcre2_match_data_create_from_pattern(re, NULL);
+  match_data = CALL_pcre2_match_data_create_from_pattern(re, NULL);
   replacement = other.replacement;
   return *this;
 }
@@ -182,12 +182,12 @@ pcre2_sub_wrapper & pcre2_sub_wrapper::operator=(pcre2_sub_wrapper && other) { /
   return *this;
 }
 pcre2_sub_wrapper::pcre2_sub_wrapper(const pcre2_sub_wrapper& other) { // copy constructor
-  re = pcre2_code_copy_with_tables(other.re);
+  re = CALL_pcre2_code_copy_with_tables(other.re);
 #ifdef SUPPORT_JIT
-  pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
+  CALL_pcre2_jit_compile(re, PCRE2_JIT_COMPLETE);
 #endif
   output = other.output;
-  match_data = pcre2_match_data_create_from_pattern(re, NULL);
+  match_data = CALL_pcre2_match_data_create_from_pattern(re, NULL);
   replacement = other.replacement;
 }
 pcre2_sub_wrapper::pcre2_sub_wrapper(pcre2_sub_wrapper && other) { // move constructor
@@ -199,12 +199,12 @@ pcre2_sub_wrapper::pcre2_sub_wrapper(pcre2_sub_wrapper && other) { // move const
   other.match_data = nullptr;
 }
 pcre2_sub_wrapper::~pcre2_sub_wrapper() {
-  if(re != nullptr) pcre2_code_free(re);
-  if(match_data != nullptr) pcre2_match_data_free(match_data);
+  if(re != nullptr) CALL_pcre2_code_free(re);
+  if(match_data != nullptr) CALL_pcre2_match_data_free(match_data);
 }
 const char * pcre2_sub_wrapper::gsub(const char * subject_ptr) {
   PCRE2_SIZE output_len = (PCRE2_SIZE)(output.size() - 1);
-  int rc = pcre2_substitute(
+  int rc = CALL_pcre2_substitute(
     re,                       // Points to the compiled pattern
     (PCRE2_SPTR)subject_ptr,  // Points to the subject string
     PCRE2_ZERO_TERMINATED,    // Length of the subject string
@@ -221,11 +221,11 @@ const char * pcre2_sub_wrapper::gsub(const char * subject_ptr) {
   // std::cout << rc << " " << output_len << std::endl;
   // std::string errmsg;
   // errmsg.resize(300);
-  // pcre2_get_error_message(rc, (PCRE2_UCHAR *)&errmsg[0], (PCRE2_SIZE)300);
+  // CALL_pcre2_get_error_message(rc, (PCRE2_UCHAR *)&errmsg[0], (PCRE2_SIZE)300);
   // std::cout << errmsg << std::endl;
   if(rc == PCRE2_ERROR_NOMEMORY) {
     output.resize(output_len + 1);
-    rc = pcre2_substitute(
+    rc = CALL_pcre2_substitute(
       re,                       // Points to the compiled pattern
       (PCRE2_SPTR)subject_ptr,  // Points to the subject string
       PCRE2_ZERO_TERMINATED,    // Length of the subject string
@@ -245,6 +245,14 @@ const char * pcre2_sub_wrapper::gsub(const char * subject_ptr) {
   return output.data();
 }
 
+std::pair<int, bool> pcre2_info() {
+  int ver = PCRE2_MAJOR * 100 + PCRE2_MINOR;
+  #ifdef PCRE2_BUNDLED
+  return std::make_pair(ver, pcre2_is_bundled() == 1 ? true : false);
+  #else
+  return std::make_pair(ver, false);
+  #endif
+}
 
 } // namespace
 

@@ -144,7 +144,7 @@ sure both macros are undefined; an emulation function will then be used. */
 #define HAVE_ZLIB_H 1
 
 /* This limits the amount of memory that may be used while matching a pattern.
-   It applies to both pcre2_match() and pcre2_dfa_match(). It does not apply
+   It applies to both bundled_pcre2_match() and bundled_pcre2_dfa_match(). It does not apply
    to JIT matching. The value is in kibibytes (units of 1024 bytes). */
 #define HEAP_LIMIT 20000000
 
@@ -159,9 +159,9 @@ sure both macros are undefined; an emulation function will then be used. */
 #define LT_OBJDIR ".libs/"
 
 /* The value of MATCH_LIMIT determines the default number of times the
-   pcre2_match() function can record a backtrack position during a single
+   bundled_pcre2_match() function can record a backtrack position during a single
    matching attempt. The value is also used to limit a loop counter in
-   pcre2_dfa_match(). There is a runtime interface for setting a different
+   bundled_pcre2_dfa_match(). There is a runtime interface for setting a different
    limit. The limit exists in order to catch runaway regular expressions that
    take for ever to determine that they do not match. The default is set very
    large so that it does not accidentally catch legitimate cases. */
@@ -174,7 +174,7 @@ sure both macros are undefined; an emulation function will then be used. */
    MATCH_LIMIT_DEPTH provides this facility. To have any useful effect, it
    must be less than the value of MATCH_LIMIT. The default is to use the same
    value as MATCH_LIMIT. There is a runtime method for setting a different
-   limit. In the case of pcre2_dfa_match(), this limit controls the depth of
+   limit. In the case of bundled_pcre2_dfa_match(), this limit controls the depth of
    the internal nested function calls that are used for pattern recursions,
    lookarounds, and atomic groups. */
 #define MATCH_LIMIT_DEPTH MATCH_LIMIT

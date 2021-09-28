@@ -1054,7 +1054,7 @@ Returns:      0 for success, else an error code (+ve or -ve)
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_pattern_convert(PCRE2_SPTR pattern, PCRE2_SIZE plength, uint32_t options,
+bundled_pcre2_pattern_convert(PCRE2_SPTR pattern, PCRE2_SIZE plength, uint32_t options,
   PCRE2_UCHAR **buffptr, PCRE2_SIZE *bufflenptr,
   pcre2_convert_context *ccontext)
 {
@@ -1169,7 +1169,7 @@ Returns:    nothing
 */
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_converted_pattern_free(PCRE2_UCHAR *converted)
+bundled_pcre2_converted_pattern_free(PCRE2_UCHAR *converted)
 {
 if (converted != NULL)
   {

@@ -54,7 +54,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* A minimum of 1 is imposed on the number of ovector pairs. */
 
 PCRE2_EXP_DEFN pcre2_match_data * PCRE2_CALL_CONVENTION
-pcre2_match_data_create(uint32_t oveccount, pcre2_general_context *gcontext)
+bundled_pcre2_match_data_create(uint32_t oveccount, pcre2_general_context *gcontext)
 {
 pcre2_match_data *yield;
 if (oveccount < 1) oveccount = 1;
@@ -76,11 +76,11 @@ return yield;
 /* If no context is supplied, use the memory allocator from the code. */
 
 PCRE2_EXP_DEFN pcre2_match_data * PCRE2_CALL_CONVENTION
-pcre2_match_data_create_from_pattern(const pcre2_code *code,
+bundled_pcre2_match_data_create_from_pattern(const pcre2_code *code,
   pcre2_general_context *gcontext)
 {
 if (gcontext == NULL) gcontext = (pcre2_general_context *)code;
-return pcre2_match_data_create(((pcre2_real_code *)code)->top_bracket + 1,
+return bundled_pcre2_match_data_create(((pcre2_real_code *)code)->top_bracket + 1,
   gcontext);
 }
 
@@ -91,7 +91,7 @@ return pcre2_match_data_create(((pcre2_real_code *)code)->top_bracket + 1,
 *************************************************/
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_match_data_free(pcre2_match_data *match_data)
+bundled_pcre2_match_data_free(pcre2_match_data *match_data)
 {
 if (match_data != NULL)
   {
@@ -109,7 +109,7 @@ if (match_data != NULL)
 *************************************************/
 
 PCRE2_EXP_DEFN PCRE2_SPTR PCRE2_CALL_CONVENTION
-pcre2_get_mark(pcre2_match_data *match_data)
+bundled_pcre2_get_mark(pcre2_match_data *match_data)
 {
 return match_data->mark;
 }
@@ -121,7 +121,7 @@ return match_data->mark;
 *************************************************/
 
 PCRE2_EXP_DEFN PCRE2_SIZE * PCRE2_CALL_CONVENTION
-pcre2_get_ovector_pointer(pcre2_match_data *match_data)
+bundled_pcre2_get_ovector_pointer(pcre2_match_data *match_data)
 {
 return match_data->ovector;
 }
@@ -133,7 +133,7 @@ return match_data->ovector;
 *************************************************/
 
 PCRE2_EXP_DEFN uint32_t PCRE2_CALL_CONVENTION
-pcre2_get_ovector_count(pcre2_match_data *match_data)
+bundled_pcre2_get_ovector_count(pcre2_match_data *match_data)
 {
 return match_data->oveccount;
 }
@@ -145,7 +145,7 @@ return match_data->oveccount;
 *************************************************/
 
 PCRE2_EXP_DEFN PCRE2_SIZE PCRE2_CALL_CONVENTION
-pcre2_get_startchar(pcre2_match_data *match_data)
+bundled_pcre2_get_startchar(pcre2_match_data *match_data)
 {
 return match_data->startchar;
 }
@@ -157,7 +157,7 @@ return match_data->startchar;
 *************************************************/
 
 PCRE2_EXP_DEFN PCRE2_SIZE PCRE2_CALL_CONVENTION
-pcre2_get_match_data_size(pcre2_match_data *match_data)
+bundled_pcre2_get_match_data_size(pcre2_match_data *match_data)
 {
 return offsetof(pcre2_match_data, ovector) +
   2 * (match_data->oveccount) * sizeof(PCRE2_SIZE);

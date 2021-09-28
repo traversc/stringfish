@@ -170,7 +170,7 @@ return rc;
 
 /* This function applies a compiled re to a subject string and creates a new
 string with substitutions. The first 7 arguments are the same as for
-pcre2_match(). Either string length may be PCRE2_ZERO_TERMINATED.
+bundled_pcre2_match(). Either string length may be PCRE2_ZERO_TERMINATED.
 
 Arguments:
   code            points to the compiled expression
@@ -217,7 +217,7 @@ length. */
 /* Here's the function */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_substitute(const pcre2_code *code, PCRE2_SPTR subject, PCRE2_SIZE length,
+bundled_pcre2_substitute(const pcre2_code *code, PCRE2_SPTR subject, PCRE2_SIZE length,
   PCRE2_SIZE start_offset, uint32_t options, pcre2_match_data *match_data,
   pcre2_match_context *mcontext, PCRE2_SPTR replacement, PCRE2_SIZE rlength,
   PCRE2_UCHAR *buffer, PCRE2_SIZE *blength)
@@ -281,7 +281,7 @@ if (match_data == NULL)
     (pcre2_general_context *)code :
     (pcre2_general_context *)mcontext;
   match_data = internal_match_data =
-    pcre2_match_data_create_from_pattern(code, gcontext);
+    bundled_pcre2_match_data_create_from_pattern(code, gcontext);
   if (internal_match_data == NULL) return PCRE2_ERROR_NOMEMORY;
   }
 
@@ -292,7 +292,7 @@ else if (use_existing_match)
     (pcre2_general_context *)mcontext;
   int pairs = (code->top_bracket + 1 < match_data->oveccount)?
     code->top_bracket + 1 : match_data->oveccount;
-  internal_match_data = pcre2_match_data_create(match_data->oveccount,
+  internal_match_data = bundled_pcre2_match_data_create(match_data->oveccount,
     gcontext);
   if (internal_match_data == NULL) return PCRE2_ERROR_NOMEMORY;
   memcpy(internal_match_data, match_data, offsetof(pcre2_match_data, ovector)
@@ -302,8 +302,8 @@ else if (use_existing_match)
 
 /* Remember ovector details */
 
-ovector = pcre2_get_ovector_pointer(match_data);
-ovector_count = pcre2_get_ovector_count(match_data);
+ovector = bundled_pcre2_get_ovector_pointer(match_data);
+ovector_count = bundled_pcre2_get_ovector_count(match_data);
 
 /* Fixed things in the callout block */
 
@@ -364,7 +364,7 @@ do
     rc = match_data->rc;
     use_existing_match = FALSE;
     }
-  else rc = pcre2_match(code, subject, length, start_offset, options|goptions,
+  else rc = bundled_pcre2_match(code, subject, length, start_offset, options|goptions,
     match_data, mcontext);
 
 #ifdef SUPPORT_UNICODE
@@ -638,7 +638,7 @@ do
         {
         if (PRIV(strcmp_c8)(name, STRING_MARK) == 0)
           {
-          PCRE2_SPTR mark = pcre2_get_mark(match_data);
+          PCRE2_SPTR mark = bundled_pcre2_get_mark(match_data);
           if (mark != NULL)
             {
             PCRE2_SPTR mark_start = mark;
@@ -665,7 +665,7 @@ do
         if (group < 0)
           {
           PCRE2_SPTR first, last, entry;
-          rc = pcre2_substring_nametable_scan(code, name, &first, &last);
+          rc = bundled_pcre2_substring_nametable_scan(code, name, &first, &last);
           if (rc == PCRE2_ERROR_NOSUBSTRING &&
               (suboptions & PCRE2_SUBSTITUTE_UNKNOWN_UNSET) != 0)
             {
@@ -699,7 +699,7 @@ do
         the captured string. If a group in a non-special substitution is unset
         when PCRE2_SUBSTITUTE_UNSET_EMPTY is set, substitute nothing. */
 
-        rc = pcre2_substring_length_bynumber(match_data, group, &sublength);
+        rc = bundled_pcre2_substring_length_bynumber(match_data, group, &sublength);
         if (rc < 0)
           {
           if (rc == PCRE2_ERROR_NOSUBSTRING &&
@@ -791,7 +791,7 @@ do
 
     /* Handle an escape sequence in extended mode. We can use check_escape()
     to process \Q, \E, \c, \o, \x and \ followed by non-alphanumerics, but
-    the case-forcing escapes are not supported in pcre2_compile() so must be
+    the case-forcing escapes are not supported in bundled_pcre2_compile() so must be
     recognized here. */
 
     else if ((suboptions & PCRE2_SUBSTITUTE_EXTENDED) != 0 &&
@@ -964,7 +964,7 @@ else
   }
 
 EXIT:
-if (internal_match_data != NULL) pcre2_match_data_free(internal_match_data);
+if (internal_match_data != NULL) bundled_pcre2_match_data_free(internal_match_data);
   else match_data->rc = rc;
 return rc;
 

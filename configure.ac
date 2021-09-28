@@ -8,6 +8,7 @@ echo "stringfish configure script"
 ADD_LIBS=""
 INCLUDE_PATHS=""
 LIBPCRE2=""
+PCRE2_BUNDLED=""
 
 ########################################################
 ### Configure args
@@ -125,6 +126,7 @@ fi
 if test xx$COMPILE_PCRE2 = "xxtrue"; then
   INCLUDE_PATHS="${INCLUDE_PATHS} -IPCRE2"
   LIBPCRE2="\$(LIBPCRE2)"
+  PCRE2_BUNDLED="-DPCRE2_BUNDLED"
 fi
 
 if test xx$with_simd = "xxAVX2"; then
@@ -142,5 +144,6 @@ echo $LIBPCRE2
 AC_SUBST([ADD_LIBS], $ADD_LIBS)
 AC_SUBST([INCLUDE_PATHS], $INCLUDE_PATHS)
 AC_SUBST([LIBPCRE2], $LIBPCRE2)
+AC_SUBST([PCRE2_BUNDLED], $PCRE2_BUNDLED)
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT

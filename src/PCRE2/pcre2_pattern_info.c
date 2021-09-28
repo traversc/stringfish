@@ -62,7 +62,7 @@ Returns:        0 when data returned
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_pattern_info(const pcre2_code *code, uint32_t what, void *where)
+bundled_pcre2_pattern_info(const pcre2_code *code, uint32_t what, void *where)
 {
 const pcre2_real_code *re = (pcre2_real_code *)code;
 
@@ -265,7 +265,7 @@ Returns:        0 when successfully completed
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_callout_enumerate(const pcre2_code *code,
+bundled_pcre2_callout_enumerate(const pcre2_code *code,
   int (*callback)(pcre2_callout_enumerate_block *, void *), void *callout_data)
 {
 pcre2_real_code *re = (pcre2_real_code *)code;

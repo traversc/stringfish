@@ -1186,7 +1186,7 @@ return;
 associated JIT data. */
 
 PCRE2_EXP_DEFN pcre2_code * PCRE2_CALL_CONVENTION
-pcre2_code_copy(const pcre2_code *code)
+bundled_pcre2_code_copy(const pcre2_code *code)
 {
 PCRE2_SIZE* ref_count;
 pcre2_code *newcode;
@@ -1220,7 +1220,7 @@ associated JIT data. This version of code_copy also makes a separate copy of
 the character tables. */
 
 PCRE2_EXP_DEFN pcre2_code * PCRE2_CALL_CONVENTION
-pcre2_code_copy_with_tables(const pcre2_code *code)
+bundled_pcre2_code_copy_with_tables(const pcre2_code *code)
 {
 PCRE2_SIZE* ref_count;
 pcre2_code *newcode;
@@ -1255,7 +1255,7 @@ return newcode;
 *************************************************/
 
 PCRE2_EXP_DEFN void PCRE2_CALL_CONVENTION
-pcre2_code_free(pcre2_code *code)
+bundled_pcre2_code_free(pcre2_code *code)
 {
 PCRE2_SIZE* ref_count;
 
@@ -1458,7 +1458,7 @@ is placed in chptr. A backreference to group n is returned as negative n. On
 entry, ptr is pointing at the character after \. On exit, it points after the
 final code unit of the escape sequence.
 
-This function is also called from pcre2_substitute() to handle escape sequences
+This function is also called from bundled_pcre2_substitute() to handle escape sequences
 in replacement strings. In this case, the cb argument is NULL, and in the case
 of escapes that have further processing, only sequences that define a data
 character are recognised. The isclass argument is not relevant; the options
@@ -1471,7 +1471,7 @@ Arguments:
   errorcodeptr   points to the errorcode variable (containing zero)
   options        the current options bits
   isclass        TRUE if inside a character class
-  cb             compile data block or NULL when called from pcre2_substitute()
+  cb             compile data block or NULL when called from bundled_pcre2_substitute()
 
 Returns:         zero => a data character
                  positive => a special escape sequence
@@ -1572,7 +1572,7 @@ else if ((i = escapes[c - ESCAPES_FIRST]) != 0)
   }
 
 /* Escapes that need further processing, including those that are unknown, have
-a zero entry in the lookup table. When called from pcre2_substitute(), only \c,
+a zero entry in the lookup table. When called from bundled_pcre2_substitute(), only \c,
 \o, and \x are recognized (\u and \U can never appear as they are used for case
 forcing). */
 
@@ -1584,7 +1584,7 @@ else
   BOOL alt_bsux =
     ((options & PCRE2_ALT_BSUX) | (extra_options & PCRE2_EXTRA_ALT_BSUX)) != 0;
 
-  /* Filter calls from pcre2_substitute(). */
+  /* Filter calls from bundled_pcre2_substitute(). */
 
   if (cb == NULL)
     {
@@ -3000,7 +3000,7 @@ while (ptr < ptrend)
       break;
 
       /* Escapes that change in UCP mode. Note that PCRE2_UCP will never be set
-      without Unicode support because it is checked when pcre2_compile() is
+      without Unicode support because it is checked when bundled_pcre2_compile() is
       called. */
 
       case ESC_d:
@@ -6969,7 +6969,7 @@ for (;; pptr++)
       goto END_REPEAT;
 
       /* Prior to 10.30, repeated recursions were wrapped in OP_ONCE brackets
-      because pcre2_match() could not handle backtracking into recursively
+      because bundled_pcre2_match() could not handle backtracking into recursively
       called groups. Now that this backtracking is available, we no longer need
       to do this. However, we still need to replicate recursions as we do for
       groups so as to have independent backtracking points. We can replicate
@@ -7290,7 +7290,7 @@ for (;; pptr++)
         to KETRPOS. (It turns out to be convenient at runtime to detect this
         kind of subpattern at both the start and at the end.) The use of
         special opcodes makes it possible to reduce greatly the stack usage in
-        pcre2_match(). If the group is preceded by OP_BRAZERO, convert this to
+        bundled_pcre2_match(). If the group is preceded by OP_BRAZERO, convert this to
         OP_BRAPOSZERO.
 
         Then, if the minimum number of matches is 1 or 0, cancel the possessive
@@ -9635,7 +9635,7 @@ Returns:        pointer to compiled data block, or NULL on error,
 */
 
 PCRE2_EXP_DEFN pcre2_code * PCRE2_CALL_CONVENTION
-pcre2_compile(PCRE2_SPTR pattern, PCRE2_SIZE patlen, uint32_t options,
+bundled_pcre2_compile(PCRE2_SPTR pattern, PCRE2_SIZE patlen, uint32_t options,
    int *errorptr, PCRE2_SIZE *erroroffset, pcre2_compile_context *ccontext)
 {
 BOOL utf;                             /* Set TRUE for UTF mode */
@@ -10490,7 +10490,7 @@ HAD_EARLY_ERROR:
 
 HAD_ERROR:
 *errorptr = errorcode;
-pcre2_code_free(re);
+bundled_pcre2_code_free(re);
 re = NULL;
 goto EXIT;
 }

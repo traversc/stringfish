@@ -39,7 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* This module contains an internal function that is used to match an extended
-class. It is used by pcre2_auto_possessify() and by both pcre2_match() and
+class. It is used by pcre2_auto_possessify() and by both bundled_pcre2_match() and
 pcre2_def_match(). */
 
 

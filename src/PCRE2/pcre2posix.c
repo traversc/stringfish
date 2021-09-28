@@ -257,8 +257,8 @@ return used + 1;
 PCRE2POSIX_EXP_DEFN void PCRE2_CALL_CONVENTION
 pcre2_regfree(regex_t *preg)
 {
-pcre2_match_data_free(preg->re_match_data);
-pcre2_code_free(preg->re_pcre2_code);
+bundled_pcre2_match_data_free(preg->re_match_data);
+bundled_pcre2_code_free(preg->re_pcre2_code);
 }
 
 
@@ -298,7 +298,7 @@ if ((cflags & REG_UCP) != 0)      options |= PCRE2_UCP;
 if ((cflags & REG_UNGREEDY) != 0) options |= PCRE2_UNGREEDY;
 
 preg->re_cflags = cflags;
-preg->re_pcre2_code = pcre2_compile((PCRE2_SPTR)pattern, patlen, options,
+preg->re_pcre2_code = bundled_pcre2_compile((PCRE2_SPTR)pattern, patlen, options,
   &errorcode, &erroffset, NULL);
 preg->re_erroffset = erroffset;
 
@@ -322,12 +322,12 @@ if (preg->re_pcre2_code == NULL)
 (void)pcre2_pattern_info((const pcre2_code *)preg->re_pcre2_code,
   PCRE2_INFO_CAPTURECOUNT, &re_nsub);
 preg->re_nsub = (size_t)re_nsub;
-preg->re_match_data = pcre2_match_data_create(re_nsub + 1, NULL);
+preg->re_match_data = bundled_pcre2_match_data_create(re_nsub + 1, NULL);
 preg->re_erroffset = (size_t)(-1);  /* No meaning after successful compile */
 
 if (preg->re_match_data == NULL)
   {
-  pcre2_code_free(preg->re_pcre2_code);
+  bundled_pcre2_code_free(preg->re_pcre2_code);
   return REG_ESPACE;
   }
 
@@ -380,7 +380,7 @@ else
   eo = (int)strlen(string);
   }
 
-rc = pcre2_match((const pcre2_code *)preg->re_pcre2_code,
+rc = bundled_pcre2_match((const pcre2_code *)preg->re_pcre2_code,
   (PCRE2_SPTR)string + so, (eo - so), 0, options, md, NULL);
 
 /* Successful match */
@@ -388,7 +388,7 @@ rc = pcre2_match((const pcre2_code *)preg->re_pcre2_code,
 if (rc >= 0)
   {
   size_t i;
-  PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(md);
+  PCRE2_SIZE *ovector = bundled_pcre2_get_ovector_pointer(md);
   if ((size_t)rc > nmatch) rc = (int)nmatch;
   for (i = 0; i < (size_t)rc; i++)
     {

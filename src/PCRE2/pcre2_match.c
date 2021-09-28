@@ -250,7 +250,7 @@ for (i = 0, Q = mb->match_frames;
 
 /* This function is called for all callouts, whether "standalone" or at the
 start of a conditional group. Feptr will be pointing to either OP_CALLOUT or
-OP_CALLOUT_STR. A callout block is allocated in pcre2_match() and initialized
+OP_CALLOUT_STR. A callout block is allocated in bundled_pcre2_match() and initialized
 with fixed values.
 
 Arguments:
@@ -6099,7 +6099,7 @@ Returns:          > 0 => success; value is the number of ovector pairs filled
 */
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_match(const pcre2_code *code, PCRE2_SPTR subject, PCRE2_SIZE length,
+bundled_pcre2_match(const pcre2_code *code, PCRE2_SPTR subject, PCRE2_SIZE length,
   PCRE2_SIZE start_offset, uint32_t options, pcre2_match_data *match_data,
   pcre2_match_context *mcontext)
 {
@@ -6197,7 +6197,7 @@ if ((re->flags & PCRE2_MODE_MASK) != PCRE2_CODE_UNIT_WIDTH/8)
 /* PCRE2_NOTEMPTY and PCRE2_NOTEMPTY_ATSTART are match-time flags in the
 options variable for this function. Users of PCRE2 who are not calling the
 function directly would like to have a way of setting these flags, in the same
-way that they can set pcre2_compile() flags like PCRE2_NO_AUTOPOSSESS with
+way that they can set bundled_pcre2_compile() flags like PCRE2_NO_AUTOPOSSESS with
 constructions like (*NO_AUTOPOSSESS). To enable this, (*NOTEMPTY) and
 (*NOTEMPTY_ATSTART) set bits in the pattern's "flag" function which we now
 transfer to the options for this function. The bits are guaranteed to be
@@ -6342,7 +6342,7 @@ if (use_jit)
   /* If JIT returns BADOPTION, which means that the selected complete or
   partial matching mode was not compiled, fall through to the interpreter. */
 
-  rc = pcre2_jit_match(code, subject, length, start_offset, options,
+  rc = bundled_pcre2_jit_match(code, subject, length, start_offset, options,
     match_data, mcontext);
   if (rc != PCRE2_ERROR_JIT_BADOPTION)
     {

@@ -14027,7 +14027,7 @@ Returns:        0: success or (*NOJIT) was used
   (PCRE2_JIT_COMPLETE|PCRE2_JIT_PARTIAL_SOFT|PCRE2_JIT_PARTIAL_HARD|PCRE2_JIT_INVALID_UTF)
 
 PCRE2_EXP_DEFN int PCRE2_CALL_CONVENTION
-pcre2_jit_compile(pcre2_code *code, uint32_t options)
+bundled_pcre2_jit_compile(pcre2_code *code, uint32_t options)
 {
 pcre2_real_code *re = (pcre2_real_code *)code;
 
