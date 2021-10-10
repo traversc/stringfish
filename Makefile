@@ -15,12 +15,18 @@ check-cran: $(BUILD)
 	# R --interactive --no-save --args $< <<<'rhub::check_for_cran(commandArgs(T)[1])'
 	# Rscript -e "rhub::check_on_solaris()"
 	# Rscript -e 'rhub::check("$(BUILD)", platform = c("solaris-x86-patched"))'
-	Rscript -e 'rhub::check("$(BUILD)", platform = c("ubuntu-gcc-devel", "windows-x86_64-devel", "solaris-x86-patched", "linux-x86_64-rocker-gcc-san"))'
+	Rscript -e 'rhub::check("$(BUILD)", platform = c("ubuntu-gcc-devel", "windows-x86_64-devel", "solaris-x86-patched", "macos-m1-bigsur-release"))'
+
+check-solaris: $(BUILD)
+	Rscript -e 'rhub::check("$(BUILD)", platform = c("solaris-x86-patched"))'
+	
+check-m1: $(BUILD)
+	Rscript -e 'rhub::check("$(BUILD)", platform = c("macos-m1-bigsur-release"))'
 
 compile:
 	find src/ -type f -exec chmod 644 {} \;
 	Rscript -e "library(Rcpp); compileAttributes('.');"
-	Rscript -e "devtools::load_all(); roxygen2::roxygenise('.');"
+	# Rscript -e "devtools::load_all(); roxygen2::roxygenise('.');"
 	find . -iname "*.a" -exec rm {} \;
 	find . -iname "*.o" -exec rm {} \;
 	find . -iname "*.so" -exec rm {} \;
@@ -34,6 +40,7 @@ build:
 	./configure
 	./cleanup
 	Rscript -e "library(Rcpp); compileAttributes('.');"
+	rm -f R/RcppExports.R
 	Rscript -e "devtools::load_all(); roxygen2::roxygenise('.');"
 	find . -iname "*.a" -exec rm {} \;
 	find . -iname "*.o" -exec rm {} \;
@@ -49,6 +56,7 @@ install:
 	./configure
 	./cleanup
 	Rscript -e "library(Rcpp); compileAttributes('.');"
+	rm -f R/RcppExports.R
 	Rscript -e "devtools::load_all(); roxygen2::roxygenise('.');"
 	find . -iname "*.a" -exec rm {} \;
 	find . -iname "*.o" -exec rm {} \;
