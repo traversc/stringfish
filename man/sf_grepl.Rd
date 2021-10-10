@@ -4,7 +4,8 @@
 \alias{sf_grepl}
 \title{sf_grepl}
 \usage{
-sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
+sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE, 
+nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{subject}{The subject character vector to search}

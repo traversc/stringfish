@@ -259,7 +259,8 @@ NULL
 #' sf_grepl
 #' 
 #' A function that matches patterns and returns a logical vector
-#' @usage sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
+#' @usage sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE, 
+#' nthreads = getOption("stringfish.nthreads", 1L))
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
@@ -285,7 +286,8 @@ NULL
 #' sf_gsub
 #' 
 #' A function that performs pattern substitution
-#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
+#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, 
+#' nthreads = getOption("stringfish.nthreads", 1L))
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param replacement The replacement string
@@ -441,7 +443,8 @@ NULL
 #' sf_split
 #' 
 #' A function to split strings by a delimiter
-#' @usage sf_split(subject, split, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
+#' @usage sf_split(subject, split, encode_mode = "auto", fixed = FALSE, 
+#' nthreads = getOption("stringfish.nthreads", 1L))
 #' @param subject A character vector
 #' @param split A delimiter to split the string by
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
