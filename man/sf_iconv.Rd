@@ -4,7 +4,7 @@
 \alias{sf_iconv}
 \title{sf_iconv}
 \usage{
-sf_iconv(x, from, to, nthreads = 1)
+sf_iconv(x, from, to, nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{x}{An alt-rep object}

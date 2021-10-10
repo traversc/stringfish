@@ -4,7 +4,7 @@
 \alias{sf_gsub}
 \title{sf_gsub}
 \usage{
-sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = 1)
+sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{subject}{The subject character vector to search}

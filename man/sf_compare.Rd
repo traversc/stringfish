@@ -5,9 +5,9 @@
 \alias{sf_equals}
 \title{sf_compare}
 \usage{
-sf_compare(x, y, nthreads = 1)
+sf_compare(x, y, nthreads = getOption("stringfish.nthreads", 1L))
 
-sf_equals(x, y, nthreads = 1L)
+sf_equals(x, y, nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{x}{A character vector of length 1 or the same non-zero length as y}

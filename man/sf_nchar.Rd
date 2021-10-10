@@ -4,7 +4,7 @@
 \alias{sf_nchar}
 \title{sf_nchar}
 \usage{
-sf_nchar(x, type = "chars", nthreads = 1)
+sf_nchar(x, type = "chars", nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{x}{A character vector}
