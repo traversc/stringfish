@@ -1,4 +1,4 @@
-sf_paste <- function(..., sep="", nthreads=1) {
+sf_paste <- function(..., sep="", nthreads = getOption("stringfish.nthreads", 1L)) {
   if(!is.character(sep) || length(sep) != 1) {
     stop("sep should be a character vector of length 1")
   }

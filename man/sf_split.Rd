@@ -4,7 +4,8 @@
 \alias{sf_split}
 \title{sf_split}
 \usage{
-sf_split(subject, split, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
+sf_split(subject, split, encode_mode = "auto", fixed = FALSE, 
+nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{subject}{A character vector}
