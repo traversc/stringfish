@@ -4,7 +4,7 @@
 \alias{sf_substr}
 \title{sf_substr}
 \usage{
-sf_substr(x, start, stop, nthreads = 1)
+sf_substr(x, start, stop, nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{x}{A character vector}

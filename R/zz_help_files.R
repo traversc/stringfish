@@ -113,7 +113,7 @@ sf_convert <- convert_to_sf
 #' sf_iconv
 #' 
 #' Converts encoding of one character vector to another
-#' @usage sf_iconv(x, from, to, nthreads = 1)
+#' @usage sf_iconv(x, from, to, nthreads = getOption("stringfish.nthreads", 1L))
 #' @param x An alt-rep object
 #' @param from the encoding to assume of `x`
 #' @param nthreads Number of threads to use
@@ -134,7 +134,7 @@ NULL
 #' sf_nchar
 #' 
 #' Counts the number of characters in a character vector
-#' @usage sf_nchar(x, type = "chars", nthreads = 1)
+#' @usage sf_nchar(x, type = "chars", nthreads = getOption("stringfish.nthreads", 1L))
 #' @param x A character vector
 #' @param type The type of counting to perform ("chars" or "bytes", default: "chars")
 #' @param nthreads Number of threads to use
@@ -154,7 +154,7 @@ NULL
 #' sf_substr
 #' 
 #' Extracts substrings from a character vector
-#' @usage sf_substr(x, start, stop, nthreads = 1)
+#' @usage sf_substr(x, start, stop, nthreads = getOption("stringfish.nthreads", 1L))
 #' @param x A character vector
 #' @param start The begining to extract from
 #' @param stop The end to extract from
@@ -198,7 +198,7 @@ NULL
 #' sf_paste
 #' 
 #' Pastes a series of strings together
-#' @usage sf_paste(..., sep = "", nthreads = 1)
+#' @usage sf_paste(..., sep = "", nthreads = getOption("stringfish.nthreads", 1L))
 #' @param ... Any number of character vector strings
 #' @param sep The seperating string between strings
 #' @param nthreads Number of threads to use
@@ -259,7 +259,7 @@ NULL
 #' sf_grepl
 #' 
 #' A function that matches patterns and returns a logical vector
-#' @usage sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = 1)
+#' @usage sf_grepl(subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
@@ -285,7 +285,7 @@ NULL
 #' sf_gsub
 #' 
 #' A function that performs pattern substitution
-#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = 1)
+#' @usage sf_gsub(subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
 #' @param subject The subject character vector to search
 #' @param pattern The pattern to search for
 #' @param replacement The replacement string
@@ -424,7 +424,7 @@ NULL
 #' sf_match
 #' 
 #' Returns a vector of the positions of x in table
-#' @usage sf_match(x, table, nthreads = 1)
+#' @usage sf_match(x, table, nthreads = getOption("stringfish.nthreads", 1L))
 #' @param x A character vector to search for in table
 #' @param table A character vector to be matched against x
 #' @param nthreads Number of threads to use
@@ -441,7 +441,7 @@ NULL
 #' sf_split
 #' 
 #' A function to split strings by a delimiter
-#' @usage sf_split(subject, split, encode_mode = "auto", fixed = FALSE, nthreads = 1)
+#' @usage sf_split(subject, split, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L))
 #' @param subject A character vector
 #' @param split A delimiter to split the string by
 #' @param encode_mode "auto", "UTF-8" or "byte". Determines multi-byte (UTF-8) characters or single-byte characters are used.
@@ -459,7 +459,7 @@ NULL
 #' sf_compare
 #' 
 #' Returns a logical vector testing equality of strings from two string vectors
-#' @usage sf_compare(x, y, nthreads = 1)
+#' @usage sf_compare(x, y, nthreads = getOption("stringfish.nthreads", 1L))
 #' @param x A character vector of length 1 or the same non-zero length as y
 #' @param y Another character vector of length 1 or the same non-zero length as y
 #' @param nthreads Number of threads to use

@@ -4,7 +4,7 @@
 \alias{sf_match}
 \title{sf_match}
 \usage{
-sf_match(x, table, nthreads = 1)
+sf_match(x, table, nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{x}{A character vector to search for in table}

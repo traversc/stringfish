@@ -4,7 +4,7 @@
 \alias{sf_paste}
 \title{sf_paste}
 \usage{
-sf_paste(..., sep = "", nthreads = 1)
+sf_paste(..., sep = "", nthreads = getOption("stringfish.nthreads", 1L))
 }
 \arguments{
 \item{...}{Any number of character vector strings}
