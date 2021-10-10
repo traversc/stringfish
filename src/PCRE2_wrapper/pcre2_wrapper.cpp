@@ -12,6 +12,10 @@ pcre2_match_wrapper::pcre2_match_wrapper(const char * pattern_ptr, bool utf8, bo
   int errorcode;
   PCRE2_SIZE erroroffset;
   uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
+  // PCRE2_NO_AUTO_POSSESS // auto_possesify ERR80 on solaris
+#if defined(sun) || defined(__sun)
+  if(!literal) flags = flags | PCRE2_NO_AUTO_POSSESS;
+#endif
   re = CALL_pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
                      PCRE2_ZERO_TERMINATED, // length
                      flags,
@@ -141,6 +145,10 @@ pcre2_sub_wrapper::pcre2_sub_wrapper(const char * pattern_ptr, const char * repl
   int errorcode;
   PCRE2_SIZE erroroffset;
   uint32_t flags = (utf8 ? PCRE2_UTF : 0) | (literal ? PCRE2_LITERAL : 0);
+  // PCRE2_NO_AUTO_POSSESS // auto_possesify ERR80 on solaris
+#if defined(sun) || defined(__sun)
+  flags = flags | PCRE2_NO_AUTO_POSSESS;
+#endif
   re = CALL_pcre2_compile((PCRE2_SPTR)pattern_ptr, // pattern
                      PCRE2_ZERO_TERMINATED, // length
                      flags,

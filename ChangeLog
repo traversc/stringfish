@@ -1,5 +1,7 @@
-Version 0.15.3 (2021-9-26)
-   * Fix to https://github.com/traversc/stringfish/issues/7
+Version 0.15.3 (2021-10-9)
+   * Fix to https://github.com/traversc/stringfish/issues/7; definition conflict with bundled PCRE2
+   * `nthreads` parameter default is now `getOption("stringfish.nthreads", 1L)`. Set using `options(stringfish.nthreads = 4L)`
+   * Update autoconf to version 2.6.9 (autoupdate; autoreconf --warnings=obsolete)
 
 Version 0.15.2 (2021-7-23)
    * Change ALTVEC_DATAPTR to DATAPTR to conform to changes in the API
