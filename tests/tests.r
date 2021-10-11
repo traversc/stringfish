@@ -348,7 +348,7 @@ for(.j in 1:4) {
       stopifnot(string_identical(x, i500_latin1))
     }
     
-    gctorture(TRUE)
+    # Disable check due to https://bugs.r-project.org/show_bug.cgi?id=18211
     catn("sf_match")
     for(. in 1:ntests) {
       i500_utf8_shuffled <- c(NA_character_, i500_utf8[sample(length(i500_utf8))][-1])
@@ -359,10 +359,9 @@ for(.j in 1:4) {
       i500_latin1_shuffled <- c(NA_character_, i500_latin1[sample(length(i500_latin1))][-1])
       temp <- c(i500_latin1, NA_character_)
       x <- sf_match(c(i500_latin1, NA_character_), i500_latin1_shuffled)
-      y <- match(temp, i500_latin1_shuffled)
-      stopifnot(identical(x,y))
+      # y <- match(temp, i500_latin1_shuffled)
+      # stopifnot(identical(x,y))
     }
-    gctorture(FALSE)
     
     catn("sf_compare")
     for(. in 1:ntests) {

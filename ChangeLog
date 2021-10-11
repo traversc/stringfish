@@ -1,3 +1,6 @@
+Version 0.15.4 (2021-10-11)
+   * Disable `sf_match` test due error on Solaris and R 4.1.X bug (https://bugs.r-project.org/show_bug.cgi?id=18211)
+
 Version 0.15.3 (2021-10-9)
    * Fix to https://github.com/traversc/stringfish/issues/7; definition conflict with bundled PCRE2
    * Update autoconf to version 2.6.9 (autoupdate; autoreconf --warnings=obsolete)
