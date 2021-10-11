@@ -26,6 +26,10 @@ decode_source <- function(x) {
   qdeserialize(x)
 }
 
+is.solaris<-function() {
+  grepl('SunOS',Sys.info()['sysname'])
+}
+
 myfile <- tempfile()
 print(myfile)
 # qserialize(readLines("~/GoogleDrive/stringfish/tests/tests.cpp"), preset = "custom", compress_level = 22) %>% base91_encode %>% catquo
@@ -39,6 +43,9 @@ print(myfile)
 #   "$8a^V39@<PuHk{YpMs_.X@7tJ',vT#MPnw?/5v/]edAGh`Fdzxcuz](&FuQn'_W4wa,e?m~v4ce>]=Tjqhh+~`+8sR]$X&Z`jUSH[9CGNXbE]vJw|SNv|&^0VHzb;p|&};vJ2&e@h)GS'LrO@=%M,l]UW;DWK7M.", 
 #   "B6JU[B),'0QLzjk<2)4mrz1MRx^Ea/1<I7?Y(OB")
 # sourceCpp(code = decode_source(src))
+
+# i500_utf8 <- readRDS("/tmp/temp.rds")
+# i500_latin1 <- iconv(i500_utf8, "UTF-8", "latin1")
 
 # For a test set, we are using the 500 most common Icelandic words
 # This is a pretty good test set because all Icelandic words can be encoded as either UTF-8 or latin1. It also contains a mix of ASCII and non-ASCII strings
@@ -55,20 +62,27 @@ catn <- function(...) {
   cat(..., "\n")
 }
 ntests <- 50
-nthreads <- c(1,8)
+
+use_tbb <- stringfish:::is_tbb()
+cat("using thread building blocks?", use_tbb, "\n")
+if(use_tbb) {
+  nthreads <- c(1,8)
+} else {
+  nthreads <- 1
+}
 
 print(sessionInfo())
 print(utils::localeToCharset())
-# materialize <- function(x) {}
+
 for(.j in 1:4) {
-  print(.j)
+  cat("iteration", .j, "\n")
   if(.j %% 2 == 0) {
     stringfish:::set_is_utf8_locale()
   } else {
     stringfish:::unset_is_utf8_locale()
   }
   for(nt in nthreads) {
-    print(nt)
+    cat("number of threads", nt, "\n")
     catn("sf_assign")
     for(. in 1:ntests) {
       x <- sf_vector(10)
@@ -334,18 +348,21 @@ for(.j in 1:4) {
       stopifnot(string_identical(x, i500_latin1))
     }
     
+    gctorture(TRUE)
     catn("sf_match")
     for(. in 1:ntests) {
       i500_utf8_shuffled <- c(NA_character_, i500_utf8[sample(length(i500_utf8))][-1])
-      x <- sf_match(c(i500_utf8, NA_character_), i500_utf8_shuffled)
-      y <- match(c(i500_utf8, NA_character_), i500_utf8_shuffled)
+      temp <- c(i500_utf8, NA_character_)
+      x <- sf_match(temp, i500_utf8_shuffled)
+      y <- match(temp, i500_utf8_shuffled)
       stopifnot(identical(x,y))
-      
       i500_latin1_shuffled <- c(NA_character_, i500_latin1[sample(length(i500_latin1))][-1])
+      temp <- c(i500_latin1, NA_character_)
       x <- sf_match(c(i500_latin1, NA_character_), i500_latin1_shuffled)
-      y <- match(c(i500_latin1, NA_character_), i500_latin1_shuffled)
+      y <- match(temp, i500_latin1_shuffled)
       stopifnot(identical(x,y))
     }
+    gctorture(FALSE)
     
     catn("sf_compare")
     for(. in 1:ntests) {
@@ -377,7 +394,6 @@ for(.j in 1:4) {
       stopifnot(string_identical(x,y))
       stopifnot(identical(sfc(character(0)), character(0)))
     }
-    
     print(gc())
   }
 }
