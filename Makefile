@@ -11,10 +11,7 @@ check: $(BUILD)
 check-no-vignette: $(BUILD)
 	R CMD check --as-cran --no-build-vignettes $<
 
-check-cran: $(BUILD)
-	# R --interactive --no-save --args $< <<<'rhub::check_for_cran(commandArgs(T)[1])'
-	# Rscript -e "rhub::check_on_solaris()"
-	# Rscript -e 'rhub::check("$(BUILD)", platform = c("solaris-x86-patched"))'
+check-rhub: $(BUILD)
 	Rscript -e 'rhub::check("$(BUILD)", platform = c("ubuntu-gcc-devel", "windows-x86_64-devel", "solaris-x86-patched", "macos-m1-bigsur-release"))'
 
 check-solaris: $(BUILD)

@@ -3,8 +3,8 @@ stringfish
 
 <!-- <img src="hex.png" width = "130" height = "150" align="right" style="border:0px;padding:15px"> -->
 
-[![Build
-Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/traversc/stringfish)
+<!-- [![Build Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/traversc/stringfish) -->
+
 [![R-CMD-check](https://github.com/traversc/stringfish/workflows/R-CMD-check/badge.svg)](https://github.com/traversc/stringfish/actions)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/stringfish)](https://cran.r-project.org/package=stringfish)
 [![CRAN\_Downloads\_Badge](https://cranlogs.r-pkg.org/badges/stringfish)](https://cran.r-project.org/package=stringfish)
