@@ -11,7 +11,7 @@ Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/tr
 [![CRAN\_Downloads\_Total\_Badge](https://cranlogs.r-pkg.org/badges/grand-total/stringfish)](https://cran.r-project.org/package=stringfish)
 
 `stringfish` is a framework for performing string and sequence
-operations using the ALTREP system to speed up the comptuation of common
+operations using the ALTREP system to speed up the computation of common
 string operations.
 
 The ultimate goal of the package is to unify ALTREP string
@@ -20,7 +20,7 @@ implementations under a common framework.
 The ALTREP system (new as of R 3.5.0) allows package developers to
 represent R objects using their own custom memory layout, completely
 invisible to the user. `stringfish` represents string data as a simple
-C++/STL vector, which is very fast andlightweight.
+C++/STL vector, which is very fast and lightweight.
 
 Using normal R functions to process string data (e.g. `substr`, `gsub`,
 `paste`, etc.) causes “materialization” of ALTREP vectors to normal R
@@ -29,7 +29,7 @@ advantage of the ALTREP framework, string processing functions need to
 be re-written to be ALTREP aware. This package hopes to fulfill that
 purpose.
 
-## Installation:
+## Installation
 
 ``` r
 install.packages("stringfish", type="source", configure.args="--with-simd=AVX2")
@@ -49,8 +49,8 @@ text datasets, this can turn minutes of computation into seconds.
 
 ## Currently implemented functions
 
-A list of implemented `stringfish` function and analogous base R
-function:
+A list of implemented `stringfish` functions and analogous base R
+functions:
 
   - `sf_iconv` (`iconv`)
   - `sf_nchar` (`nchar`)
@@ -80,7 +80,7 @@ Utility functions:
   - `get_string_type` – determines string type (whether ALTREP or
     normal)
   - `materialize` – converts any ALTREP object into a normal R object
-  - `random_strings` – creates a random strings as either a `stringfish`
+  - `random_strings` – creates random strings as either a `stringfish`
     or normal R vector
   - `string_identical` – like `identical` for strings but also requires
     identical encoding (i.e. latin1 and UTF-8 strings will not match)
