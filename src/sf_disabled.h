@@ -40,6 +40,4 @@ IntegerVector sf_match(SEXP x, SEXP table, const int nthreads = 1) {NO_ALTREP_SU
 LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads = 1) {NO_ALTREP_SUPPORT();}
 SEXP c_sf_concat(SEXP x) {NO_ALTREP_SUPPORT();}
 
-
-
 #endif

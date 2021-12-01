@@ -1,3 +1,6 @@
+Version 0.15.5 (2021-11-30)
+   * Minor bugfix to work on R 3.4 (https://github.com/tidyverse/multidplyr/pull/129)
+
 Version 0.15.4 (2021-10-11)
    * Disable `sf_match` test due error on Solaris and R 4.1.X bug (https://bugs.r-project.org/show_bug.cgi?id=18211)
 
@@ -19,7 +22,7 @@ Version 0.15.0 (2021-2-20)
 
 Version 0.14.2 (2020-9-3)
    * Fix bug with `extract_subset` ALTREP routine (https://github.com/traversc/qs/issues/42)
-   
+
 Version 0.14.1 (2020-7-23)
    * Implemented multithreading with RcppParallel
    * Addition of `Extract_subset` ALTREP method

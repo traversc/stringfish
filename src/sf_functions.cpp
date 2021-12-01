@@ -13,6 +13,8 @@
 #endif
 #include <atomic>
 
+#include "PCRE2_wrapper/pcre2_wrapper.h"
+
 using namespace Rcpp;
 using namespace RcppParallel;
 
@@ -73,6 +75,18 @@ void check_simd() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// SIMD check utility
+
+// [[Rcpp::export(rng = false)]]
+List get_pcre2_info() {
+  auto result = sf::pcre2_info();
+  return List::create(
+    _["pcre2_header_version"] = IntegerVector::create(result.first),
+    _["is_bundled"] = LogicalVector::create(result.second)
+  );
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 // Disable functions if not ALTREP support
 #if R_VERSION < R_Version(3, 5, 0) // no AlTREP support before 3.5
@@ -86,16 +100,6 @@ void check_simd() {
 #include <fstream>
 
 #include "xxhash/xxhash.c"
-
-#include "PCRE2_wrapper/pcre2_wrapper.h"
-// [[Rcpp::export(rng = false)]]
-List get_pcre2_info() {
-  auto result = sf::pcre2_info();
-  return List::create(
-    _["pcre2_header_version"] = IntegerVector::create(result.first),
-    _["is_bundled"] = LogicalVector::create(result.second)
-  );
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // iconv helper class
