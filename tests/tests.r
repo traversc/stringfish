@@ -36,24 +36,6 @@ is_solaris<-function() {
 myfile <- tempfile()
 print(myfile)
 
-R_TESTS <- Sys.getenv("R_TESTS") # startup.Rs
-if (nzchar(R_TESTS)) {
-  R_TESTS_absolute <- normalizePath(R_TESTS)
-  Sys.setenv(R_TESTS = R_TESTS_absolute)
-}
-# qserialize(readLines("~/GoogleDrive/stringfish/tests/tests.cpp"), preset = "custom", compress_level = 22) %>% base91_encode %>% catquo
-src <- c("un]'BAAA@QRtHACAAAAAAA*h%AAAv7#aT)3t*RQAD;!)+W(7mAAAAABtl5D6in`zuG3Oq}n@dWajczz9yI|Bz5M}2e*hSa0*tJ)AqqDXgr6yEtdA2rh3}=e1B|ok7[/ZFsi[pk~Wpge{v!E1yTQP(pz!FSo!fN[X",
-  "!n83TP:x.{C(SQv?H[A.~u3|PlL%hO<@eS{e:bzq>30jCFdB$E#rT.hCMD#zl;6[IQ%+tnxm@vFH)KHYf/r2qfDznf}B+,qL%AEASKwWU;6`hRx3F6v`HC=}I35:D/cEY7>Bo])5~8@qJJ%>+$|#=r`4$pJHcYyN",
-  "Yw9BAfV??<.&+{f6P!W}Fz3&,pYkTkH1]^pZ&Rx$X(4n2n.gHNQuZ]o}$6jJ~5jzFG}F_oE;>{7bnw8U^VO}#ISz7(lE#F+5t,<2V!Bje.D/gz(u<m(@7[ffhRmlp5cua1^{l#c;yy0};34+&NxYp4#^`9f5H|@2",
-  "(p|<KnBozgLcpnO1[+Ad^SC72^9IpZ2=&s=GqUS#>(5GG$Y=P|_Hx5Xz)M<.n`;wML?K;vaL7KQf>2mr#[htsv=MYXjG}avX~c7:lp$jRDaODn5p&F=7iC6HJ(S+^yd&he99LxcXpa8m{D8|jDzKht//_Ef`mF]t",
-  "^_N_>&1{l&=dJS%z<p=(+Pl&~%akl@Wu@tMEO:]Q'6+TfS(PXtF[[T'k|3S}DjszM'EZtgo+ZlGA*HAA:CQA/FP#djTD;oAwXO*5|We/;Ux(`QzZYb(e$>?D#pe2jwk'r46m]M{FomM_jz8&#P:+`Nx={+r4q4k,",
-  "'lxqeYbI[0rjwI4+l+nKdZDhc%Q;]CR|?,HCS!<*zQRTIU_r+s}O8wf,^T$!z%s;m70ehLHQ{cbFhm:ZG99vT0]B>,C|ZB<@i,_|)K;ls<5r&O}@I2!4el_2fIlz=vp1J{{nHi$3`6WdGoC49xPYu@}v&c=rd~e9",
-  "$TIt'W{L:Jr1[kqu{+uQHOaOk&Jg4/A^A,{NhBu%AM]^wIzi9$C2,HjXAGj3az1bj1CMKNdD')NU/kSt4N9%z40:NpxR#NEXG+W%>+vQcwa&6&XcM=wL5{>LViK;Pie#e4DW.gs@?6$emLK?5vq7]kn5t#=l.g!@",
-  "$8a^V39@<PuHk{YpMs_.X@7tJ',vT#MPnw?/5v/]edAGh`Fdzxcuz](&FuQn'_W4wa,e?m~v4ce>]=Tjqhh+~`+8sR]$X&Z`jUSH[9CGNXbE]vJw|SNv|&^0VHzb;p|&};vJ2&e@h)GS'LrO@=%M,l]UW;DWK7M.",
-  "B6JU[B),'0QLzjk<2)4mrz1MRx^Ea/1<I7?Y(OB")
-sourceCpp(code = decode_source(src))
-if (nzchar(R_TESTS)) Sys.setenv(R_TESTS = R_TESTS)
-
 # i500_utf8 <- readRDS("/tmp/temp.rds")
 # i500_latin1 <- iconv(i500_utf8, "UTF-8", "latin1")
 
@@ -87,6 +69,24 @@ print(utils::localeToCharset())
 if(!altrep_support()) {
   cat("ALT-REP not supported (R < 3.5)")
 } else {
+  R_TESTS <- Sys.getenv("R_TESTS") # startup.Rs
+  if (nzchar(R_TESTS)) {
+    R_TESTS_absolute <- normalizePath(R_TESTS)
+    Sys.setenv(R_TESTS = R_TESTS_absolute)
+  }
+  # qserialize(readLines("~/GoogleDrive/stringfish/tests/tests.cpp"), preset = "custom", compress_level = 22) %>% base91_encode %>% catquo
+  src <- c("un]'BAAA@QRtHACAAAAAAA*h%AAAv7#aT)3t*RQAD;!)+W(7mAAAAABtl5D6in`zuG3Oq}n@dWajczz9yI|Bz5M}2e*hSa0*tJ)AqqDXgr6yEtdA2rh3}=e1B|ok7[/ZFsi[pk~Wpge{v!E1yTQP(pz!FSo!fN[X",
+           "!n83TP:x.{C(SQv?H[A.~u3|PlL%hO<@eS{e:bzq>30jCFdB$E#rT.hCMD#zl;6[IQ%+tnxm@vFH)KHYf/r2qfDznf}B+,qL%AEASKwWU;6`hRx3F6v`HC=}I35:D/cEY7>Bo])5~8@qJJ%>+$|#=r`4$pJHcYyN",
+           "Yw9BAfV??<.&+{f6P!W}Fz3&,pYkTkH1]^pZ&Rx$X(4n2n.gHNQuZ]o}$6jJ~5jzFG}F_oE;>{7bnw8U^VO}#ISz7(lE#F+5t,<2V!Bje.D/gz(u<m(@7[ffhRmlp5cua1^{l#c;yy0};34+&NxYp4#^`9f5H|@2",
+           "(p|<KnBozgLcpnO1[+Ad^SC72^9IpZ2=&s=GqUS#>(5GG$Y=P|_Hx5Xz)M<.n`;wML?K;vaL7KQf>2mr#[htsv=MYXjG}avX~c7:lp$jRDaODn5p&F=7iC6HJ(S+^yd&he99LxcXpa8m{D8|jDzKht//_Ef`mF]t",
+           "^_N_>&1{l&=dJS%z<p=(+Pl&~%akl@Wu@tMEO:]Q'6+TfS(PXtF[[T'k|3S}DjszM'EZtgo+ZlGA*HAA:CQA/FP#djTD;oAwXO*5|We/;Ux(`QzZYb(e$>?D#pe2jwk'r46m]M{FomM_jz8&#P:+`Nx={+r4q4k,",
+           "'lxqeYbI[0rjwI4+l+nKdZDhc%Q;]CR|?,HCS!<*zQRTIU_r+s}O8wf,^T$!z%s;m70ehLHQ{cbFhm:ZG99vT0]B>,C|ZB<@i,_|)K;ls<5r&O}@I2!4el_2fIlz=vp1J{{nHi$3`6WdGoC49xPYu@}v&c=rd~e9",
+           "$TIt'W{L:Jr1[kqu{+uQHOaOk&Jg4/A^A,{NhBu%AM]^wIzi9$C2,HjXAGj3az1bj1CMKNdD')NU/kSt4N9%z40:NpxR#NEXG+W%>+vQcwa&6&XcM=wL5{>LViK;Pie#e4DW.gs@?6$emLK?5vq7]kn5t#=l.g!@",
+           "$8a^V39@<PuHk{YpMs_.X@7tJ',vT#MPnw?/5v/]edAGh`Fdzxcuz](&FuQn'_W4wa,e?m~v4ce>]=Tjqhh+~`+8sR]$X&Z`jUSH[9CGNXbE]vJw|SNv|&^0VHzb;p|&};vJ2&e@h)GS'LrO@=%M,l]UW;DWK7M.",
+           "B6JU[B),'0QLzjk<2)4mrz1MRx^Ea/1<I7?Y(OB")
+  sourceCpp(code = decode_source(src))
+  if (nzchar(R_TESTS)) Sys.setenv(R_TESTS = R_TESTS)
+  
   for(.j in 1:4) {
     cat("iteration", .j, "\n")
     if(.j %% 2 == 0) {
