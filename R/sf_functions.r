@@ -52,15 +52,15 @@ sf_trim <- function(subject, which = c("both", "left", "right"), whitespace = "[
 string_identical <- function(x, y) {
   stopifnot(is.character(x))
   stopifnot(is.character(y))
-  if(length(x) != length(y)) return(F)
+  if(length(x) != length(y)) return(FALSE)
   na_x <- is.na(x)
   na_y <- is.na(y)
   stopifnot(identical(na_x,na_y))
-  if(all(na_x)) return(T) # correctly catches zero length as well
+  if(all(na_x)) return(TRUE) # correctly catches zero length as well
   not_na <- !na_x
-  if(any(nchar(x[not_na]) != nchar(y[not_na]))) return(F)
-  if(!all(Encoding(x[not_na]) == Encoding(y[not_na]))) return(F)
-  if(any(x[not_na] != y[not_na])) return(F)
-  return(T)
+  if(any(nchar(x[not_na]) != nchar(y[not_na]))) return(FALSE)
+  if(!all(Encoding(x[not_na]) == Encoding(y[not_na]))) return(FALSE)
+  if(any(x[not_na] != y[not_na])) return(FALSE)
+  return(TRUE)
 }
 
