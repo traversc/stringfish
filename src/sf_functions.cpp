@@ -10,6 +10,7 @@
 #if RCPP_PARALLEL_USE_TBB
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/task_arena.h>
+#include <tbb/enumerable_thread_specific.h>
 #endif
 #include <atomic>
 
