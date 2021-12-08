@@ -1,8 +1,11 @@
+Version 0.15.6 (2021-12-8)
+   * Bugfix to work on Linux Alpine; missing checks for TBB (https://github.com/r-hub/r-minimal/issues/37, https://github.com/traversc/stringfish/issues/11)
+
 Version 0.15.5 (2021-11-30)
-   * Minor bugfix to work on R 3.4 (https://github.com/tidyverse/multidplyr/pull/129)
+   * Bugfix to work on R 3.4 (https://github.com/tidyverse/multidplyr/pull/129)
 
 Version 0.15.4 (2021-10-11)
-   * Disable `sf_match` test due error on Solaris and R 4.1.X bug (https://bugs.r-project.org/show_bug.cgi?id=18211)
+   * Disable `sf_match` test due to error on Solaris and R 4.1.X bug (https://bugs.r-project.org/show_bug.cgi?id=18211)
 
 Version 0.15.3 (2021-10-9)
    * Fix to https://github.com/traversc/stringfish/issues/7; definition conflict with bundled PCRE2
