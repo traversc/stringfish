@@ -315,7 +315,7 @@ struct iconv_worker : public Worker {
 };
 #endif
 
-// [[Rcpp::export(rng = false)]]
+// [[Rcpp::export(rng = false, signature = {x, from, to, nthreads = getOption("stringfish.nthreads", 1L)})]]
 SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads=1) {
   cetype_t encoding;
   if(to == "UTF-8") {
@@ -404,7 +404,7 @@ struct nchar_worker : public Worker {
 };
 #endif
 
-// [[Rcpp::export(rng = false)]]
+// [[Rcpp::export(rng = false, signature = {x, type = "chars", nthreads = getOption("stringfish.nthreads", 1L)})]]
 IntegerVector sf_nchar(SEXP x, const std::string type = "chars", const int nthreads = 1) {
   if((type != "chars") && (type != "bytes")) {
     throw std::runtime_error("type must be chars or bytes");
@@ -522,7 +522,7 @@ struct substr_worker : public Worker {
   }
 };
 
-// [[Rcpp::export(rng = false)]]
+// [[Rcpp::export(rng = false, signature = {x, start, stop, nthreads = getOption("stringfish.nthreads", 1L)})]]
 SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthreads = 1) {
   size_t start_size = Rf_xlength(start);
   size_t stop_size = Rf_xlength(stop);
@@ -838,8 +838,8 @@ struct grepl_worker : public Worker {
 };
 #endif
 
-// [[Rcpp::export(rng = false)]]
-LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode = "auto", const bool fixed = false ,const int nthreads = 1) {
+// [[Rcpp::export(rng = false, signature = {subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L)})]]
+LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {
   if(encode_mode != "auto" && encode_mode != "byte" && encode_mode != "UTF-8") {
     throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
   }
@@ -1003,7 +1003,7 @@ struct split_worker : public Worker {
 };
 #endif
 
-// [[Rcpp::export(rng = false)]]
+// [[Rcpp::export(rng = false, signature = {subject, split, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L)})]]
 SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {
   
   SEXP pattern_element = STRING_ELT(split, 0);
@@ -1160,7 +1160,7 @@ struct gsub_worker : public Worker {
 };
 #endif
 
-// [[Rcpp::export(rng = false)]]
+// [[Rcpp::export(rng = false, signature = {subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L)})]]
 SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {
   SEXP pattern_element = STRING_ELT(pattern, 0);
   cetype_t pattern_enc = Rf_getCharCE(pattern_element);
@@ -1392,7 +1392,7 @@ struct hash_search_worker : public Worker {
 };
 #endif
 
-// [[Rcpp::export(rng = false)]]
+// [[Rcpp::export(rng = false, signature = {x, table, nthreads = getOption("stringfish.nthreads", 1L)})]]
 IntegerVector sf_match(SEXP x, SEXP table, const int nthreads = 1) {
   RStringIndexer cr(table);
   size_t len = cr.size();
@@ -1461,7 +1461,7 @@ struct compare_worker : public Worker {
 };
 
 
-// [[Rcpp::export(rng = false)]]
+// [[Rcpp::export(rng = false, signature = {x, y, nthreads = getOption("stringfish.nthreads", 1L)})]]
 LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads = 1) {
   RStringIndexer xr(x);
   RStringIndexer yr(y);

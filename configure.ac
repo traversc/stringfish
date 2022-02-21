@@ -100,18 +100,18 @@ elif test "xx$PKGCONF" != "xx"; then
     VERSION_STRING=`${PKGCONF} --modversion libpcre2-8`
     VER=`getVersion ${VERSION_STRING}`
     if test "${VER}" -ge 10035; then
-      echo "PCRE2 ${VERSION_STRING} dynamic library detected -- skipping PCRE2 compilation"
+      echo "PCRE2 ${VERSION_STRING} library detected -- skipping PCRE2 compilation"
       pcre2_lib_path=`"${PKGCONF}" --libs libpcre2-8`
       pcre2_include_path=`"${PKGCONF}" --cflags-only-I libpcre2-8`
       ADD_LIBS="${ADD_LIBS} ${pcre2_lib_path}"
       INCLUDE_PATHS="${INCLUDE_PATHS} ${pcre2_include_path}"
       COMPILE_PCRE2="false"
     else
-      echo "PCRE2 ${VERSION_STRING} dynamic library detected but is lower than bundled version (10.35) -- compiling from source"
+      echo "PCRE2 ${VERSION_STRING} library detected but is lower than bundled version (10.35) -- compiling from source"
       COMPILE_PCRE2="true"
     fi
   else
-    echo "PCRE2 dynamic library not detected -- compiling from source"
+    echo "PCRE2 library not detected -- compiling from source"
     COMPILE_PCRE2="true"
   fi
 else

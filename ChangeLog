@@ -1,3 +1,7 @@
+Version 0.15.7 (2022-2-21)
+   * Switch to using Rcpp's new `signature` attribute to define default parameters
+   * Use more accurate language in configure script
+
 Version 0.15.6 (2021-12-8)
    * Bugfix to work on Linux Alpine; missing checks for TBB (https://github.com/r-hub/r-minimal/issues/37, https://github.com/traversc/stringfish/issues/11)
 
