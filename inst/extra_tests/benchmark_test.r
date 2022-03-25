@@ -39,12 +39,12 @@ readlines_bench <- microbenchmark(
   stringi = stringi::stri_read_lines(test_file, encoding = "UTF-8"),
   stringfish = sf_readLines(test_file),
   stringfish_materialized = materialize(sf_readLines(test_file)),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 enwik8 <- readLines(test_file, encoding = "UTF-8", warn = F)
 qsave(enwik8, temp)
 rm(enwik8)
-gc()
+gc(full=TRUE)
 
 catn("qread")
 qread_bench <- microbenchmark(
@@ -52,7 +52,7 @@ qread_bench <- microbenchmark(
   # stringfish = system(sprintf('Rscript -e "x <- qs::qread(\\"%s\\", use_alt_rep=T)"', temp)),
   base_R = qread(temp),
   stringfish = qread(temp, use_alt_rep=T),
-  times=n, setup = {gc()})
+  times=n, setup = {gc(full=TRUE)})
 unlink(temp)
 
 enwik8 <- readLines(test_file, encoding = "UTF-8", warn = F)
@@ -69,7 +69,7 @@ writeLines_bench <- microbenchmark(
   base_R = writeLines(enwik8, temp),
   stringi = stringi::stri_write_lines(enwik8, temp, encoding = "UTF-8"),
   stringfish = sf_writeLines(enwik8_sf, temp),
-  times=n, setup = {unlink(temp); gc()})
+  times=n, setup = {unlink(temp); gc(full=TRUE)})
 
 if(Sys.info()["sysname"] != "Windows") {
 writeLines(enwik8, temp)
@@ -87,7 +87,7 @@ catn("qsave")
 qsave_bench <- microbenchmark(
   base_R = qsave(enwik8, temp),
   stringfish = qsave(enwik8_sf, temp),
-  times=n, setup = {unlink(temp); gc()})
+  times=n, setup = {unlink(temp); gc(full=TRUE)})
 
 qsave(enwik8, temp)
 x <- tools::md5sum(temp)
@@ -99,7 +99,7 @@ y <- qread(temp, use_alt_rep=T)
 stopifnot(string_identical(enwik8, x))
 stopifnot(string_identical(enwik8, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("substr")
 substr_bench <- microbenchmark(
@@ -108,7 +108,7 @@ substr_bench <- microbenchmark(
   stringfish = sf_substr(enwik8_sf, 10, 60),
   stringfish_mt = sf_substr(enwik8_sf, 10, 60, nthreads=nt),
   stringfish_materialized = materialize(sf_substr(enwik8_sf, 10, 60)),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- substr(enwik8, 10, 50)
 y <- sf_substr(enwik8_sf, 10, 50)
@@ -116,7 +116,7 @@ stopifnot(string_identical(x, y))
 y <- sf_substr(enwik8_sf, 10, 50, nthreads=nt)
 stopifnot(string_identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("paste")
 paste_bench <- microbenchmark(
@@ -125,7 +125,7 @@ paste_bench <- microbenchmark(
   stringfish = sf_paste(enwik8_sf, enwik8_sf_shuffled),
   stringfish_mt = sf_paste(enwik8_sf, enwik8_sf_shuffled, nthreads=nt),
   stringfish_materialized = materialize(sf_paste(enwik8_sf, enwik8_sf)),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- paste0(enwik8, enwik8_shuffled)
 y <- sf_paste(enwik8_sf, enwik8_sf_shuffled)
@@ -133,7 +133,7 @@ stopifnot(string_identical(x, y))
 y <- sf_paste(enwik8_sf, enwik8_sf_shuffled, nthreads=nt)
 stopifnot(string_identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("grepl")
 grepl_bench <- microbenchmark(
@@ -141,7 +141,7 @@ grepl_bench <- microbenchmark(
   stringi = stringi::stri_detect(enwik8, regex="<title>.+</title>"),
   stringfish = sf_grepl(enwik8_sf, "<title>.+</title>"),
   stringfish_mt = sf_grepl(enwik8_sf, "<title>.+</title>", nthreads=nt),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- grepl("<title>.+</title>", enwik8)
 y <- sf_grepl(enwik8_sf, "<title>.+</title>")
@@ -149,7 +149,7 @@ stopifnot(identical(x, y))
 y <- sf_grepl(enwik8_sf, "<title>.+</title>", nthreads=nt)
 stopifnot(identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("gsub")
 gsub_bench <- microbenchmark(
@@ -158,7 +158,7 @@ gsub_bench <- microbenchmark(
   stringfish = sf_gsub(enwik8_sf, "^.*<title>(.+)</title>.*$", "$1"),
   stringfish_mt = sf_gsub(enwik8_sf, "^.*<title>(.+)</title>.*$", "$1", nthreads=nt),
   stringfish_materialized = materialize(sf_gsub(enwik8_sf, "^.*<title>(.+)</title>.*$", "$1")),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- gsub("^.*<title>(.+)</title>.*$", "\\1", enwik8)
 y <- sf_gsub(enwik8_sf, "^.*<title>(.+)</title>.*$", "$1")
@@ -166,7 +166,7 @@ stopifnot(string_identical(x, y))
 y <- sf_gsub(enwik8_sf, "^.*<title>(.+)</title>.*$", "$1", nthreads=nt)
 stopifnot(string_identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("strsplit")
 strsplit_bench <- microbenchmark(
@@ -175,7 +175,7 @@ strsplit_bench <- microbenchmark(
   stringfish = sf_split(enwik8_sf, split = ",|;"),
   stringfish_mt = sf_split(enwik8_sf, split = ",|;", nthreads=nt),
   stringfish_materialized = lapply(sf_split(enwik8_sf, split = ",|;"), materialize),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- stringi::stri_split(enwik8, regex=",|;")
 y <- sf_split(enwik8_sf, split = ",|;")
@@ -183,14 +183,14 @@ stopifnot(identical(x, y))
 y <- sf_split(enwik8_sf, split = ",|;", nthreads=nt)
 stopifnot(identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("match")
 match_bench <- microbenchmark(
   base_R = match(enwik8_shuffled, enwik8),
   stringfish = sf_match(enwik8_sf_shuffled, enwik8_sf),
   stringfish_mt = sf_match(enwik8_sf_shuffled, enwik8_sf, nthreads=nt),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- match(enwik8_shuffled, enwik8)
 y <- sf_match(enwik8_sf_shuffled, enwik8_sf)
@@ -198,7 +198,7 @@ stopifnot(identical(x, y))
 y <- sf_match(enwik8_sf_shuffled, enwik8_sf, nthreads=nt)
 stopifnot(identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("trimws")
 trimws_bench <- microbenchmark(
@@ -206,7 +206,7 @@ trimws_bench <- microbenchmark(
   stringi = stringi::stri_trim(enwik8),
   stringfish = sf_trim(enwik8_sf),
   stringfish_mt = sf_trim(enwik8_sf, nthreads=nt),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- trimws(enwik8)
 y <- sf_trim(enwik8_sf)
@@ -214,7 +214,7 @@ stopifnot(string_identical(x, y))
 y <- sf_trim(enwik8_sf, nthreads=nt)
 stopifnot(string_identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 catn("nchar")
 nchar_bench <- microbenchmark(
@@ -222,7 +222,7 @@ nchar_bench <- microbenchmark(
   stringi = stringi::stri_length(enwik8),
   stringfish = sf_nchar(enwik8_sf),
   stringfish_mt = sf_nchar(enwik8_sf, nthreads=nt),
-  times=n, setup = gc())
+  times=n, setup = gc(full=TRUE))
 
 x <- nchar(enwik8)
 y <- sf_nchar(enwik8_sf)
@@ -230,7 +230,7 @@ stopifnot(identical(x, y))
 y <- sf_nchar(enwik8_sf, nthreads=nt)
 stopifnot(identical(x, y))
 rm(x, y)
-gc()
+gc(full=TRUE)
 
 
 # plot code -- run interactively
@@ -268,11 +268,17 @@ df$op <- factor(df$op, levels =
     c("nchar", "grepl", "gsub", "substr", "paste", "strsplit", "match", "trimws",  "writeLines", "readLines", "qs::qsave",  "qs::qread"))
 
   dfs <- df %>% 
-    filter(expr %in% c("base_R", "stringfish", "stringfish_mt")) %>%
+    # filter(expr %in% c("base_R", "stringfish", "stringfish_mt")) %>% # comment out this line to include stringi
+    mutate(expr = as.character(expr)) %>%
+    mutate(expr = case_when(expr == "base_R" ~ "Base R",
+                            expr == "stringfish" ~ "stringfish (1 thread)", 
+                            expr == "stringfish_materialized" ~ "stringfish (materialized)",
+                            expr == "stringfish_mt" ~ "stringfish (4 threads)",
+                            T ~ expr)) %>% 
     group_by(op, expr) %>% 
     summarize(time = mean(time)) %>% 
     group_by(op) %>%
-    mutate(speed = time[expr == "base_R"] / time)
+    mutate(speed = time[expr == "Base R"] / time)
   g <- ggplot(dfs, aes(x = op, y = speed, fill = expr)) + 
     geom_bar(color = "black", stat = "identity", position = position_dodge(preserve = "single")) + 
     geom_hline(aes(yintercept=1), lty=2, color = "blue") + 
@@ -287,7 +293,7 @@ df$op <- factor(df$op, levels =
           axis.title.y = element_text(size=rel(1.3))) + 
     labs(x = NULL, y = "Speed relative to base R", fill = NULL) + 
     scale_y_continuous(trans = "log1p", breaks = c(0,1,2.5,5,10,20,40,80)) + 
-    scale_fill_discrete(labels = c("Base R", "stringfish (1 thread)", "stringfish (4 threads)")) +
+    # scale_fill_discrete(labels = c("Base R", "stringfish (1 thread)", "stringfish (4 threads)")) +
     theme(legend.position = "bottom") + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust=1))
   
