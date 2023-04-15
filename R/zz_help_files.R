@@ -487,11 +487,11 @@ sf_equals <- sf_compare
 #' @return TRUE if strings are identical, including encoding
 #' @seealso identical
 #' @examples
-# x <- "fa\xE7ile"
-# Encoding(x) <- "latin1"
-# y <- iconv(x, "latin1", "UTF-8")
-# identical(x, y) # TRUE
-# string_identical(x, y) # FALSE
+#' x <- "fa\xE7ile"
+#' Encoding(x) <- "latin1"
+#' y <- iconv(x, "latin1", "UTF-8")
+#' identical(x, y) # TRUE
+#' string_identical(x, y) # FALSE
 #' @name string_identical
 NULL
 

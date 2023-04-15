@@ -17,6 +17,13 @@ TRUE if strings are identical, including encoding
 \description{
 A stricter comparison of string equality
 }
+\examples{
+x <- "fa\xE7ile"
+Encoding(x) <- "latin1"
+y <- iconv(x, "latin1", "UTF-8")
+identical(x, y) # TRUE
+string_identical(x, y) # FALSE
+}
 \seealso{
 identical
 }

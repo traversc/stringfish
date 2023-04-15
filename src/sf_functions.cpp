@@ -1348,7 +1348,7 @@ struct rstring_info_hash {
   }
 };
 #if RCPP_PARALLEL_USE_TBB
-using tbb_rstring_map = tbb::concurrent_unordered_map<RStringIndexer::rstring_info, tbb::atomic<int>, rstring_info_hash>;
+using tbb_rstring_map = tbb::concurrent_unordered_map<RStringIndexer::rstring_info, std::atomic<int>, rstring_info_hash>;
 // hash filler
 struct hash_fill_worker : public Worker {
   tbb_rstring_map * table_hash;
@@ -1358,13 +1358,19 @@ struct hash_fill_worker : public Worker {
   
   void operator()(std::size_t begin, std::size_t end) {
     for (std::size_t i = begin; i < end; ++i) {
-      auto q = fillit->getCharLenCE(i);
-      auto p = table_hash->insert(tbb_rstring_map::value_type(q,i));
-      if(!p.second) {
-        int oldval = i;
-        do {
-          oldval = p.first->second.compare_and_swap(i,oldval);
-        } while (oldval > static_cast<int>(i));
+      int newval = static_cast<int>(i);
+      RStringIndexer::rstring_info q = fillit->getCharLenCE(i);
+      auto p = table_hash->emplace(q, newval); // <iterator, bool>
+      if(!p.second) { // emplace failed because there was already an entry
+        std::atomic<int> & pa = p.first->second;
+        int oldval = pa.load();
+        while(newval < oldval) { // we want the lowest value; if a smaller value already exists then stop
+          // ONLY exchange if oldval hasn't changed since the load (due to another thread)
+          // If it has changed, the expression returns false and oldval is updated to the true stored value; loop continues
+          if(pa.compare_exchange_weak(oldval, newval)) {
+            break;
+          }
+        }
       }
     }
   }
