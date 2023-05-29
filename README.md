@@ -3,12 +3,10 @@ stringfish
 
 <!-- <img src="hex.png" width = "130" height = "150" align="right" style="border:0px;padding:15px"> -->
 
-<!-- [![Build Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/traversc/stringfish) -->
-
 [![R-CMD-check](https://github.com/traversc/stringfish/workflows/R-CMD-check/badge.svg)](https://github.com/traversc/stringfish/actions)
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/stringfish)](https://cran.r-project.org/package=stringfish)
-[![CRAN\_Downloads\_Badge](https://cranlogs.r-pkg.org/badges/stringfish)](https://cran.r-project.org/package=stringfish)
-[![CRAN\_Downloads\_Total\_Badge](https://cranlogs.r-pkg.org/badges/grand-total/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN-Status-Badge](http://www.r-pkg.org/badges/version/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN-Downloads-Badge](https://cranlogs.r-pkg.org/badges/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN-Downloads-Total-Badge](https://cranlogs.r-pkg.org/badges/grand-total/stringfish)](https://cran.r-project.org/package=stringfish)
 
 `stringfish` is a framework for performing string and sequence
 operations using the ALTREP system to speed up the computation of common

@@ -99,7 +99,7 @@ extern "C" {
   
 
 // TC -- returns 1 or 0
-int pcre2_is_bundled();
+int pcre2_is_bundled(void);
 
 /* The following option bits can be passed to bundled_pcre2_compile(), bundled_pcre2_match(),
 or bundled_pcre2_dfa_match(). PCRE2_NO_UTF_CHECK affects only the function to which it

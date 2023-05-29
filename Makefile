@@ -62,9 +62,8 @@ install:
 	R CMD INSTALL $(BUILD) --configure-args="--with-simd=AVX2" # --with-pcre2-force-compile"
 
 vignette:
-	Rscript -e "rmarkdown::render(input='vignettes/vignette.rmd', output_format='all')"
-	mv vignettes/vignette.md README.md
-	sed -r -i 's/\((.+)\.png/\(vignettes\/\1\.png/' README.md
+	Rscript -e "rmarkdown::render(input='vignettes/vignette.rmd', output_format='html_vignette')"
+	IS_GITHUB=Yes Rscript -e "rmarkdown::render(input='vignettes/vignette.rmd', output_file='../README.md', output_format=rmarkdown::github_document(html_preview=FALSE))"; unset IS_GITHUB
 
 test:
 	Rscript tests/tests.r

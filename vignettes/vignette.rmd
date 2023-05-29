@@ -11,12 +11,19 @@ vignette: >
 ---
 
 <!-- <img src="hex.png" width = "130" height = "150" align="right" style="border:0px;padding:15px"> -->
- 
-<!-- [![Build Status](https://travis-ci.org/traversc/stringfish.svg)](https://travis-ci.org/traversc/stringfish) -->
+
+```{r, setup, echo=FALSE}
+IS_GITHUB <- Sys.getenv("IS_GITHUB") != ""
+```
+
+```{r results='asis', echo=FALSE, eval=IS_GITHUB}
+cat('
 [![R-CMD-check](https://github.com/traversc/stringfish/workflows/R-CMD-check/badge.svg)](https://github.com/traversc/stringfish/actions)
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/stringfish)](https://cran.r-project.org/package=stringfish)
-[![CRAN\_Downloads\_Badge](https://cranlogs.r-pkg.org/badges/stringfish)](https://cran.r-project.org/package=stringfish)
-[![CRAN\_Downloads\_Total\_Badge](https://cranlogs.r-pkg.org/badges/grand-total/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN-Status-Badge](http://www.r-pkg.org/badges/version/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN-Downloads-Badge](https://cranlogs.r-pkg.org/badges/stringfish)](https://cran.r-project.org/package=stringfish)
+[![CRAN-Downloads-Total-Badge](https://cranlogs.r-pkg.org/badges/grand-total/stringfish)](https://cran.r-project.org/package=stringfish)
+')
+```
 
 `stringfish` is a framework for performing string and sequence operations using the ALTREP system to speed up the computation of common string operations. 
 
@@ -35,7 +42,14 @@ install.packages("stringfish", type="source", configure.args="--with-simd=AVX2")
 
 The simplest way to show the utility of the ALTREP framework is through a quick benchmark comparing `stringfish` and base R. 
 
-![](bench_v2.png "bench_v2"){width=576px}
+```{r echo=FALSE, results='asis'}
+if(IS_GITHUB) {
+  cat('![](vignettes/bench_v2.png "bench_v2"){width=576px}')
+} else {
+  cat('![](bench_v2.png "bench_v2"){width=576px}')
+}
+```
+
 
 Yes you are reading the graph correctly: some functions in `stringfish` are more than an order of magnitude faster than vectorized base R operations (and even faster with some build in multithreading). On large text datasets, this can turn minutes of computation into seconds. 
 
