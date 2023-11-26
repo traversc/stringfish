@@ -130,6 +130,7 @@ inline cetype_t choose_enc(cetype_t x, cetype_t y, cetype_t z) {
 struct sfstring {
   std::string sdata;
   cetype_t_ext encoding;
+  sfstring(const char * ptr, int len, cetype_t_ext enc) : sdata(ptr, len), encoding(enc) {}
   sfstring(std::string x, cetype_t enc) : sdata(x) {
     if(checkAscii(sdata.c_str(), sdata.size())) {
       encoding = cetype_t_ext::CE_ASCII; // to keep the same as R
@@ -137,17 +138,14 @@ struct sfstring {
       encoding = static_cast<cetype_t_ext>(enc);
     }
   }
-  sfstring(const char * ptr, cetype_t enc) {
-    size_t len = strlen(ptr);
-    sdata = std::string(ptr);
-    if(checkAscii(ptr, len)) {
+  sfstring(const char * ptr, cetype_t enc) : sdata(ptr) {
+    if(checkAscii(sdata.data(), sdata.size())) {
       encoding = cetype_t_ext::CE_ASCII; // to keep the same as R
     } else {
       encoding = static_cast<cetype_t_ext>(enc);
     }
   }
-  sfstring(const char * ptr, int len, cetype_t enc) {
-    sdata = std::string(ptr, len);
+  sfstring(const char * ptr, int len, cetype_t enc) : sdata(ptr, len) {
     if(checkAscii(ptr, len)) {
       encoding = cetype_t_ext::CE_ASCII; // to keep the same as R
     } else {
