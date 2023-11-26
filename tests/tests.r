@@ -5,6 +5,51 @@ suppressMessages(library(Rcpp, quietly = T))
 suppressMessages(library(stringr, quietly = T))
 suppressMessages(library(rlang, quietly = T))
 
+alternate_case_source <- '
+// [[Rcpp::plugins(cpp11)]]
+// [[Rcpp::depends(stringfish)]]
+#include <Rcpp.h>
+#include "sf_external.h"
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+SEXP sf_alternate_case(SEXP x) {
+  RStringIndexer r(x);
+  size_t len = r.size();
+  SEXP output = PROTECT(sf_vector(len));
+  sf_vec_data & output_data = sf_vec_data_ref(output);
+  size_t i = 0;
+  for(auto e : r) {
+    if(e.ptr == nullptr) {
+      i++; // increment output index
+      continue;
+    }
+    std::string temp(e.len, \'\\0\');
+    bool case_switch = false;
+    for(int j=0; j<e.len; j++) {
+      if((e.ptr[j] >= 65) & (e.ptr[j] <= 90)) {
+        if((case_switch = !case_switch)) {
+          temp[j] = e.ptr[j] + 32;
+          continue;
+        }
+      } else if((e.ptr[j] >= 97) & (e.ptr[j] <= 122)) {
+        if(!(case_switch = !case_switch)) {
+          temp[j] = e.ptr[j] - 32;
+          continue;
+        }
+      } else if(e.ptr[j] == 32) {
+        case_switch = false;
+      }
+      temp[j] = e.ptr[j];
+    }
+    output_data[i] = sfstring(temp, e.enc);
+    i++;
+  }
+  UNPROTECT(1);
+  return output;
+}
+'
+
 encode_source <- function(file, width = 160) {
   n <- file.info(file)$size
   x <- readChar(con = file, nchars=n, useBytes = T)
@@ -75,52 +120,7 @@ if(!altrep_support()) {
       R_TESTS_absolute <- normalizePath(R_TESTS)
       Sys.setenv(R_TESTS = R_TESTS_absolute)
     }
-    # qserialize(readLines("~/GoogleDrive/stringfish/tests/tests.cpp"), preset = "custom", compress_level = 22) %>% base91_encode %>% catquo
-src <- '
-// [[Rcpp::plugins(cpp11)]]
-// [[Rcpp::depends(stringfish)]]
-#include <Rcpp.h>
-#include "sf_external.h"
-using namespace Rcpp;
-
-// [[Rcpp::export]]
-SEXP sf_alternate_case(SEXP x) {
-  RStringIndexer r(x);
-  size_t len = r.size();
-  SEXP output = PROTECT(sf_vector(len));
-  sf_vec_data & output_data = sf_vec_data_ref(output);
-  size_t i = 0;
-  for(auto e : r) {
-    if(e.ptr == nullptr) {
-      i++; // increment output index
-      continue;
-    }
-    std::string temp(e.len, \'\\0\');
-    bool case_switch = false;
-    for(int j=0; j<e.len; j++) {
-      if((e.ptr[j] >= 65) & (e.ptr[j] <= 90)) {
-        if((case_switch = !case_switch)) {
-          temp[j] = e.ptr[j] + 32;
-          continue;
-        }
-      } else if((e.ptr[j] >= 97) & (e.ptr[j] <= 122)) {
-        if(!(case_switch = !case_switch)) {
-          temp[j] = e.ptr[j] - 32;
-          continue;
-        }
-      } else if(e.ptr[j] == 32) {
-        case_switch = false;
-      }
-      temp[j] = e.ptr[j];
-    }
-    output_data[i] = sfstring(temp, e.enc);
-    i++;
-  }
-  UNPROTECT(1);
-  return output;
-}
-'
-    sourceCpp(code = src)
+    sourceCpp(code = alternate_case_source)
     if (nzchar(R_TESTS)) Sys.setenv(R_TESTS = R_TESTS)
   }
   for(.j in 1:4) {
@@ -132,6 +132,16 @@ SEXP sf_alternate_case(SEXP x) {
     }
     for(nt in nthreads) {
       cat("number of threads", nt, "\n")
+
+      catn("test altrep serialization")
+      x <- convert_to_sf(sample(c(i500_utf8, i500_latin1), size = length(i500_utf8) + length(i500_latin1), replace=TRUE))
+      y <- unserialize(serialize(x, NULL))
+      stopifnot(string_identical(x,y))
+      stopifnot(get_string_type(y) == "stringfish vector")
+      y <- qdeserialize(qserialize(x), use_alt_rep=TRUE)
+      stopifnot(string_identical(x,y))
+      stopifnot(get_string_type(y) == "stringfish vector")
+
       catn("sf_assign")
       for(. in 1:ntests) {
         # if(. == 1) {gctorture(TRUE)} else {gctorture(FALSE)}

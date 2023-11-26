@@ -35,7 +35,6 @@ void unset_is_utf8_locale() {is_utf8_locale = false;}
 // [[Rcpp::export(rng = false)]]
 bool get_is_utf8_locale() {return is_utf8_locale;}
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // tbb helper functions
 
@@ -243,7 +242,7 @@ SEXP materialize(SEXP x) {
 
 // [[Rcpp::export(rng = false)]]
 SEXP sf_vector(size_t len) {
-  auto ret = new sf_vec_data(len);
+  auto * ret = new sf_vec_data(len);
   return sf_vec::Make(ret, true);
 }
 

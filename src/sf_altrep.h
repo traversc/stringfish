@@ -79,11 +79,10 @@ struct sf_vec {
     SEXP data2 = R_altrep_data2(vec);
     if (data2 != R_NilValue) {
       return data2;
-    }
-    R_xlen_t n = Length(vec);
-    data2 = PROTECT(Rf_allocVector(STRSXP, n));
-    
+    }    
     auto & data1 = Get(vec);
+    R_xlen_t n = data1.size();
+    data2 = PROTECT(Rf_allocVector(STRSXP, n));
     for (R_xlen_t i = 0; i < n; ++i) {
       if(data1[i].encoding == cetype_t_ext::CE_NA) {
         SET_STRING_ELT(data2, i, NA_STRING);
@@ -95,7 +94,7 @@ struct sf_vec {
     }
     
     R_set_altrep_data2(vec, data2);
-    Finalize(R_altrep_data1(vec));
+    Finalize(R_altrep_data1(vec)); // clear ext pointer
     UNPROTECT(1);
     return data2;
   }
@@ -204,12 +203,91 @@ struct sf_vec {
     } // no other type should be possible
     return Make(out, true);
   }
-  
+
+  // serialization
+  static SEXP Serialized_state(SEXP vec) {
+    SEXP data2 = R_altrep_data2(vec);
+    if(data2 == R_NilValue) { // unmaterialized
+      auto & data1 = Get(vec);
+      uint64_t n = data1.size();
+      uint64_t total_size = 0;
+      for (uint64_t i = 0; i < n; ++i) {
+        total_size += data1[i].sdata.size();
+      }
+      // 8 bytes - vector length
+      // n * 4 bytes - string sizes (use int32_t)
+      // n * 1 bytes - encoding (cetype_t_ext : uint8_t)
+      // no need to protect since no additional alloc
+      SEXP serialized_state = Rf_allocVector(RAWSXP, sizeof(uint64_t) + (sizeof(int) + sizeof(uint8_t)) * n + total_size);
+      unsigned char * serialized_ptr = RAW(serialized_state);
+      
+      // write vector length
+      std::memcpy(serialized_ptr, &n, sizeof(uint64_t));
+      unsigned char * current_offset = serialized_ptr + sizeof(uint64_t);
+
+      // write sizes
+      for(uint64_t i=0; i<n; ++i) {
+        int32_t size = data1[i].sdata.size();
+        std::memcpy(current_offset, &size, sizeof(int32_t));
+        current_offset += sizeof(int32_t);
+      }
+
+      // write encodings
+      for(uint64_t i=0; i<n; ++i) {
+        uint8_t encoding = static_cast<uint8_t>(data1[i].encoding);
+        std::memcpy(current_offset, &encoding, sizeof(uint8_t));
+        current_offset += sizeof(uint8_t);
+      }
+
+      // write strings
+      for(uint64_t i=0; i<n; ++i) {
+        std::memcpy(current_offset, data1[i].sdata.data(), data1[i].sdata.size());
+        current_offset += data1[i].sdata.size();
+      }
+
+      return serialized_state;
+    } else { // materialized
+      return data2;
+    }
+  }
+
+  static SEXP Unserialize(SEXP /* class */, SEXP serialized_state) {
+    if(TYPEOF(serialized_state) == STRSXP) {
+      return serialized_state; // was materialized
+    } else if(TYPEOF(serialized_state) == RAWSXP) { // wasn't materialized
+      unsigned char * serialized_ptr = RAW(serialized_state);
+      uint64_t n;
+      std::memcpy(&n, serialized_ptr, sizeof(uint64_t));
+      sf_vec_data * ret = new sf_vec_data(n);
+
+      unsigned char * size_offset = serialized_ptr + sizeof(uint64_t); // offset to size of strings
+      cetype_t_ext * enc_offset = reinterpret_cast<cetype_t_ext*>(size_offset + n * sizeof(int32_t)); // offset to encoding of strings
+      char * data_offset = reinterpret_cast<char * >(enc_offset + n * sizeof(uint8_t)); // offset to data of strings
+
+      for(uint64_t i=0; i<n; ++i) {
+        int32_t size;
+        std::memcpy(&size, size_offset, sizeof(int32_t));
+        cetype_t_ext encoding = *enc_offset;
+        (*ret)[i] = sfstring(data_offset, size, encoding);
+        size_offset += sizeof(int32_t);
+        enc_offset += sizeof(uint8_t);
+        data_offset += size;
+      }
+      return sf_vec::Make(ret, true);
+    } else {
+      throw std::runtime_error("invalid serialized_state type");
+    }
+
+  }
+    
   // -------- initialize the altrep class with the methods above
   static void Init(DllInfo* dll){
     class_t = R_make_altstring_class("__sf_vec__", "stringfish", dll);
     
     // altrep
+    R_set_altrep_Serialized_state_method(class_t, Serialized_state);
+    R_set_altrep_Unserialize_method(class_t, Unserialize);
+
     R_set_altrep_Length_method(class_t, Length);
     R_set_altrep_Inspect_method(class_t, Inspect);
     

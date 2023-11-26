@@ -1,3 +1,6 @@
+Version 0.16.0 (2023-11-25)
+   * Add in ALTREP serialization
+
 Version 0.15.8 (2023-5-29)
    * Fix warn message in R 4.3+ "warning: function declaration isn’t a prototype [-Wstrict-prototypes]"
    * Remove C++11 SystemRequirements per new CRAN guidelines
