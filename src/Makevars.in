@@ -1,4 +1,5 @@
 PKG_CPPFLAGS=-DRCPP_USE_UNWIND_PROTECT -DRCPP_NO_RTTI -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H @PCRE2_BUNDLED@ -I. @INCLUDE_PATHS@
+PKG_CXXFLAGS = $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::CxxFlags()")
 PKG_LIBS=-lpthread -L. -lSFPCRE2 @ADD_LIBS@ $(shell ${R_HOME}/bin/Rscript -e "RcppParallel::RcppParallelLibs()")
 
 LIBPCRE2 = PCRE2/pcre2_chartables.o \
