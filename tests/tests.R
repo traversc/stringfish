@@ -1,9 +1,11 @@
-suppressMessages(library(stringfish, quietly = T))
-suppressMessages(library(qs, quietly = T))
-suppressMessages(library(dplyr, quietly = T))
-suppressMessages(library(Rcpp, quietly = T))
-suppressMessages(library(stringr, quietly = T))
-suppressMessages(library(rlang, quietly = T))
+if (
+  require("stringfish", quietly = TRUE) &&
+  require("qs",         quietly = TRUE) &&
+  require("dplyr",      quietly = TRUE) &&
+  require("Rcpp",       quietly = TRUE) &&
+  require("stringr",    quietly = TRUE) &&
+  require("rlang",      quietly = TRUE)
+) {
 
 alternate_case_source <- '
 // [[Rcpp::plugins(cpp11)]]
@@ -475,3 +477,5 @@ if(!altrep_support()) {
   }
 }
 print("end")
+
+}
