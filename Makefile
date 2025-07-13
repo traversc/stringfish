@@ -3,6 +3,15 @@ PACKAGE := $(shell perl -aF: -ne 'print, exit if s/^Package:\s+//' DESCRIPTION)
 VERSION := $(shell perl -aF: -ne 'print, exit if s/^Version:\s+//' DESCRIPTION)
 BUILD   := $(PACKAGE)_$(VERSION).tar.gz
 
+RHUB_ALL_PLATFORMS := c( \
+  "linux",      "m1-san",      "macos",        "macos-arm64",  "windows", \
+  "atlas",      "c23",         "clang-asan",   "clang-ubsan",  "clang16", \
+  "clang17",    "clang18",     "clang19",      "clang20",      "donttest", \
+  "gcc-asan",   "gcc13",       "gcc14",        "gcc15",        "intel", \
+  "mkl",        "nold",        "noremap",      "nosuggests",   "rchk", \
+  "ubuntu-clang","ubuntu-gcc12","ubuntu-next", "ubuntu-release","valgrind" \
+)
+
 .PHONY: doc build install test vignette $(BUILD)
 
 check: $(BUILD)
@@ -12,13 +21,7 @@ check-no-vignette: $(BUILD)
 	R CMD check --as-cran --no-build-vignettes $<
 
 check-rhub: $(BUILD)
-	Rscript -e 'rhub::check("$(BUILD)", platform = c("ubuntu-gcc-devel", "windows-x86_64-devel", "solaris-x86-patched", "solaris-x86-patched-ods", "macos-m1-bigsur-release"))'
-
-check-solaris: $(BUILD)
-	Rscript -e 'rhub::check("$(BUILD)", platform = c("solaris-x86-patched", "solaris-x86-patched-ods"))'
-
-check-m1: $(BUILD)
-	Rscript -e 'rhub::check("$(BUILD)", platform = c("macos-m1-bigsur-release"))'
+	Rscript -e 'rhub::rhub_check(platform = $(RHUB_ALL_PLATFORMS))'
 
 compile:
 	find src/ -type f -exec chmod 644 {} \;
