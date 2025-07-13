@@ -103,12 +103,13 @@ struct sf_vec {
   static const void* Dataptr_or_null(SEXP vec) {
     SEXP data2 = R_altrep_data2(vec);
     if (data2 == R_NilValue) return nullptr;
-    return STDVEC_DATAPTR(data2);
+    return DATAPTR_RO(data2);
   }
 
-  // same in this case, writeable is ignored
+  // Signature requires a non-const pointer, so we use const_cast on DATAPTR_RO
+  // since DATAPTR is no longer part of the API. This approach is used by arrow.
   static void* Dataptr(SEXP vec, Rboolean writeable) {
-    return STDVEC_DATAPTR(Materialize(vec));
+    return const_cast<void*>(DATAPTR_RO(Materialize(vec)));
   }
 
   // ALTSTRING methods -----------------

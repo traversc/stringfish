@@ -1,3 +1,7 @@
+Version 0.17.0 (2025-07-12)
+   * Remove non-API functions: `STDVEC_DATAPTR`/`DATAPTR` becomes `DATAPTR_RO` (Requires R 3.6)
+   * Remove non-API functions: `LEVELS` was used to check if a string is ASCII. Instead use `Rf_charIsASCII` (R 4.5) or fallback to SIMD ASCII check
+   
 Version 0.16.0 (2023-11-25)
    * Add in ALTREP serialization
 

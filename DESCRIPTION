@@ -1,7 +1,7 @@
 Package: stringfish
 Title: Alt String Implementation
-Version: 0.16.0
-Date: 2023-11-27
+Version: 0.17.0
+Date: 2025-07-12
 Authors@R: c(
     person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre", "cph")),
     person("Phillip", "Hazel", role = c("ctb"), comment = "Bundled PCRE2 code"),
@@ -14,16 +14,16 @@ Description: Provides an extendable, performant and multithreaded 'alt-string' i
 License: GPL-3
 Biarch: true
 Encoding: UTF-8
-Depends: R (>= 3.0.2)
+Depends: R (>= 3.6.0)
 SystemRequirements: GNU make
 LinkingTo: 
     Rcpp (>= 0.12.18.3), RcppParallel (>= 5.1.4)
 Imports: 
     Rcpp, RcppParallel
 Suggests:
-    qs, knitr, rmarkdown, usethis, dplyr, stringr, rlang
+    qs2, qs, knitr, rmarkdown, usethis, dplyr, stringr, rlang
 VignetteBuilder: knitr
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Copyright: Copyright for the bundled 'PCRE2' library is held by University of Cambridge, Zoltan Herczeg and Tilera Coporation (Stack-less Just-In-Time compiler); Copyright for the bundled 'xxHash' code is held by Yann Collet. 
 URL: https://github.com/traversc/stringfish
 BugReports: https://github.com/traversc/stringfish/issues

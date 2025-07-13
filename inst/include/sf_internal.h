@@ -89,10 +89,15 @@ enum class cetype_t_ext : uint8_t {
 };
 
 // defn.h
-#define ASCII_MASK (1<<6)
-//#define IS_ASCII(x) ((x)->sxpinfo.gp & ASCII_MASK)
+// #define ASCII_MASK (1<<6)
+// #define IS_ASCII(x) ((x)->sxpinfo.gp & ASCII_MASK)
+// LEVELS is no longer public API
 inline bool IS_ASCII(SEXP x) {
-  return LEVELS(x) & ASCII_MASK;
+#if (R_VERSION >= R_Version(4, 5, 0))
+  return Rf_charIsASCII(x);
+#else
+  return checkAscii(CHAR(x), Rf_xlength(x));
+#endif
 }
 
 
@@ -230,7 +235,7 @@ class RStringIndexer {
 private:
   size_t len;
   rstring_type type;
-  void * dptr; // should we use std::variant?
+  void * dptr;
 public:
   struct rstring_info {
     const char * ptr;
@@ -270,7 +275,7 @@ public:
       len = Rf_xlength(obj);
       break;
     case rstring_type::OTHER_ALT_REP:
-      DATAPTR(obj);
+      DATAPTR_RO(obj); // materialize
       dptr = R_altrep_data2(obj);
       len = Rf_xlength(reinterpret_cast<SEXP>(dptr));
       break;

@@ -232,7 +232,7 @@ std::string get_string_type(SEXP x) {
 // [[Rcpp::export(rng = false)]]
 SEXP materialize(SEXP x) {
   if(ALTREP(x)) {
-    DATAPTR(x);
+    DATAPTR_RO(x);
   }
   return x;
 }
