@@ -1,6 +1,7 @@
 #ifndef SF_INTERNAL_H
 #define SF_INTERNAL_H
 #include <Rcpp.h>
+#include <Rversion.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -214,6 +215,23 @@ enum class rstring_type : uint8_t {
 
 rstring_type get_rstring_type_internal(SEXP obj) {
   if(TYPEOF(obj) != STRSXP) throw std::runtime_error("Object not an Character Vector");
+#if R_VERSION >= R_Version(4, 6, 0)
+    SEXP class_name = R_altrep_class_name(object); // R_NilValue if not ALTREP
+    if(class_name == R_NilValue) {
+      return rstring_type::normal;
+    } else {
+      std::string classname = std::string(CHAR(PRINTNAME(class_name)));
+      if(classname == "__sf_vec__") {
+        if(DATAPTR_OR_NULL(obj) == nullptr) {
+          return rstring_type::SF_VEC;
+        } else {
+          return rstring_type::SF_VEC_MATERIALIZED;
+        }
+      } else {
+        return rstring_type::OTHER_ALT_REP;
+      }
+    }
+#else
   if(ALTREP(obj)) {
     SEXP pclass = ATTRIB(ALTREP_CLASS(obj));
     std::string classname = std::string(CHAR(PRINTNAME(CAR(pclass))));
@@ -229,6 +247,7 @@ rstring_type get_rstring_type_internal(SEXP obj) {
   } else {
     return rstring_type::NORMAL;
   }
+#endif
 }
 
 class RStringIndexer {
