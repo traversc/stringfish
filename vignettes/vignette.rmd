@@ -96,7 +96,7 @@ In addition, many R operations in base R and other packages are already ALTREP-a
 
 ## Extensibility
 
-`stringfish` as a framework is intended to be easily extensible. Stringfish vectors can be worked into `Rcpp` scripts or even into other packages (see the `qs` package for an example).
+`stringfish` as a framework is intended to be easily extensible. Stringfish vectors can be worked into `Rcpp` scripts or even into other packages (see the `qs2` package for an example).
 
 Below is a detailed `Rcpp` script that creates a function to alternate upper and lower case of strings. 
 

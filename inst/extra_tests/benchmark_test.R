@@ -1,5 +1,5 @@
 suppressMessages(library(stringfish, quietly = T))
-suppressMessages(library(qs, quietly = T))
+suppressMessages(library(qs2, quietly = T))
 suppressMessages(library(dplyr, quietly = T))
 suppressMessages(library(microbenchmark, quietly = T))
 suppressMessages(library(stringi, quietly = T))
@@ -28,7 +28,7 @@ if(!file.exists(test_file)) {
   test_folder <- tempdir()
   zip_file <- tempfile()
   options(timeout = 1000)
-  download.file("https://data.deepai.org/enwik8.zip", zip_file)
+  download.file("https://mattmahoney.net/dc/enwik8.zip", zip_file)
   unzip(zip_file, "enwik8", exdir = test_folder, overwrite=T)
   test_file <- paste0(test_folder, "/enwik8")
 }
@@ -42,16 +42,16 @@ readlines_bench <- microbenchmark(
   times=n, setup = gc(full=TRUE))
 
 enwik8 <- readLines(test_file, encoding = "UTF-8", warn = F)
-qsave(enwik8, temp)
+qs2::qd_save(enwik8, temp)
 rm(enwik8)
 gc(full=TRUE)
 
-catn("qread")
-qread_bench <- microbenchmark(
-  # base_R = system(sprintf('Rscript -e "x <- qs::qread(\\"%s\\")"', temp)),
-  # stringfish = system(sprintf('Rscript -e "x <- qs::qread(\\"%s\\", use_alt_rep=T)"', temp)),
-  base_R = qread(temp),
-  stringfish = qread(temp, use_alt_rep=T),
+catn("qs2::qd_read")
+qd_read_bench <- microbenchmark(
+  # base_R = system(sprintf('Rscript -e "x <- qs2::qd_read(\\"%s\\")"', temp)),
+  # stringfish = system(sprintf('Rscript -e "x <- qs2::qd_read(\\"%s\\", use_alt_rep=T)"', temp)),
+  base_R = qs2::qd_read(temp),
+  stringfish = qs2::qd_read(temp, use_alt_rep=T),
   times=n, setup = {gc(full=TRUE)})
 unlink(temp)
 
@@ -83,19 +83,19 @@ unlink(temp)
 stopifnot(string_identical(enwik8, enwik8_sf))
 stopifnot(string_identical(enwik8_shuffled, enwik8_sf_shuffled))
 
-catn("qsave")
-qsave_bench <- microbenchmark(
-  base_R = qsave(enwik8, temp),
-  stringfish = qsave(enwik8_sf, temp),
+catn("qs2::qd_save")
+qd_save_bench <- microbenchmark(
+  base_R = qs2::qd_save(enwik8, temp),
+  stringfish = qs2::qd_save(enwik8_sf, temp),
   times=n, setup = {unlink(temp); gc(full=TRUE)})
 
-qsave(enwik8, temp)
+qs2::qd_save(enwik8, temp)
 x <- tools::md5sum(temp)
-qsave(enwik8_sf, temp)
+qs2::qd_save(enwik8_sf, temp)
 y <- tools::md5sum(temp)
 stopifnot(identical(x,y))
-x <- qread(temp)
-y <- qread(temp, use_alt_rep=T)
+x <- qs2::qd_read(temp)
+y <- qs2::qd_read(temp, use_alt_rep=T)
 stopifnot(string_identical(enwik8, x))
 stopifnot(string_identical(enwik8, y))
 rm(x, y)
@@ -239,10 +239,10 @@ if(F) {
   library(hrbrthemes)
   
 df <- rbind(
-  qread_bench %>% 
-    as.data.frame %>% mutate(op = "qs::qread"),
-  qsave_bench %>% 
-    as.data.frame %>% mutate(op = "qs::qsave"),
+  qd_read_bench %>% 
+    as.data.frame %>% mutate(op = "qs2::qd_read"),
+  qd_save_bench %>% 
+    as.data.frame %>% mutate(op = "qs2::qd_save"),
   readlines_bench %>% 
     as.data.frame %>% mutate(op = "readLines"),
   writeLines_bench %>% 
@@ -265,7 +265,7 @@ df <- rbind(
     as.data.frame %>% mutate(op = "nchar"))
 
 df$op <- factor(df$op, levels = 
-    c("nchar", "grepl", "gsub", "substr", "paste", "strsplit", "match", "trimws",  "writeLines", "readLines", "qs::qsave",  "qs::qread"))
+    c("nchar", "grepl", "gsub", "substr", "paste", "strsplit", "match", "trimws",  "writeLines", "readLines", "qs2::qd_save",  "qs2::qd_read"))
 
   dfs <- df %>% 
     # filter(expr %in% c("base_R", "stringfish", "stringfish_mt")) %>% # comment out this line to include stringi

@@ -36,7 +36,7 @@ install.packages("stringfish", type="source", configure.args="--with-simd=AVX2")
 The simplest way to show the utility of the ALTREP framework is through
 a quick benchmark comparing `stringfish` and base R.
 
-![](vignettes/bench_v2.png "bench_v2")
+<img src="vignettes/bench_v2.png" title="bench_v2" width="576" />
 
 Yes you are reading the graph correctly: some functions in `stringfish`
 are more than an order of magnitude faster than vectorized base R
@@ -48,61 +48,60 @@ text datasets, this can turn minutes of computation into seconds.
 A list of implemented `stringfish` functions and analogous base R
 functions:
 
-  - `sf_iconv` (`iconv`)
-  - `sf_nchar` (`nchar`)
-  - `sf_substr` (`substr`)
-  - `sf_paste` (`paste0`)
-  - `sf_collapse` (`paste0`)
-  - `sf_readLines` (`readLines`)
-  - `sf_writeLines` (`writeLines`)
-  - `sf_grepl` (`grepl`)
-  - `sf_gsub` (`gsub`)
-  - `sf_toupper` (`toupper`)
-  - `sf_tolower` (`tolower`)
-  - `sf_starts` (`startsWith`)
-  - `sf_ends` (`endsWith`)
-  - `sf_trim` (`trimws`)
-  - `sf_split` (`strsplit`)
-  - `sf_match` (`match` for strings only)
-  - `sf_compare`/`sf_equals` (`==`, ALTREP-aware string equality)
+- `sf_iconv` (`iconv`)
+- `sf_nchar` (`nchar`)
+- `sf_substr` (`substr`)
+- `sf_paste` (`paste0`)
+- `sf_collapse` (`paste0`)
+- `sf_readLines` (`readLines`)
+- `sf_writeLines` (`writeLines`)
+- `sf_grepl` (`grepl`)
+- `sf_gsub` (`gsub`)
+- `sf_toupper` (`toupper`)
+- `sf_tolower` (`tolower`)
+- `sf_starts` (`startsWith`)
+- `sf_ends` (`endsWith`)
+- `sf_trim` (`trimws`)
+- `sf_split` (`strsplit`)
+- `sf_match` (`match` for strings only)
+- `sf_compare`/`sf_equals` (`==`, ALTREP-aware string equality)
 
 Utility functions:
 
-  - `sf_vector` – creates a new and empty `stringfish` vector
-  - `sf_assign` – assign strings into a `stringfish` vector in place
-    (like `x[i] <- "mystring"`)
-  - `sf_convert`/`convert_to_sf` – converts a character vector to a
-    `stringfish` vector
-  - `get_string_type` – determines string type (whether ALTREP or
-    normal)
-  - `materialize` – converts any ALTREP object into a normal R object
-  - `random_strings` – creates random strings as either a `stringfish`
-    or normal R vector
-  - `string_identical` – like `identical` for strings but also requires
-    identical encoding (i.e. latin1 and UTF-8 strings will not match)
+- `sf_vector` – creates a new and empty `stringfish` vector
+- `sf_assign` – assign strings into a `stringfish` vector in place (like
+  `x[i] <- "mystring"`)
+- `sf_convert`/`convert_to_sf` – converts a character vector to a
+  `stringfish` vector
+- `get_string_type` – determines string type (whether ALTREP or normal)
+- `materialize` – converts any ALTREP object into a normal R object
+- `random_strings` – creates random strings as either a `stringfish` or
+  normal R vector
+- `string_identical` – like `identical` for strings but also requires
+  identical encoding (i.e. latin1 and UTF-8 strings will not match)
 
 In addition, many R operations in base R and other packages are already
 ALTREP-aware (i.e. they don’t cause materialization). Functions that
 subset or index into string vectors generally do not materialize.
 
-  - `sample`
-  - `head`
-  - `tail`
-  - `[` – e.g. `x[20:30]`
-  - `dplyr::filter` – e.g. `dplyr::filter(df, sf_starts("a"))`
-  - Etc.
+- `sample`
+- `head`
+- `tail`
+- `[` – e.g. `x[20:30]`
+- `dplyr::filter` – e.g. `dplyr::filter(df, sf_starts("a"))`
+- Etc.
 
 `stringfish` functions are not intended to exactly replicate their base
 R analogues. One difference is that `subject` parameters are always the
 first argument, which is easier to use with pipes (`%>%`). E.g.,
-`gsub(pattern, replacement, subject)` becomes `sf_gsub(subject, pattern,
-replacement)`.
+`gsub(pattern, replacement, subject)` becomes
+`sf_gsub(subject, pattern, replacement)`.
 
 ## Extensibility
 
 `stringfish` as a framework is intended to be easily extensible.
 Stringfish vectors can be worked into `Rcpp` scripts or even into other
-packages (see the `qs` package for an example).
+packages (see the `qs2` package for an example).
 
 Below is a detailed `Rcpp` script that creates a function to alternate
 upper and lower case of strings.
@@ -180,5 +179,5 @@ sf_alternate_case("hello world")
 
 ## To do
 
-  - Additional functions
-  - ICU library functions
+- Additional functions
+- ICU library functions

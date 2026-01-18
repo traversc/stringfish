@@ -216,9 +216,9 @@ enum class rstring_type : uint8_t {
 rstring_type get_rstring_type_internal(SEXP obj) {
   if(TYPEOF(obj) != STRSXP) throw std::runtime_error("Object not an Character Vector");
 #if R_VERSION >= R_Version(4, 6, 0)
-    SEXP class_name = R_altrep_class_name(object); // R_NilValue if not ALTREP
+    SEXP class_name = R_altrep_class_name(obj); // R_NilValue if not ALTREP
     if(class_name == R_NilValue) {
-      return rstring_type::normal;
+      return rstring_type::NORMAL;
     } else {
       std::string classname = std::string(CHAR(PRINTNAME(class_name)));
       if(classname == "__sf_vec__") {

@@ -1,4 +1,5 @@
-Version 0.18.0 (2026-01-16)
+Version 0.18.0 (2026-01-17)
+   * Remove `qs` package suggests and usage in tests/benchmarks/documentation; replace with `qs2`
    * Remove non-API functions: `ATTRIB` in string type check; use `R_altrep_class_name` instead to pull ALTREP class name in R 4.6 or later
 
 Version 0.17.0 (2025-07-12)
