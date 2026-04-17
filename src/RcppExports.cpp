@@ -91,6 +91,37 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sf_vector_create
+SEXP sf_vector_create(size_t len);
+RcppExport SEXP _stringfish_sf_vector_create(SEXP lenSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< size_t >::type len(lenSEXP);
+    rcpp_result_gen = Rcpp::wrap(sf_vector_create(len));
+    return rcpp_result_gen;
+END_RCPP
+}
+// slice_store_create
+SEXP slice_store_create(size_t len);
+RcppExport SEXP _stringfish_slice_store_create(SEXP lenSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< size_t >::type len(lenSEXP);
+    rcpp_result_gen = Rcpp::wrap(slice_store_create(len));
+    return rcpp_result_gen;
+END_RCPP
+}
+// slice_store_create_with_size
+SEXP slice_store_create_with_size(size_t len, size_t initial_slice_size);
+RcppExport SEXP _stringfish_slice_store_create_with_size(SEXP lenSEXP, SEXP initial_slice_sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< size_t >::type len(lenSEXP);
+    Rcpp::traits::input_parameter< size_t >::type initial_slice_size(initial_slice_sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(slice_store_create_with_size(len, initial_slice_size));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sf_assign
 void sf_assign(SEXP x, size_t i, SEXP e);
 RcppExport SEXP _stringfish_sf_assign(SEXP xSEXP, SEXP iSEXP, SEXP eSEXP) {
@@ -115,13 +146,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// convert_to_sf
-SEXP convert_to_sf(SEXP x);
-RcppExport SEXP _stringfish_convert_to_sf(SEXP xSEXP) {
+// convert_to_sf_vector
+SEXP convert_to_sf_vector(SEXP x, size_t length_out);
+RcppExport SEXP _stringfish_convert_to_sf_vector(SEXP xSEXP, SEXP length_outSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(convert_to_sf(x));
+    Rcpp::traits::input_parameter< size_t >::type length_out(length_outSEXP);
+    rcpp_result_gen = Rcpp::wrap(convert_to_sf_vector(x, length_out));
+    return rcpp_result_gen;
+END_RCPP
+}
+// convert_to_slice_store
+SEXP convert_to_slice_store(SEXP x, size_t length_out);
+RcppExport SEXP _stringfish_convert_to_slice_store(SEXP xSEXP, SEXP length_outSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< size_t >::type length_out(length_outSEXP);
+    rcpp_result_gen = Rcpp::wrap(convert_to_slice_store(x, length_out));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -241,13 +284,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // random_strings
-SEXP random_strings(const int N, const int string_size, std::string charset, std::string vector_mode);
+SEXP random_strings(size_t N, IntegerVector string_size, std::string charset, std::string vector_mode);
 RcppExport SEXP _stringfish_random_strings(SEXP NSEXP, SEXP string_sizeSEXP, SEXP charsetSEXP, SEXP vector_modeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const int >::type string_size(string_sizeSEXP);
+    Rcpp::traits::input_parameter< size_t >::type N(NSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type string_size(string_sizeSEXP);
     Rcpp::traits::input_parameter< std::string >::type charset(charsetSEXP);
     Rcpp::traits::input_parameter< std::string >::type vector_mode(vector_modeSEXP);
     rcpp_result_gen = Rcpp::wrap(random_strings(N, string_size, charset, vector_mode));
@@ -319,9 +362,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_get_string_type", (DL_FUNC) &_stringfish_get_string_type, 1},
     {"_stringfish_materialize", (DL_FUNC) &_stringfish_materialize, 1},
     {"_stringfish_sf_vector", (DL_FUNC) &_stringfish_sf_vector, 1},
+    {"_stringfish_sf_vector_create", (DL_FUNC) &_stringfish_sf_vector_create, 1},
+    {"_stringfish_slice_store_create", (DL_FUNC) &_stringfish_slice_store_create, 1},
+    {"_stringfish_slice_store_create_with_size", (DL_FUNC) &_stringfish_slice_store_create_with_size, 2},
     {"_stringfish_sf_assign", (DL_FUNC) &_stringfish_sf_assign, 3},
     {"_stringfish_sf_iconv", (DL_FUNC) &_stringfish_sf_iconv, 4},
-    {"_stringfish_convert_to_sf", (DL_FUNC) &_stringfish_convert_to_sf, 1},
+    {"_stringfish_convert_to_sf_vector", (DL_FUNC) &_stringfish_convert_to_sf_vector, 2},
+    {"_stringfish_convert_to_slice_store", (DL_FUNC) &_stringfish_convert_to_slice_store, 2},
     {"_stringfish_sf_nchar", (DL_FUNC) &_stringfish_sf_nchar, 3},
     {"_stringfish_sf_substr", (DL_FUNC) &_stringfish_sf_substr, 4},
     {"_stringfish_c_sf_paste", (DL_FUNC) &_stringfish_c_sf_paste, 3},
@@ -341,7 +388,7 @@ static const R_CallMethodDef CallEntries[] = {
 };
 
 void init_stringfish(DllInfo* dll);
-void sf_export_functions(DllInfo* dll);
+void sf_export_functions(DllInfo* /* dll */);
 RcppExport void R_init_stringfish(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);

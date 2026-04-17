@@ -1,3 +1,11 @@
+Version 0.19.0 (2026-04-18)
+   * Add slice-store-backed string vectors and conversion helpers: `slice_store_create()`, `slice_store_create_with_size()`, and `convert_to_slice_store()`
+   * Add `sf_vector_create()` as the primary `sf_vec` constructor; keep `sf_vector()` as a backwards-compatible alias
+   * Make the encoding contract more UTF-8-centric and consistent across constructors, conversions, and ALTREP-backed strings
+   * Improve ALTREP robustness across duplication, subsetting, serialization, and assignment after materialization
+   * Fix string operation edge cases, including zero-width regex splits, byte-preserving `sf_writeLines()`, and cross-encoding comparisons
+   * Simplify optional package dependencies and refresh tests and documentation
+
 Version 0.18.0 (2026-01-17)
    * Remove `qs` package suggests and usage in tests/benchmarks/documentation; replace with `qs2`
    * Remove non-API functions: `ATTRIB` in string type check; use `R_altrep_class_name` instead to pull ALTREP class name in R 4.6 or later

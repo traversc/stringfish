@@ -25,3 +25,4 @@ autom4te.cache/*
 /src/.vscode
 src/Makevars
 configure~
+context/*

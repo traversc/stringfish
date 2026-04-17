@@ -12,7 +12,7 @@ RHUB_ALL_PLATFORMS := c( \
   "ubuntu-clang","ubuntu-gcc12","ubuntu-next", "ubuntu-release","valgrind" \
 )
 
-.PHONY: doc build install test vignette $(BUILD)
+.PHONY: doc build install test bench vignette $(BUILD)
 
 check: $(BUILD)
 	R CMD check --as-cran $<
@@ -87,6 +87,9 @@ vignette:
 	IS_GITHUB=Yes Rscript -e "rmarkdown::render(input='vignettes/vignette.rmd', output_file='../README.md', output_format=rmarkdown::github_document(html_preview=FALSE))"; unset IS_GITHUB
 
 test:
-	Rscript tests/tests.R
-	Rscript inst/extra_tests/benchmark_test.R 5
+	tmp_lib=$$(mktemp -d /tmp/stringfish-lib-XXXXXX); \
+	R CMD INSTALL -l $$tmp_lib .; \
+	Rscript -e '.libPaths(c(commandArgs(TRUE)[1], .libPaths())); source("tests/tests.R"); source("tests/regressions.R")' $$tmp_lib
 
+bench:
+	Rscript inst/extra/benchmark.R 5

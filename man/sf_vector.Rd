@@ -10,19 +10,18 @@ sf_vector(len)
 \item{len}{length of the new vector}
 }
 \value{
-A new (empty) stringfish vector
+A new empty stringfish vector
 }
 \description{
-Creates a new stringfish vector
+Creates a new empty stringfish vector
 }
 \details{
-This function creates a new stringfish vector, an alt-rep character vector backed by a C++ "std::vector" as the internal memory representation. 
+This is a backwards-compatible alias for `sf_vector_create(len)`.
+It creates a new stringfish vector, an alt-rep character vector backed by a C++ "std::vector" as the internal memory representation.
 The vector type is "sfstring", which is a simple C++ class containing a "std::string" and a single byte (uint8_t) representing the encoding.
 }
 \examples{
-if(getRversion() >= "3.5.0") {
 x <- sf_vector(10)
 sf_assign(x, 1, "hello world")
 sf_assign(x, 2, "another string")
-}
 }

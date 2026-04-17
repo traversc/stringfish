@@ -19,10 +19,8 @@ A function converting a string to all lowercase
 Note: the function only converts ASCII characters.
 }
 \examples{
-if(getRversion() >= "3.5.0") {
 x <- LETTERS
 sf_tolower(x)
-}
 }
 \seealso{
 tolower

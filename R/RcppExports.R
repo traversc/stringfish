@@ -37,6 +37,18 @@ sf_vector <- function(len) {
     .Call(`_stringfish_sf_vector`, len)
 }
 
+sf_vector_create <- function(len) {
+    .Call(`_stringfish_sf_vector_create`, len)
+}
+
+slice_store_create <- function(len) {
+    .Call(`_stringfish_slice_store_create`, len)
+}
+
+slice_store_create_with_size <- function(len, initial_slice_size) {
+    .Call(`_stringfish_slice_store_create_with_size`, len, initial_slice_size)
+}
+
 sf_assign <- function(x, i, e) {
     invisible(.Call(`_stringfish_sf_assign`, x, i, e))
 }
@@ -45,8 +57,12 @@ sf_iconv <- function(x, from, to, nthreads = getOption("stringfish.nthreads", 1L
     .Call(`_stringfish_sf_iconv`, x, from, to, nthreads)
 }
 
-convert_to_sf <- function(x) {
-    .Call(`_stringfish_convert_to_sf`, x)
+convert_to_sf_vector <- function(x, length_out = length(x)) {
+    .Call(`_stringfish_convert_to_sf_vector`, x, length_out)
+}
+
+convert_to_slice_store <- function(x, length_out = length(x)) {
+    .Call(`_stringfish_convert_to_slice_store`, x, length_out)
 }
 
 sf_nchar <- function(x, type = "chars", nthreads = getOption("stringfish.nthreads", 1L)) {

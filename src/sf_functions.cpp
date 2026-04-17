@@ -1,3 +1,5 @@
+#define STRINGFISH_INTERNAL_BUILD
+
 #include <Rcpp.h>
 #include <RcppParallel.h>
 // TRUE and FALSE is defined in a windows header as 1 and 0; conflicts with #define in R headers
@@ -12,1568 +14,183 @@
 #include <tbb/task_arena.h>
 #include <tbb/enumerable_thread_specific.h>
 #endif
+#include <R_ext/Rdynload.h>
+#include <R_ext/Riconv.h>
 #include <atomic>
+#include <unordered_map>
+#include <fstream>
+#include <optional>
+#include <algorithm>
+#include <cerrno>
+#include <climits>
+#include <cmath>
 
+#include "../inst/include/sf_internal.h"
 #include "PCRE2_wrapper/pcre2_wrapper.h"
+#include "xxhash/xxhash.c"
+#include "sf_altrep.h"
+#include "exported_functions/slice_store_write_helpers.h"
 
 using namespace Rcpp;
 using namespace RcppParallel;
 
-////////////////////////////////////////////////////////////////////////////////
-// constants
-static constexpr uint32_t R_MAX_INT = 2147483647; // R max (int) vector length
-
-// is_utf8_locale controls whether CE_NATIVE strings are iconv'ed to utf-8 strings
-// or used as is. Set during R package initialization
-// but if R package isn't loaded, default of "false" is fine
-static bool is_utf8_locale = false;
-// [[Rcpp::export(rng = false)]]
-void set_is_utf8_locale() {is_utf8_locale = true;}
-// [[Rcpp::export(rng = false)]]
-void unset_is_utf8_locale() {is_utf8_locale = false;}
+#include "sf_utility.h"
 
 // [[Rcpp::export(rng = false)]]
-bool get_is_utf8_locale() {return is_utf8_locale;}
-
-////////////////////////////////////////////////////////////////////////////////
-// tbb helper functions
-
-// #if RCPP_PARALLEL_USE_TBB
-// inline void parallelFor(std::size_t begin, std::size_t end, Worker& worker, std::size_t grainSize = 1, int nthreads = 1) {
-//   int max_threads = tbb::task_scheduler_init::default_num_threads();
-//   if(nthreads > max_threads) nthreads = max_threads;
-//   tbb::task_arena limited(nthreads);
-//   tbb::task_group tg;
-//   limited.execute([&]{
-//     tg.run([&]{
-//       parallelFor(begin, end, worker, grainSize);
-//     });
-//   });
-//   limited.execute([&]{ tg.wait(); });
-// }
-// #endif
+void set_is_utf8_locale();
 
 // [[Rcpp::export(rng = false)]]
-bool is_tbb() {
-#if RCPP_PARALLEL_USE_TBB
-  return true;
-#endif
-  return false;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// SIMD check utility
-// [[Rcpp::export(rng = false)]]
-void check_simd() {
-#if defined (__AVX2__)
-  Rcpp::Rcerr << "AVX2" << std::endl;
-#elif defined (__SSE2__)
-  Rcpp::Rcerr << "SSE2" << std::endl;
-#else
-  Rcpp::Rcerr << "no SIMD" << std::endl;
-#endif
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// SIMD check utility
+void unset_is_utf8_locale();
 
 // [[Rcpp::export(rng = false)]]
-List get_pcre2_info() {
-  auto result = sf::pcre2_info();
-  return List::create(
-    _["pcre2_header_version"] = IntegerVector::create(result.first),
-    _["is_bundled"] = LogicalVector::create(result.second)
-  );
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-// Disable functions if not ALTREP support
-#if R_VERSION < R_Version(3, 5, 0) // no AlTREP support before 3.5
-#include "sf_disabled.h"
-#else
-#include <R_ext/Rdynload.h>
-#include <R_ext/Riconv.h>
-#include "sf_altrep.h"
-
-#include <unordered_map>
-#include <fstream>
-
-#include "xxhash/xxhash.c"
-
-////////////////////////////////////////////////////////////////////////////////
-// iconv helper class
-
-struct iconv_wrapper {
-  const char * to;
-  const char * from;
-  void * cd;
-  iconv_wrapper() : to(nullptr), from(nullptr), cd(nullptr) {
-    // std::cout << "a";
-  }
-  iconv_wrapper(const char * to, const char * from) : to(to), from(from), cd(Riconv_open(to,from)) {
-    // std::cout << "b";
-  }
-  std::pair<bool, std::string> convertToString(const char * ptr, size_t len) {
-    std::string outstring;
-    outstring.resize(len * 4);
-    size_t outlen = outstring.size();
-    char * outptr =  &outstring[0];
-    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
-    if(res == (size_t)(-1)) return std::make_pair(false, "");
-    size_t bytes_written = outstring.size() - outlen;
-    outstring.resize(bytes_written);
-    return std::make_pair(true, outstring);
-  }
-  std::pair<bool, std::string> convertToString(const char * ptr) {
-    size_t len = strlen(ptr);
-    std::string outstring;
-    outstring.resize(len * 4);
-    size_t outlen = outstring.size();
-    char * outptr =  &outstring[0];
-    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
-    if(res == (size_t)(-1)) return std::make_pair(false, "");
-    size_t bytes_written = outstring.size() - outlen;
-    outstring.resize(bytes_written);
-    return std::make_pair(true, outstring);
-  }
-  bool convert(const char * ptr, size_t len, std::string& outstring) {
-    outstring.resize(len * 4);
-    size_t outlen = outstring.size();
-    char * outptr =  &outstring[0];
-    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
-    if(res == (size_t)(-1)) return false;
-    size_t bytes_written = outstring.size() - outlen;
-    outstring.resize(bytes_written);
-    return true;
-  }
-  bool convert(const char * ptr, std::string& outstring) {
-    size_t len = strlen(ptr);
-    outstring.resize(len * 4);
-    size_t outlen = outstring.size();
-    char * outptr =  &outstring[0];
-    size_t res = Riconv(cd, &ptr, &len, &outptr, &outlen);
-    if(res == (size_t)(-1)) return false;
-    size_t bytes_written = outstring.size() - outlen;
-    outstring.resize(bytes_written);
-    return true;
-  }
-  iconv_wrapper(const iconv_wrapper& other) { // copy constructor
-    // std::cout << "c";
-    to = other.to;
-    from = other.from;
-    if(to != nullptr) {
-      cd = Riconv_open(to, from);
-    } else {
-      cd = nullptr;
-    }
-  }
-  iconv_wrapper(iconv_wrapper && other) { // move constructor
-    // std::cout << "d";
-    to = other.to;
-    from = other.from;
-    cd = other.cd;
-    other.cd = nullptr;
-  }
-  iconv_wrapper & operator=(const iconv_wrapper & other) { // copy assignment
-    // std::cout << "e";
-    if(&other == this) return *this;
-    if(cd != nullptr) Riconv_close(cd);
-    to = other.to;
-    from = other.from;
-    if(to != nullptr) {
-      cd = Riconv_open(to, from);
-    } else {
-      cd = nullptr;
-    }
-    return *this;
-  }
-  iconv_wrapper & operator=(iconv_wrapper && other) { // move assignment
-    // std::cout << "f";
-    if(&other == this) return *this;
-    if(cd != nullptr) Riconv_close(cd);
-    to = other.to;
-    from = other.from;
-    cd = other.cd;
-    other.cd = nullptr;
-    return *this;
-  }
-  ~iconv_wrapper() {
-    // std::cout << "g";
-    if(cd != nullptr) Riconv_close(cd);
-  }
-};
-static const std::string iconv_utf8_string = "UTF-8";
-static const std::string iconv_latin1_string = "latin1";
-static const std::string iconv_native_string = "";
-
-
-////////////////////////////////////////////////////////////////////////////////
+bool get_is_utf8_locale();
 
 // [[Rcpp::export(rng = false)]]
-std::string get_string_type(SEXP x) {
-  rstring_type rx = get_rstring_type_internal(x);
-  switch(rx) {
-  case rstring_type::NORMAL:
-    return "normal vector";
-  case rstring_type::SF_VEC:
-    return "stringfish vector";
-  case rstring_type::SF_VEC_MATERIALIZED:
-    return "stringfish vector (materialized)";
-  case rstring_type::OTHER_ALT_REP:
-    return "other alt-rep vector";
-  default:
-    throw std::runtime_error("get_string_type error");
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////
+bool is_tbb();
 
 // [[Rcpp::export(rng = false)]]
-SEXP materialize(SEXP x) {
-  if(ALTREP(x)) {
-    DATAPTR_RO(x);
-  }
-  return x;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
+void check_simd();
 
 // [[Rcpp::export(rng = false)]]
-SEXP sf_vector(size_t len) {
-  auto * ret = new sf_vec_data(len);
-  return sf_vec::Make(ret, true);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-// C only export manually - no checking of valid object is done here
-sf_vec_data & sf_vec_data_ref(SEXP x) {
-  return *reinterpret_cast<sf_vec_data*>(R_ExternalPtrAddr(R_altrep_data1(x)));
-}
-
-////////////////////////////////////////////////////////////////////////////////
+List get_pcre2_info();
 
 // [[Rcpp::export(rng = false)]]
-void sf_assign(SEXP x, size_t i, SEXP e) {
-  if(TYPEOF(e) != STRSXP || Rf_xlength(e) != 1) {
-    throw std::runtime_error("e must be a string of length 1");
-  }
-  if(i == 0) {
-    throw std::runtime_error("i must be > 0");
-  }
-  i--;
-  rstring_type rx = get_rstring_type_internal(x);
-  switch(rx) {
-  case rstring_type::SF_VEC:
-  {
-    sf_vec_data & ref = sf_vec_data_ref(x);
-    ref[i] = sfstring(STRING_ELT(e,0));
-  }
-    break;
-  case rstring_type::SF_VEC_MATERIALIZED:
-    SET_STRING_ELT(R_altrep_data2(x), i, STRING_ELT(e,0));
-    break;
-  case rstring_type::NORMAL:
-  case rstring_type::OTHER_ALT_REP:
-  default:
-    SET_STRING_ELT(x, i, STRING_ELT(e,0));
-    break;
-  }
-}
+std::string get_string_type(SEXP x);
 
-////////////////////////////////////////////////////////////////////////////////
+// [[Rcpp::export(rng = false)]]
+SEXP materialize(SEXP x);
 
-#if RCPP_PARALLEL_USE_TBB
-struct iconv_worker : public Worker {
-  tbb::enumerable_thread_specific<iconv_wrapper> iw;
-  cetype_t encoding;
-  RStringIndexer * rsi;
-  sf_vec_data & ref;
-  iconv_worker(iconv_wrapper iw, cetype_t encoding, RStringIndexer * rsi, sf_vec_data & ref) : 
-    iw(iw), encoding(encoding), rsi(rsi), ref(ref) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_local = iw.local();
-    for(size_t i=begin; i<end; ++i) {
-      auto q = rsi->getCharLenCE(i);
-      if(q.ptr == nullptr) {
-        ref[i] = sfstring(NA_STRING);
-      } else {
-        auto sc = iw_local.convertToString(q.ptr, q.len);
-        if(!sc.first) {
-          ref[i] = sfstring(NA_STRING);
-        } else {
-          ref[i] = sfstring(std::move(sc.second), encoding);
-        }
-      }
-    }
-  }
-};
-#endif
+// [[Rcpp::export(rng = false)]]
+SEXP sf_vector(size_t len);
+
+// [[Rcpp::export(rng = false)]]
+SEXP sf_vector_create(size_t len);
+
+// [[Rcpp::export(rng = false)]]
+SEXP slice_store_create(size_t len);
+
+// [[Rcpp::export(rng = false)]]
+SEXP slice_store_create_with_size(size_t len, size_t initial_slice_size);
+
+sf_vec_data & sf_vec_data_ref(SEXP x);
+slice_store_data & slice_store_data_ref(SEXP x);
+
+// [[Rcpp::export(rng = false)]]
+void sf_assign(SEXP x, size_t i, SEXP e);
 
 // [[Rcpp::export(rng = false, signature = {x, from, to, nthreads = getOption("stringfish.nthreads", 1L)})]]
-SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads=1) {
-  cetype_t encoding;
-  if(to == "UTF-8") {
-    encoding = CE_UTF8;
-  } else if(to == "latin1") {
-    encoding = CE_LATIN1;
-  } else {
-    encoding = CE_NATIVE;
-  }
-  iconv_wrapper iw(to.c_str(), from.c_str());
-  RStringIndexer rsi(x);
-  size_t len = rsi.size();
-  SEXP ret = PROTECT(sf_vector(len));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    iconv_worker w(iw, encoding, &rsi, ref);
-    parallelFor(0, len, w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  }
-  for(size_t i=0; i<len; ++i) {
-    auto q = rsi.getCharLenCE(i);
-    if(q.ptr == nullptr) {
-      ref[i] = sfstring(NA_STRING);
-    } else {
-      auto sc = iw.convertToString(q.ptr, q.len);
-      if(!sc.first) {
-        ref[i] = sfstring(NA_STRING);
-      } else {
-        ref[i] = sfstring(std::move(sc.second), encoding);
-      }
-    }
-  }
-  UNPROTECT(1);
-  return ret;
-}
+SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads = 1);
 
-////////////////////////////////////////////////////////////////////////////////
+// [[Rcpp::export(rng = false, signature = {x, length_out = length(x)})]]
+SEXP convert_to_sf_vector(SEXP x, size_t length_out);
 
-// [[Rcpp::export(rng = false)]]
-SEXP convert_to_sf(SEXP x) {
-  size_t len = Rf_xlength(x);
-  SEXP ret = PROTECT(sf_vector(len));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  for(size_t i=0; i<len; ++i) {
-    ref[i] = sfstring(STRING_ELT(x,i));
-  }
-  UNPROTECT(1);
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-#if RCPP_PARALLEL_USE_TBB
-struct nchar_worker : public Worker {
-  RStringIndexer * rsi;
-  int * optr;
-  const std::string type;
-  nchar_worker(RStringIndexer * r, int * o, const std::string t) : 
-    rsi(r), optr(o), type(t) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    if(type == "chars") {
-      for(size_t i=begin; i<end; ++i) {
-        auto q = rsi->getCharLenCE(i);
-        if(q.ptr == nullptr) {
-          optr[i] = NA_INTEGER;
-        } else if(q.enc == CE_UTF8) {
-          optr[i] = code_points(q.ptr);
-        } else {
-          optr[i] = static_cast<int>( strlen(q.ptr) );
-        }
-      }
-    } else if(type == "bytes") {
-      for(size_t i=begin; i<end; ++i) {
-        auto q = rsi->getCharLenCE(i);
-        if(q.ptr == nullptr) {
-          optr[i] = NA_INTEGER;
-        } else {
-          optr[i] = static_cast<int>( strlen(q.ptr) );
-        }
-      }
-    }
-  }
-};
-#endif
+// [[Rcpp::export(rng = false, signature = {x, length_out = length(x)})]]
+SEXP convert_to_slice_store(SEXP x, size_t length_out);
 
 // [[Rcpp::export(rng = false, signature = {x, type = "chars", nthreads = getOption("stringfish.nthreads", 1L)})]]
-IntegerVector sf_nchar(SEXP x, const std::string type = "chars", const int nthreads = 1) {
-  if((type != "chars") && (type != "bytes")) {
-    throw std::runtime_error("type must be chars or bytes");
-  }
-  RStringIndexer rsi(x);
-  size_t len = rsi.size();
-  IntegerVector ret(len);
-  int * optr = INTEGER(ret);
-  
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    nchar_worker w(&rsi, optr, type);
-    parallelFor(0, len, w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    if(type == "chars") {
-      for(size_t i=0; i<len; ++i) {
-        auto q = rsi.getCharLenCE(i);
-        if(q.ptr == nullptr) {
-          optr[i] = NA_INTEGER;
-        } else if(q.enc == CE_UTF8) {
-          optr[i] = code_points(q.ptr);
-        } else {
-          optr[i] = static_cast<int>( strlen(q.ptr) );
-        }
-      }
-    } else if(type == "bytes") {
-      for(size_t i=0; i<len; ++i) {
-        auto q = rsi.getCharLenCE(i);
-        if(q.ptr == nullptr) {
-          optr[i] = NA_INTEGER;
-        } else {
-          optr[i] = static_cast<int>( strlen(q.ptr) );
-        }
-      }
-    }
-  }
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-inline sfstring sf_substr_internal(const char * x, const int len, const cetype_t type, int start, int stop) {
-  if(x == nullptr) return sfstring(NA_STRING);
-  if(len == 0) return sfstring("", CE_NATIVE);
-  if(start > len) return sfstring("", CE_NATIVE);
-  
-  if(type == CE_UTF8) {
-    int clen = code_points(x);
-    if(start > clen) return sfstring("", CE_NATIVE);
-    // for utf-8, stop is one-based
-    // we want the end of the last byte for the last character so we overshoot 
-    // by one byte to find the boundary
-    if(start < 0 || stop < 0) {
-      start = start < 0 ? (clen+start) : (start-1);
-      stop = stop < 0 ? (clen+stop+1) : (stop); // zero based
-    } else {
-      start = start-1;
-      // stop = stop;
-    }
-    
-    if((stop-1) < start) return sfstring("", type);
-    if(stop < 1) return sfstring("", type);
-    if(start < 0) start = 0;
-    
-    const char * p = x;
-    int start_byte = 0;
-    int outlen = 0;
-    int count = 0;
-    while(count <= start) {
-      if(*p == 0) return sfstring("", type);
-      count += ((*p & 0xc0) != 0x80); // b11000000, b10000000
-      p++;
-      start_byte++;
-    }
-    while(count <= stop) {
-      if(*p == 0) {
-        outlen++;
-        break;
-      }
-      count += ((*p & 0xc0) != 0x80); // b11000000, b10000000
-      p++;
-      outlen++;
-    }
-    return sfstring(std::string(x + start_byte - 1, outlen), type);
-  } else {
-    start = start < 0 ? (len+start) : (start-1); // zero based
-    stop = stop < 0 ? (len+stop) : (stop-1); // zero based
-    if(stop < start) return sfstring("", CE_NATIVE);
-    if(stop >= len) stop = len - 1;
-    if(stop < 0) return sfstring("", CE_NATIVE);
-    if(start < 0) start = 0;
-    return sfstring(std::string(x + start, stop - start + 1), type);
-  }
-}
-
-struct substr_worker : public Worker {
-  const std::string type;
-  RStringIndexer * rsi;
-  size_t start_size;
-  size_t stop_size;
-  int * start_ptr;
-  int * stop_ptr;
-  sf_vec_data & ref;
-  substr_worker(RStringIndexer * r, size_t start_s, size_t stop_s, int * start_p, int * stop_p, sf_vec_data & ref) : 
-    rsi(r), start_size(start_s), stop_size(stop_s), start_ptr(start_p), stop_ptr(stop_p), ref(ref) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    for(size_t i=begin; i<end; ++i) {
-      auto q = rsi->getCharLenCE(i);
-      ref[i] = sf_substr_internal(q.ptr, q.len, q.enc, start_ptr[start_size == 1 ? 0 : i], stop_ptr[stop_size == 1 ? 0 : i]);
-    }
-  }
-};
+IntegerVector sf_nchar(SEXP x, const std::string type = "chars", const int nthreads = 1);
 
 // [[Rcpp::export(rng = false, signature = {x, start, stop, nthreads = getOption("stringfish.nthreads", 1L)})]]
-SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthreads = 1) {
-  size_t start_size = Rf_xlength(start);
-  size_t stop_size = Rf_xlength(stop);
-  int * start_ptr = INTEGER(start);
-  int * stop_ptr = INTEGER(stop);
-  
-  for(size_t i=0; i<start_size; ++i) {
-    if(start_ptr[i] == NA_INTEGER) throw std::runtime_error("no NA start values allowed");
-  }
-  
-  for(size_t i=0; i<start_size; ++i) {
-    if(stop_ptr[i] == NA_INTEGER) throw std::runtime_error("no NA stop values allowed");
-  }
-  
-  RStringIndexer rsi(x);
-  size_t len = rsi.size();
-  if(start_size != len && start_size != 1) throw std::runtime_error("length of start must be 1 or the same as x");
-  if(stop_size != len && stop_size != 1) throw std::runtime_error("length of stop must be 1 or the same as x");
-  SEXP ret = PROTECT(sf_vector(len));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    substr_worker w(&rsi, start_size, stop_size, start_ptr, stop_ptr, ref);
-    parallelFor(0, len, w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    for(size_t i=0; i<len; ++i) {
-      auto q = rsi.getCharLenCE(i);
-      ref[i] = sf_substr_internal(q.ptr, q.len, q.enc, start_ptr[start_size == 1 ? 0 : i], stop_ptr[stop_size == 1 ? 0 : i]);
-    }
-  }
-  UNPROTECT(1);
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct paste_worker : public Worker {
-  size_t dotlen;
-  std::string & sep_string;
-  std::vector<RStringIndexer> & rs;
-  std::vector<size_t> & lens;
-  std::vector<RStringIndexer::rstring_info> & singles;
-  sf_vec_data & ref;
-
-  paste_worker(size_t dotlen, std::string& sep_string, std::vector<RStringIndexer> & rs, 
-               std::vector<size_t> & lens, std::vector<RStringIndexer::rstring_info> & singles,
-               sf_vec_data & ref) : 
-    dotlen(dotlen), sep_string(sep_string), rs(rs), lens(lens), singles(singles), ref(ref) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    for(size_t i=begin; i<end; ++i) {
-      std::string temp;
-      cetype_t enc = CE_NATIVE;
-      bool is_na = false;
-      for(size_t j=0; j<dotlen; ++j) {
-        RStringIndexer::rstring_info q = lens[j] == 1 ? singles[j] : rs[j].getCharLenCE(i);
-        if(q.ptr == nullptr) {
-          is_na = true;
-          break;
-        } else {
-          enc = choose_enc(enc, q.enc);
-          temp += std::string(q.ptr, q.len);
-          if(j < (dotlen-1)) temp += sep_string;
-        }
-      }
-      if(is_na) {
-        ref[i] = sfstring(NA_STRING);
-      } else {
-        ref[i] = sfstring(temp, enc);
-      }
-    }
-  }
-};
-
-// Would it be better to upgrade everything to UTF-8?
-// Called by sf_paste -- valid input already determined
-// [[Rcpp::export(rng = false)]]
-SEXP c_sf_paste(List dots, SEXP sep, const int nthreads = 1) {
-
-  RStringIndexer sr(sep);
-  if(sr.size() != 1) throw std::runtime_error("sep should be a character vector of length 1");
-  auto sr_element = sr.getCharLenCE(0);
-  
-  std::string sep_string(sr_element.ptr, sr_element.len);
-  size_t maxlen = 1;
-  size_t dotlen = Rf_xlength(dots);
-  std::vector<RStringIndexer> rs;
-  std::vector<size_t> lens(dotlen);
-  std::vector<RStringIndexer::rstring_info> singles(dotlen);
-  for(size_t i=0; i<dotlen; ++i) {
-    SEXP d = dots[i];
-    rs.emplace_back(d); // no copy constructor called, since it s deleted
-    lens[i] = rs[i].size();
-    if(lens[i] == 1) {
-      singles[i] = rs[i].getCharLenCE(0);
-    }
-    if(maxlen == 1 && lens[i] > 1) {
-      maxlen = lens[i];
-    }
-  }
-  
-  SEXP ret = PROTECT(sf_vector(maxlen));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    paste_worker w(dotlen, sep_string, rs, lens, singles, ref);
-    parallelFor(0,maxlen,w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    for(size_t i=0; i<maxlen; ++i) {
-      std::string temp;
-      cetype_t enc = CE_NATIVE;
-      bool is_na = false;
-      for(size_t j=0; j<dotlen; ++j) {
-        RStringIndexer::rstring_info q = lens[j] == 1 ? singles[j] : rs[j].getCharLenCE(i);
-        if(q.ptr == nullptr) {
-          is_na = true;
-          break;
-        } else {
-          enc = choose_enc(enc, q.enc);
-          temp += std::string(q.ptr, q.len);
-          if(j < (dotlen-1)) temp += sep_string;
-        }
-      }
-      if(is_na) {
-        ref[i] = sfstring(NA_STRING);
-      } else {
-        ref[i] = sfstring(temp, enc);
-      }
-    }
-  }
-  UNPROTECT(1);
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
+SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthreads = 1);
 
 // [[Rcpp::export(rng = false)]]
-SEXP sf_collapse(SEXP x, SEXP collapse) {
-  RStringIndexer cr(collapse);
-  if(cr.size() != 1) throw std::runtime_error("collapse should be a character vector of length 1");
-  auto cr_element = cr.getCharLenCE(0);
-  std::string collapse_string(cr_element.ptr, cr_element.len);
-  
-  RStringIndexer xr(x);
-  size_t len = xr.size();
-  std::string temp;
-  cetype_t enc = cr_element.enc;
-  for(size_t i=0; i<len; ++i) {
-    auto q = xr.getCharLenCE(i);
-    if(q.ptr == nullptr) return NA_STRING;
-    enc = choose_enc(enc, q.enc);
-    temp += std::string(q.ptr, q.len);
-    if(i < (len-1)) temp += collapse_string;
-  }
-  // since the return length is 1, there's no point using ALT-REP
-  SEXP ret = PROTECT(Rf_allocVector(STRSXP, 1));
-  SET_STRING_ELT(ret, 0, Rf_mkCharLenCE(temp.c_str(), temp.size(), enc));
-  UNPROTECT(1);
-  return(ret);
-}
+SEXP c_sf_paste(List dots, SEXP sep, const int nthreads = 1);
 
-////////////////////////////////////////////////////////////////////////////////
 // [[Rcpp::export(rng = false)]]
-SEXP sf_readLines(const std::string file, const std::string encoding = "UTF-8") {
-  SEXP ret = PROTECT(sf_vector(0));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  cetype_t enc;
-  if(encoding == "UTF-8") {
-    enc = CE_UTF8;
-  } else if(encoding == "latin1") {
-    enc = CE_LATIN1;
-  } else if(encoding == "bytes") {
-    enc = CE_BYTES;
-  } else {
-    enc = CE_NATIVE;
-  }
-  std::ifstream myFile(R_ExpandFileName(file.c_str()), std::ios::in);
-  if(!myFile) {
-    throw std::runtime_error("Failed to open " + file + ". Check file path.");
-  }
-  
-  // possibly better way of handling line endings: https://stackoverflow.com/q/6089231/2723734
-  std::string str;
-  while(std::getline(myFile, str)) {
-    if(str.size() > 0 && str.back() == '\r') {
-      str.resize(str.size() - 1);
-    }
-    ref.push_back(sfstring(str, enc));
-  }
-  UNPROTECT(1);
-  return ret;
-}
+SEXP sf_collapse(SEXP x, SEXP collapse);
 
-////////////////////////////////////////////////////////////////////////////////
 // [[Rcpp::export(rng = false)]]
-void sf_writeLines(SEXP text, const std::string file, const std::string sep = "\n", const std::string na_value = "NA", const std::string encode_mode = "UTF-8") {
-  if((encode_mode != "UTF-8") && (encode_mode != "byte")) {
-    throw std::runtime_error("encode_mode must be byte or UTF-8");
-  }
-  std::ofstream myFile(R_ExpandFileName(file.c_str()), std::ios::out | std::ios::binary);
-  if(!myFile) {
-    throw std::runtime_error("Failed to open " + file + ". Check file path.");
-  }
-  
-  iconv_wrapper iw_latin1;
-  iconv_wrapper iw_native;
-  if((encode_mode == "UTF-8")) {
-    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
-    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
-  }
-  
-  RStringIndexer xr(text);
-  size_t len = xr.size();
-  
-  for(size_t i=0; i<len; ++i) {
-    auto q = xr.getCharLenCE(i);
-    if(q.ptr == nullptr) {
-      myFile.write(na_value.c_str(), na_value.size());
-    } else {
-      if(encode_mode == "byte") {
-        myFile.write(q.ptr, q.len);
-      } else { // UTF-8
-        if(q.enc == CE_NATIVE) {
-          if(!is_utf8_locale && !xr.is_ASCII(i)) {
-            auto iw = iw_native.convertToString(q.ptr, q.len);
-            if(!iw.first) {
-              myFile.write(na_value.c_str(), na_value.size());
-            } else {
-              myFile.write(iw.second.c_str(), iw.second.size());
-            }
-          } else {
-            myFile.write(q.ptr, q.len);
-          }
-        } else if(q.enc == CE_LATIN1) {
-          auto iw = iw_latin1.convertToString(q.ptr, q.len);
-          if(!iw.first) {
-            myFile.write(na_value.c_str(), na_value.size());
-          } else {
-            myFile.write(iw.second.c_str(), iw.second.size());
-          }
-        } else {
-          myFile.write(q.ptr, q.len);
-        }
-      }
-    }
-    myFile.write(sep.c_str(), sep.size());
-  }
-  
-}
+SEXP sf_readLines(const std::string file, const std::string encoding = "UTF-8");
 
-
-////////////////////////////////////////////////////////////////////////////////
-#if RCPP_PARALLEL_USE_TBB
-struct grepl_worker : public Worker {
-  const std::string encode_mode;
-  tbb::enumerable_thread_specific<iconv_wrapper> iw_latin1;
-  tbb::enumerable_thread_specific<iconv_wrapper> iw_native;
-  tbb::enumerable_thread_specific<sf::pcre2_match_wrapper> pm;
-  RStringIndexer * cr;
-  int * outptr;
-  
-  grepl_worker(const std::string encode_mode, iconv_wrapper iw_latin1, iconv_wrapper iw_native, 
-               const sf::pcre2_match_wrapper & pm, RStringIndexer * cr, int * outptr) : 
-    encode_mode(encode_mode), iw_latin1(iw_latin1), iw_native(iw_native), pm(pm), cr(cr), outptr(outptr) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    tbb::enumerable_thread_specific<sf::pcre2_match_wrapper>::reference pm_local = pm.local();
-    tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
-    tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
-    for(size_t i=begin; i<end; ++i) {
-      auto q = cr->getCharLenCE(i);
-      if(q.ptr == nullptr) {
-        outptr[i] = NA_LOGICAL;
-        continue;
-      }
-      if(encode_mode == "UTF-8") {
-        outptr[i] = pm_local.match(q.ptr, q.len);
-      } else if(encode_mode == "byte") {
-        outptr[i] = pm_local.match(q.ptr, q.len);
-      } else { // auto - upscale everything to UTF-8
-        if(q.enc == CE_NATIVE) {
-          if(!is_utf8_locale && !cr->is_ASCII(i)) {
-            auto istr = iw_native_local.convertToString(q.ptr, q.len);
-            if(!istr.first) {
-              outptr[i] = NA_LOGICAL;
-            } else {
-              outptr[i] = pm_local.match(istr.second.c_str(), istr.second.size());
-            }
-          } else {
-            outptr[i] = pm_local.match(q.ptr, q.len);
-          }
-        } else if(q.enc == CE_LATIN1) {
-          auto istr = iw_latin1_local.convertToString(q.ptr, q.len);
-          if(!istr.first) {
-            outptr[i] = NA_LOGICAL;
-          } else {
-            outptr[i] = pm_local.match(istr.second.c_str(), istr.second.size());
-          }
-        } else {
-          outptr[i] = pm_local.match(q.ptr, q.len);
-        }
-      }
-    }
-  }
-};
-#endif
+// [[Rcpp::export(rng = false)]]
+void sf_writeLines(SEXP text, const std::string file, const std::string sep = "\n", const std::string na_value = "NA", const std::string encode_mode = "UTF-8");
 
 // [[Rcpp::export(rng = false, signature = {subject, pattern, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L)})]]
-LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {
-  if(encode_mode != "auto" && encode_mode != "byte" && encode_mode != "UTF-8") {
-    throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
-  }
-  
-  SEXP pattern_element = STRING_ELT(pattern, 0);
-  const char * pattern_ptr = CHAR(pattern_element);
-  cetype_t pattern_enc = Rf_getCharCE(pattern_element);
-  
-  iconv_wrapper iw_latin1;
-  iconv_wrapper iw_native;
-  sf::pcre2_match_wrapper pm;
-  std::string pattern_str;
-  if((encode_mode == "auto")) {
-    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
-    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
-    
-    if( (!is_utf8_locale && (pattern_enc == CE_NATIVE) && !IS_ASCII(pattern_element)) ) {
-      pattern_str = iw_native.convertToString(pattern_ptr).second;
-      pattern_ptr = pattern_str.c_str();
-    } else if(pattern_enc == CE_LATIN1) {
-      pattern_str = iw_latin1.convertToString(pattern_ptr).second;
-      pattern_ptr = pattern_str.c_str();
-    }
-    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
-  } else if(encode_mode == "UTF-8") {
-    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
-  }else if(encode_mode == "byte") {
-    pm = sf::pcre2_match_wrapper(pattern_ptr, false, fixed);
-  } else {
-    throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
-  }
-  
-  RStringIndexer cr(subject);
-  size_t len = cr.size();
-  LogicalVector ret(len);
-  int * outptr = LOGICAL(ret);
-  
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    grepl_worker w(encode_mode, iw_latin1, iw_native, pm, &cr, outptr);
-    parallelFor(0, len, w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    std::string outstring;
-    for(size_t i=0; i<len; ++i) {
-      auto q = cr.getCharLenCE(i);
-      if(q.ptr == nullptr) {
-        outptr[i] = NA_LOGICAL;
-        continue;
-      }
-      // outptr[i] = p.match(q.ptr);
-      if(encode_mode == "UTF-8") {
-        outptr[i] = pm.match(q.ptr, q.len);
-      } else if(encode_mode == "byte") {
-        outptr[i] = pm.match(q.ptr, q.len);
-      } else { // auto - upscale everything to UTF-8
-        if(q.enc == CE_NATIVE) {
-          if(!is_utf8_locale && !cr.is_ASCII(i)) {
-            bool iw = iw_native.convert(q.ptr, q.len, outstring);
-            if(!iw) {
-              outptr[i] = NA_LOGICAL;
-            } else {
-              outptr[i] = pm.match(outstring.c_str(), outstring.size());
-            }
-          } else {
-            outptr[i] = pm.match(q.ptr, q.len);
-          }
-        } else if(q.enc == CE_LATIN1) {
-          bool iw = iw_latin1.convert(q.ptr, q.len, outstring);
-          if(!iw) {
-            outptr[i] = NA_LOGICAL;
-          } else {
-            outptr[i] = pm.match(outstring.c_str(), outstring.size());
-          }
-        } else {
-          outptr[i] = pm.match(q.ptr, q.len);
-        }
-      }
-    }
-  }
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-void sf_split_internal(sf_vec_data & ref, sf::pcre2_match_wrapper & p, const char * sptr, int len, cetype_t enc) {
-  int rc = 0;
-  bool is_zero_match = false;
-  size_t begin;
-  size_t end;
-  while((rc = p.match_get_interval(sptr, len, begin, end)) && (*sptr != 0)) {
-    ref.emplace_back(sptr, begin, enc);
-    sptr += end;
-    len -= end;
-    if(begin == end) is_zero_match = true;
-  }
-  if(!is_zero_match) { // prevents empty match at the end of string
-    ref.emplace_back(sptr, enc);
-  }
-}
-
-#if RCPP_PARALLEL_USE_TBB
-struct split_worker : public Worker {
-  const std::string encode_mode;
-  cetype_t pattern_enc;
-  tbb::enumerable_thread_specific<iconv_wrapper> iw_latin1;
-  tbb::enumerable_thread_specific<iconv_wrapper> iw_native;
-  tbb::enumerable_thread_specific<sf::pcre2_match_wrapper> pm;
-  std::vector<sf_vec_data*> refs;
-  RStringIndexer * cr;
-  
-  split_worker(const std::string encode_mode, cetype_t pattern_enc, iconv_wrapper iw_latin1, iconv_wrapper iw_native, sf::pcre2_match_wrapper pm,
-               std::vector<sf_vec_data*> refs, RStringIndexer * cr) : 
-    encode_mode(encode_mode), pattern_enc(pattern_enc), iw_latin1(iw_latin1), iw_native(iw_native), 
-    pm(pm), refs(refs), cr(cr) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
-    tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
-    tbb::enumerable_thread_specific<sf::pcre2_match_wrapper>::reference pm_local = pm.local();
-    std::string outstring;
-    for(size_t i=begin; i<end; ++i) {
-      auto & ref = *refs[i];
-      auto q = cr->getCharLenCE(i);
-      if(q.ptr == nullptr) {
-        ref.emplace_back(NA_STRING);
-        continue;
-      }
-      if(encode_mode == "UTF-8") {
-        sf_split_internal(ref, pm_local, q.ptr, q.len, CE_UTF8);
-      } else if(encode_mode == "byte") {
-        cetype_t new_enc = choose_enc(q.enc, pattern_enc);
-        sf_split_internal(ref, pm_local, q.ptr, q.len, new_enc);
-      } else { // auto
-        if(q.enc == CE_NATIVE) {
-          if(!is_utf8_locale && !cr->is_ASCII(i)) {
-            bool iw = iw_native_local.convert(q.ptr, q.len, outstring);
-            if(!iw) {
-              ref.emplace_back(NA_STRING);
-            } else {
-              sf_split_internal(ref, pm_local, outstring.c_str(), outstring.size(), CE_UTF8);
-            }
-          } else {
-            sf_split_internal(ref, pm_local, q.ptr, q.len, CE_UTF8);
-          }
-        } else if(q.enc == CE_LATIN1) {
-          bool iw = iw_latin1_local.convert(q.ptr, q.len, outstring);
-          if(!iw) {
-            ref.emplace_back(NA_STRING);
-          } else {
-            sf_split_internal(ref, pm_local, outstring.c_str(), outstring.size(), CE_UTF8);
-          }
-        } else {
-          sf_split_internal(ref, pm_local, q.ptr, q.len, CE_UTF8);
-        }
-      }
-    }
-  }
-};
-#endif
+LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1);
 
 // [[Rcpp::export(rng = false, signature = {subject, split, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L)})]]
-SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {
-  
-  SEXP pattern_element = STRING_ELT(split, 0);
-  cetype_t pattern_enc = Rf_getCharCE(pattern_element);
-  const char * pattern_ptr = CHAR(pattern_element);
-  std::string pattern_str;
-  
-  iconv_wrapper iw_latin1;
-  iconv_wrapper iw_native;
-  sf::pcre2_match_wrapper pm;
-  
-  if((encode_mode == "auto")) {
-    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
-    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
-    if( (!is_utf8_locale && (pattern_enc == CE_NATIVE) && !IS_ASCII(pattern_element)) ) {
-      pattern_str = iw_native.convertToString(pattern_ptr).second;
-      pattern_ptr = pattern_str.c_str();
-    } else if(pattern_enc == CE_LATIN1) {
-      pattern_str = iw_latin1.convertToString(pattern_ptr).second;
-      pattern_ptr = pattern_str.c_str();
-    }
-    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
-  } else if(encode_mode == "UTF-8") {
-    pm = sf::pcre2_match_wrapper(pattern_ptr, true, fixed);
-  }else if(encode_mode == "byte") {
-    pm = sf::pcre2_match_wrapper(pattern_ptr, false, fixed);
-  } else {
-    throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
-  }
-  
-  RStringIndexer cr(subject);
-  size_t len = cr.size();
-  SEXP ret = PROTECT(Rf_allocVector(VECSXP, len));
-  
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    std::vector<sf_vec_data*> refs(len);
-    for(size_t i=0; i<len; ++i) {
-      SEXP svec = PROTECT(sf_vector(0));
-      SET_VECTOR_ELT(ret, i, svec);
-      UNPROTECT(1);
-      refs[i] = &sf_vec_data_ref(svec);
-    }
-    split_worker w(encode_mode, pattern_enc, iw_latin1, iw_native, pm, std::move(refs), &cr);
-    parallelFor(0, len, w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    std::string outstring;
-    for(size_t i=0; i<len; ++i) {
-      auto q = cr.getCharLenCE(i);
-      SEXP svec = PROTECT(sf_vector(0));
-      SET_VECTOR_ELT(ret, i, svec);
-      UNPROTECT(1);
-      auto & ref = sf_vec_data_ref(svec);
-      if(q.ptr == nullptr) {
-        ref.emplace_back(NA_STRING);
-        continue;
-      }
-      if(encode_mode == "UTF-8") {
-        sf_split_internal(ref, pm, q.ptr, q.len, CE_UTF8);
-      } else if(encode_mode == "byte") {
-        cetype_t new_enc = choose_enc(q.enc, pattern_enc);
-        sf_split_internal(ref, pm, q.ptr, q.len, new_enc);
-      } else { // auto
-        if(q.enc == CE_NATIVE) {
-          if(!is_utf8_locale && !cr.is_ASCII(i)) {
-            bool iw = iw_native.convert(q.ptr, q.len, outstring);
-            if(!iw) {
-              ref.emplace_back(NA_STRING);
-            } else {
-              sf_split_internal(ref, pm, outstring.c_str(), outstring.size(), CE_UTF8);
-            }
-          } else {
-            sf_split_internal(ref, pm, q.ptr, q.len, CE_UTF8);
-          }
-        } else if(q.enc == CE_LATIN1) {
-          bool iw = iw_latin1.convert(q.ptr, q.len, outstring);
-          if(!iw) {
-            ref.emplace_back(NA_STRING);
-          } else {
-            sf_split_internal(ref, pm, outstring.c_str(), outstring.size(), CE_UTF8);
-          }
-        } else {
-          sf_split_internal(ref, pm, q.ptr, q.len, CE_UTF8);
-        }
-      }
-    }
-  }
-  UNPROTECT(1);
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-#if RCPP_PARALLEL_USE_TBB
-struct gsub_worker : public Worker {
-  const std::string encode_mode;
-  tbb::enumerable_thread_specific<iconv_wrapper> iw_latin1;
-  tbb::enumerable_thread_specific<iconv_wrapper> iw_native;
-  tbb::enumerable_thread_specific<sf::pcre2_sub_wrapper> ps;
-  cetype_t pattern_enc;
-  cetype_t replacement_enc;
-  RStringIndexer * cr;
-  sf_vec_data & ref;
-  
-  gsub_worker(const std::string encode_mode, iconv_wrapper iw_latin1, iconv_wrapper iw_native, 
-               const sf::pcre2_sub_wrapper & ps, cetype_t pattern_enc, cetype_t replacement_enc, RStringIndexer * cr, sf_vec_data & ref) : 
-    encode_mode(encode_mode), iw_latin1(iw_latin1), iw_native(iw_native), ps(ps), pattern_enc(pattern_enc), replacement_enc(replacement_enc), 
-    cr(cr), ref(ref) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    tbb::enumerable_thread_specific<sf::pcre2_sub_wrapper>::reference ps_local = ps.local();
-    tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_latin1_local = iw_latin1.local();
-    tbb::enumerable_thread_specific<iconv_wrapper>::reference iw_native_local = iw_native.local();
-    std::string outstring;
-    for(size_t i=begin; i<end; ++i) {
-      auto q = cr->getCharLenCE(i);
-      if(q.ptr == nullptr) {
-        ref[i] = sfstring(NA_STRING);
-        continue;
-      }
-      if(encode_mode == "UTF-8") {
-        ref[i] = sfstring(ps_local.gsub(q.ptr), CE_UTF8);
-      } else if(encode_mode == "byte") {
-        cetype_t output_enc = choose_enc(q.enc, pattern_enc, replacement_enc);
-        ref[i] = sfstring(ps_local.gsub(q.ptr), output_enc);
-      } else { //auto
-        if(q.enc == CE_NATIVE) {
-          if(!is_utf8_locale && !cr->is_ASCII(i)) {
-            bool iw = iw_native_local.convert(q.ptr, q.len, outstring);
-            if(!iw) {
-              ref[i] = sfstring(NA_STRING);
-            } else {
-              ref[i] = sfstring(ps_local.gsub(outstring.c_str()), CE_UTF8);
-            }
-          } else {
-            ref[i] = sfstring(ps_local.gsub(q.ptr), CE_UTF8);
-          }
-        } else if(q.enc == CE_LATIN1) {
-          bool iw = iw_latin1_local.convert(q.ptr, q.len, outstring);
-          if(!iw) {
-            ref[i] = sfstring(NA_STRING);
-          } else {
-            ref[i] = sfstring(ps_local.gsub(outstring.c_str()), CE_UTF8);
-          }
-        } else {
-          ref[i] = sfstring(ps_local.gsub(q.ptr), CE_UTF8);
-        }
-      }
-    }
-  }
-};
-#endif
+SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1);
 
 // [[Rcpp::export(rng = false, signature = {subject, pattern, replacement, encode_mode = "auto", fixed = FALSE, nthreads = getOption("stringfish.nthreads", 1L)})]]
-SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1) {
-  SEXP pattern_element = STRING_ELT(pattern, 0);
-  cetype_t pattern_enc = Rf_getCharCE(pattern_element);
-  const char * pattern_ptr = CHAR(pattern_element);
-  std::string pattern_str; // if we need to re-cast as a UTF-8
-  
-  SEXP replacement_element = STRING_ELT(replacement, 0);
-  cetype_t replacement_enc = Rf_getCharCE(replacement_element);
-  const char * replacement_ptr = CHAR(replacement_element);
-  std::string replacement_str;
-  
-  iconv_wrapper iw_latin1;
-  iconv_wrapper iw_native;
-  sf::pcre2_sub_wrapper ps;
-  
-  if((encode_mode == "auto")) {
-    iw_latin1 = iconv_wrapper("UTF-8", "latin1");
-    if(!is_utf8_locale) {iw_native = iconv_wrapper("UTF-8", "");}
-    
-    if( (!is_utf8_locale && (pattern_enc == CE_NATIVE) && !IS_ASCII(pattern_element)) ) {
-      pattern_str = iw_native.convertToString(pattern_ptr).second;
-      pattern_ptr = pattern_str.c_str();
-    } else if(pattern_enc == CE_LATIN1) {
-      pattern_str = iw_latin1.convertToString(pattern_ptr).second;
-      pattern_ptr = pattern_str.c_str();
-    }
-    if( (!is_utf8_locale && (replacement_enc == CE_NATIVE) && !IS_ASCII(replacement_element)) ) {
-      replacement_str = iw_native.convertToString(replacement_ptr).second;
-      replacement_ptr = replacement_str.c_str();
-    } else if(replacement_enc == CE_LATIN1) {
-      replacement_str = iw_latin1.convertToString(replacement_ptr).second;
-      replacement_ptr = replacement_str.c_str();
-    }
-    ps = sf::pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
-  } else if(encode_mode == "UTF-8") {
-    ps = sf::pcre2_sub_wrapper(pattern_ptr, replacement_ptr, true, fixed);
-  }else if(encode_mode == "byte") {
-    ps = sf::pcre2_sub_wrapper(pattern_ptr, replacement_ptr, false, fixed);
-  } else {
-    throw std::runtime_error("encode_mode must be auto, byte or UTF-8");
-  }
-  
-  RStringIndexer cr(subject);
-  size_t len = cr.size();
-  SEXP ret = PROTECT(sf_vector(len));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  
-  
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    gsub_worker w(encode_mode, iw_latin1, iw_native, ps, pattern_enc, replacement_enc, &cr, ref);
-    parallelFor(0, len, w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    std::string outstring;
-    for(size_t i=0; i<len; ++i) {
-      auto q = cr.getCharLenCE(i);
-      if(q.ptr == nullptr) {
-        ref[i] = sfstring(NA_STRING);
-        continue;
-      }
-      if(encode_mode == "UTF-8") {
-        ref[i] = sfstring(ps.gsub(q.ptr), CE_UTF8);
-      } else if(encode_mode == "byte") {
-        cetype_t output_enc = choose_enc(q.enc, pattern_enc, replacement_enc);
-        ref[i] = sfstring(ps.gsub(q.ptr), output_enc);
-      } else { //auto
-        if(q.enc == CE_NATIVE) {
-          if(!is_utf8_locale && !cr.is_ASCII(i)) {
-            bool iw = iw_native.convert(q.ptr, q.len, outstring);
-            if(!iw) {
-              ref[i] = sfstring(NA_STRING);
-            } else {
-              ref[i] = sfstring(ps.gsub(outstring.c_str()), CE_UTF8);
-            }
-          } else {
-            ref[i] = sfstring(ps.gsub(q.ptr), CE_UTF8);
-          }
-        } else if(q.enc == CE_LATIN1) {
-          bool iw = iw_latin1.convert(q.ptr, q.len, outstring);
-          if(!iw) {
-            ref[i] = sfstring(NA_STRING);
-          } else {
-            ref[i] = sfstring(ps.gsub(outstring.c_str()), CE_UTF8);
-          }
-        } else {
-          ref[i] = sfstring(ps.gsub(q.ptr), CE_UTF8);
-        }
-      }
-    }
-  }
-  UNPROTECT(1);
-  return ret;
-}
+SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string encode_mode = "auto", const bool fixed = false, const int nthreads = 1);
 
-////////////////////////////////////////////////////////////////////////////////
-// [[Rcpp::export]] // RNG needed
-SEXP random_strings(const int N, const int string_size = 50, 
-                    std::string charset = "abcdefghijklmnopqrstuvwxyz", 
-                    std::string vector_mode = "stringfish") {
-  if(vector_mode == "stringfish") {
-    SEXP ret = PROTECT(sf_vector(N));
-    sf_vec_data & ref = sf_vec_data_ref(ret);
-    std::string str;
-    str.resize(string_size);
-    for(int i=0; i<N; ++i) {
-      std::vector<int> r = Rcpp::as< std::vector<int> >(Rcpp::sample(charset.size(), string_size, true, R_NilValue, false));
-      for(int j=0; j<string_size; ++j) str[j] = charset[r[j]];
-      ref[i] = sfstring(str, CE_NATIVE);
-    }
-    UNPROTECT(1);
-    return ret;
-  } else if(vector_mode == "normal") {
-    CharacterVector ret(N);
-    std::string str;
-    str.resize(string_size);
-    for(int i=0; i<N; ++i) {
-      std::vector<int> r = Rcpp::as< std::vector<int> >(Rcpp::sample(charset.size(), string_size, true, R_NilValue, false));
-      for(int j=0; j<string_size; ++j) str[j] = charset[r[j]];
-      ret[i] = str;
-    }
-    return ret;
-  } else {
-    throw std::runtime_error("String vector_mode must be 'normal' or 'stringfish'");
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////
+// [[Rcpp::export(signature = {N, string_size = 50L, charset = "abcdefghijklmnopqrstuvwxyz", vector_mode = "stringfish"})]]
+SEXP random_strings(size_t N, IntegerVector string_size, std::string charset = "abcdefghijklmnopqrstuvwxyz", std::string vector_mode = "stringfish");
 
 // [[Rcpp::export(rng = false)]]
-SEXP sf_tolower(SEXP x) {
-  RStringIndexer xr(x);
-  size_t len = xr.size();
-  SEXP ret = PROTECT(sf_vector(len));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  std::string temp;
-  for(size_t i=0; i<len; ++i) {
-    auto q = xr.getCharLenCE(i);
-    temp.resize(q.len);
-    for(int j=0; j<q.len; ++j) {
-      if((q.ptr[j] >= 65) & (q.ptr[j] <= 90)) { // char j is upper case
-        temp[j] = q.ptr[j] + 32;
-      } else {
-        temp[j] = q.ptr[j];
-      }
-    }
-    ref[i] = sfstring(temp, q.enc);
-  }
-  UNPROTECT(1);
-  return ret;
-}
+SEXP sf_tolower(SEXP x);
 
 // [[Rcpp::export(rng = false)]]
-SEXP sf_toupper(SEXP x) {
-  RStringIndexer xr(x);
-  size_t len = xr.size();
-  SEXP ret = PROTECT(sf_vector(len));
-  sf_vec_data & ref = sf_vec_data_ref(ret);
-  std::string temp;
-  for(size_t i=0; i<len; ++i) {
-    auto q = xr.getCharLenCE(i);
-    temp.resize(q.len);
-    for(int j=0; j<q.len; ++j) {
-      if((q.ptr[j] >= 97) & (q.ptr[j] <= 122)) { // char j is lower case
-        temp[j] = q.ptr[j] - 32;
-      } else {
-        temp[j] = q.ptr[j];
-      }
-    }
-    ref[i] = sfstring(temp, q.enc);
-  }
-  UNPROTECT(1);
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct rstring_info_hash { 
-  size_t operator()(const RStringIndexer::rstring_info & s) const {
-    // return std::hash<std::string>{}(std::string(s.ptr, s.len)); // slower
-    // return XXH64(s.ptr, s.lin, 0); // slower
-    return XXH3_64bits(s.ptr, s.len);
-  }
-};
-#if RCPP_PARALLEL_USE_TBB
-using tbb_rstring_map = tbb::concurrent_unordered_map<RStringIndexer::rstring_info, std::atomic<int>, rstring_info_hash>;
-// hash filler
-struct hash_fill_worker : public Worker {
-  tbb_rstring_map * table_hash;
-  RStringIndexer * fillit;
-  hash_fill_worker(tbb_rstring_map * t, RStringIndexer * f) : 
-    table_hash(t), fillit(f) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    for (std::size_t i = begin; i < end; ++i) {
-      int newval = static_cast<int>(i);
-      RStringIndexer::rstring_info q = fillit->getCharLenCE(i);
-      auto p = table_hash->emplace(q, newval); // <iterator, bool>
-      if(!p.second) { // emplace failed because there was already an entry
-        std::atomic<int> & pa = p.first->second;
-        int oldval = pa.load();
-        while(newval < oldval) { // we want the lowest value; if a smaller value already exists then stop
-          // ONLY exchange if oldval hasn't changed since the load (due to another thread)
-          // If it has changed, the expression returns false and oldval is updated to the true stored value; loop continues
-          if(pa.compare_exchange_weak(oldval, newval)) {
-            break;
-          }
-        }
-      }
-    }
-  }
-};
-
-// hash_searcher
-struct hash_search_worker : public Worker {
-  tbb_rstring_map * table_hash;
-  RStringIndexer * searchit;
-  int * output;
-  hash_search_worker(tbb_rstring_map * t, RStringIndexer * s, int * o) : 
-    table_hash(t), searchit(s), output(o) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    for (std::size_t i = begin; i < end; ++i) {
-      auto q = searchit->getCharLenCE(i);
-      auto it = table_hash->find(q);
-      if(it != table_hash->end()) {
-        output[i] = it->second + 1;
-      } else {
-        output[i] = NA_INTEGER;
-      }
-    }
-  }
-};
-#endif
+SEXP sf_toupper(SEXP x);
 
 // [[Rcpp::export(rng = false, signature = {x, table, nthreads = getOption("stringfish.nthreads", 1L)})]]
-IntegerVector sf_match(SEXP x, SEXP table, const int nthreads = 1) {
-  RStringIndexer cr(table);
-  size_t len = cr.size();
-  if(len > R_MAX_INT) throw std::runtime_error("long vectors not supported");
-  
-  RStringIndexer xr(x);
-  size_t xlen = xr.size();
-  IntegerVector ret(xlen);
-  int * retp = INTEGER(ret);
-  
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    tbb_rstring_map table_hash;
-    hash_fill_worker w1(&table_hash, &cr);
-    parallelFor(0, len, w1, 100, nthreads);
-    hash_search_worker w2(&table_hash, &xr, retp);
-    parallelFor(0, xlen, w2, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    std::unordered_map<RStringIndexer::rstring_info, int, rstring_info_hash> table_hash;
-    for(size_t i=0; i<len; ++i) {
-      auto q = cr.getCharLenCE(i);
-      table_hash.insert(std::make_pair(q, static_cast<int>(i)));
-    }
-    for(size_t i=0; i<xlen; ++i) {
-      auto q = xr.getCharLenCE(i);
-      auto it = table_hash.find(q);
-      if(it != table_hash.end()) {
-        retp[i] = it->second + 1;
-      } else {
-        retp[i] = NA_INTEGER;
-      }
-    }
-  }
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-struct compare_worker : public Worker {
-  RStringIndexer & xr;
-  RStringIndexer & yr;
-  const size_t xlen;
-  const size_t ylen;
-  int * out;
-  compare_worker(RStringIndexer & xr, RStringIndexer & yr, const size_t xlen, const size_t ylen, int * out) : 
-    xr(xr), yr(yr), xlen(xlen), ylen(ylen), out(out) {}
-  
-  void operator()(std::size_t begin, std::size_t end) {
-    for (std::size_t i = begin; i < end; ++i) {
-      auto qx = xr.getCharLenCE(xlen == 1 ? 0 : i);
-      if(qx.ptr == nullptr) {
-        out[i] = NA_LOGICAL;
-        continue;
-      }
-      auto qy = yr.getCharLenCE(ylen == 1 ? 0 : i);
-      if(qx.ptr == nullptr) {
-        out[i] = NA_LOGICAL;
-        continue;
-      }
-      if(qx == qy) out[i] = 1;
-    }
-  }
-};
-
+IntegerVector sf_match(SEXP x, SEXP table, const int nthreads = 1);
 
 // [[Rcpp::export(rng = false, signature = {x, y, nthreads = getOption("stringfish.nthreads", 1L)})]]
-LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads = 1) {
-  RStringIndexer xr(x);
-  RStringIndexer yr(y);
-  size_t xlen = xr.size();
-  size_t ylen = yr.size();
-  if((xlen == 0) || (ylen == 0) || ((xlen != 1) && (ylen != 1) && (xlen != ylen))) {
-    throw std::runtime_error("x and y must be length 1 or the same length > 0");
-  }
-  size_t outlen = std::max(xlen, ylen);
-  LogicalVector ret(outlen);
-  int * out = INTEGER(ret);
-
-  if(nthreads > 1) {
-#if RCPP_PARALLEL_USE_TBB
-    compare_worker w(xr, yr, xlen, ylen, out);
-    parallelFor(0, xlen, w, 100, nthreads);
-#else
-    throw std::runtime_error("RcppParallel TBB not supported");
-#endif
-  } else {
-    for(size_t i=0; i<outlen; ++i) {
-      auto qx = xr.getCharLenCE(xlen == 1 ? 0 : i);
-      if(qx.ptr == nullptr) {
-        out[i] = NA_LOGICAL;
-        continue;
-      }
-      auto qy = yr.getCharLenCE(ylen == 1 ? 0 : i);
-      if(qx.ptr == nullptr) {
-        out[i] = NA_LOGICAL;
-        continue;
-      }
-      if(qx == qy) out[i] = 1;
-    }
-  }
-  return ret;
-}
-
-////////////////////////////////////////////////////////////////////////////////
+LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads = 1);
 
 // [[Rcpp::export(rng = false)]]
-SEXP c_sf_concat(SEXP x) {
-  size_t xlen = Rf_xlength(x);
-  std::vector<RStringIndexer> indexers(xlen);
-  std::vector<size_t> sizes(xlen);
-  size_t total_size = 0;
-  for(size_t i=0; i<xlen; ++i) {
-    SEXP xi = VECTOR_ELT(x, i);
-    indexers[i] = RStringIndexer(xi);
-    sizes[i] = indexers[i].size();
-    total_size += sizes[i];
-  }
-  SEXP ret = PROTECT(sf_vector(total_size));
-  auto & ref = sf_vec_data_ref(ret);
-  size_t count = 0;
-  for(size_t i=0; i<xlen; ++i) {
-    switch(indexers[i].getType()) {
-    case rstring_type::SF_VEC:
-    {
-      auto & rp = *reinterpret_cast<sf_vec_data*>(indexers[i].getData());
-      for(auto && e : rp) {
-        ref[count++] = e;
-      }
-    }
-      break;
-    default:
-    {
-      SEXP rp = reinterpret_cast<SEXP>(indexers[i].getData());
-      for(size_t j = 0; j < sizes[i]; ++j) {
-        ref[count++] = sfstring(STRING_ELT(rp, j));
-      }
-    }
-      break;
-    }
-  }
-  UNPROTECT(1);
-  return ret;
-}
+SEXP c_sf_concat(SEXP x);
 
-////////////////////////////////////////////////////////////////////////////////
-
+#include "exported_functions/sf_assign.h"
+#include "exported_functions/sf_iconv.h"
+#include "exported_functions/sf_nchar.h"
+#include "exported_functions/sf_substr.h"
+#include "exported_functions/c_sf_paste.h"
+#include "exported_functions/sf_collapse.h"
+#include "exported_functions/sf_readLines.h"
+#include "exported_functions/sf_writeLines.h"
+#include "exported_functions/sf_grepl.h"
+#include "exported_functions/sf_split.h"
+#include "exported_functions/sf_gsub.h"
+#include "exported_functions/random_strings.h"
+#include "exported_functions/sf_tolower.h"
+#include "exported_functions/sf_toupper.h"
+#include "exported_functions/sf_match.h"
+#include "exported_functions/sf_compare.h"
+#include "exported_functions/c_sf_concat.h"
 
 // [[Rcpp::init]]
-void sf_export_functions(DllInfo* dll) {
-  R_RegisterCCallable("stringfish", "get_string_type", (DL_FUNC) &get_string_type);
-  R_RegisterCCallable("stringfish", "materialize", (DL_FUNC) &materialize);
-  R_RegisterCCallable("stringfish", "sf_vector", (DL_FUNC) &sf_vector);
-  R_RegisterCCallable("stringfish", "sf_vec_data_ref", (DL_FUNC) &sf_vec_data_ref);
-  R_RegisterCCallable("stringfish", "sf_assign", (DL_FUNC) &sf_assign);
-  R_RegisterCCallable("stringfish", "sf_iconv", (DL_FUNC) &sf_iconv);
-  R_RegisterCCallable("stringfish", "convert_to_sf", (DL_FUNC) &convert_to_sf);
-  R_RegisterCCallable("stringfish", "sf_nchar", (DL_FUNC) &sf_nchar);
-  // R_RegisterCCallable("stringfish", "sfstring sf_substr_internal", (DL_FUNC) &sfstring sf_substr_internal);
-  R_RegisterCCallable("stringfish", "sf_substr", (DL_FUNC) &sf_substr);
-  R_RegisterCCallable("stringfish", "c_sf_paste", (DL_FUNC) &c_sf_paste);
-  R_RegisterCCallable("stringfish", "sf_collapse", (DL_FUNC) &sf_collapse);
-  R_RegisterCCallable("stringfish", "sf_readLines", (DL_FUNC) &sf_readLines);
-  R_RegisterCCallable("stringfish", "sf_writeLines", (DL_FUNC) &sf_writeLines);
-  R_RegisterCCallable("stringfish", "sf_grepl", (DL_FUNC) &sf_grepl);
-  R_RegisterCCallable("stringfish", "sf_split", (DL_FUNC) &sf_split);
-  R_RegisterCCallable("stringfish", "sf_gsub", (DL_FUNC) &sf_gsub);
-  R_RegisterCCallable("stringfish", "random_strings", (DL_FUNC) &random_strings);
-  R_RegisterCCallable("stringfish", "sf_toupper", (DL_FUNC) &sf_toupper);
-  R_RegisterCCallable("stringfish", "sf_tolower", (DL_FUNC) &sf_tolower);
-  R_RegisterCCallable("stringfish", "sf_match", (DL_FUNC) &sf_match);
+void sf_export_functions(DllInfo* /* dll */) {
+  auto register_fn = [](const char * name, DL_FUNC fun) {
+    R_RegisterCCallable("stringfish", name, fun);
+  };
+
+  // Core helpers
+  register_fn("get_string_type", (DL_FUNC) &get_string_type);
+  register_fn("get_rstring_type_export", (DL_FUNC) &get_rstring_type_export);
+  register_fn("materialize", (DL_FUNC) &materialize);
+
+  // ALTREP constructors and accessors
+  register_fn("sf_vector", (DL_FUNC) &sf_vector);
+  register_fn("sf_vector_create", (DL_FUNC) &sf_vector_create);
+  register_fn("sf_vec_data_ref", (DL_FUNC) &sf_vec_data_ref);
+  register_fn("slice_store_create", (DL_FUNC) &slice_store_create);
+  register_fn("slice_store_create_with_size", (DL_FUNC) &slice_store_create_with_size);
+  register_fn("slice_store_data_ref", (DL_FUNC) &slice_store_data_ref);
+  register_fn("sf_assign", (DL_FUNC) &sf_assign);
+
+  // Converters and string operations
+  register_fn("sf_iconv", (DL_FUNC) &sf_iconv);
+  register_fn("convert_to_sf_vector", (DL_FUNC) &convert_to_sf_vector);
+  register_fn("convert_to_slice_store", (DL_FUNC) &convert_to_slice_store);
+  register_fn("sf_nchar", (DL_FUNC) &sf_nchar);
+  register_fn("sf_substr_internal", (DL_FUNC) &sfexport::sf_substr_internal);
+  register_fn("sf_substr", (DL_FUNC) &sf_substr);
+  register_fn("c_sf_paste", (DL_FUNC) &c_sf_paste);
+  register_fn("sf_collapse", (DL_FUNC) &sf_collapse);
+  register_fn("sf_grepl", (DL_FUNC) &sf_grepl);
+  register_fn("sf_split", (DL_FUNC) &sf_split);
+  register_fn("sf_gsub", (DL_FUNC) &sf_gsub);
+  register_fn("sf_toupper", (DL_FUNC) &sf_toupper);
+  register_fn("sf_tolower", (DL_FUNC) &sf_tolower);
+  register_fn("sf_match", (DL_FUNC) &sf_match);
+  register_fn("sf_compare", (DL_FUNC) &sf_compare);
+  register_fn("c_sf_concat", (DL_FUNC) &c_sf_concat);
+
+  // I/O and generators
+  register_fn("sf_readLines", (DL_FUNC) &sf_readLines);
+  register_fn("sf_writeLines", (DL_FUNC) &sf_writeLines);
+  register_fn("random_strings", (DL_FUNC) &random_strings);
+  register_fn("sf_random_strings", (DL_FUNC) &random_strings);
 }
-
-#endif // #if R_VERSION < R_Version(3, 5, 0)
-
-// END OF SF_FUNCTIONS.CPP
-

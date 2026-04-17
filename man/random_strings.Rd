@@ -4,13 +4,14 @@
 \alias{random_strings}
 \title{random_strings}
 \usage{
-random_strings(N, string_size = 50, charset = "abcdefghijklmnopqrstuvwxyz", 
+random_strings(N, string_size = 50L, charset = "abcdefghijklmnopqrstuvwxyz",
                       vector_mode = "stringfish")
 }
 \arguments{
 \item{N}{The number of strings to generate}
 
-\item{string_size}{The length of the strings}
+\item{string_size}{Either a single non-negative integer applied to every output
+string, or a non-negative integer vector of length `N`.}
 
 \item{charset}{The characters used to generate the random strings (default: abcdefghijklmnopqrstuvwxyz)}
 
@@ -23,16 +24,10 @@ A character vector of the random strings
 A function that generates random strings
 }
 \details{
-The function uses the PCRE2 library, which is also used internally by R. 
-Note: the order of paramters is switched compared to the `gsub` base R function, with subject being first. 
-See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax.
+A convenience function for generating test strings.
 }
 \examples{
-if(getRversion() >= "3.5.0") {
 set.seed(1)
-x <- random_strings(1e6, 80, "ACGT", vector_mode = "stringfish")
-}
-}
-\seealso{
-gsub
+x <- random_strings(1e6, 80L, "ACGT", vector_mode = "stringfish")
+y <- random_strings(4, c(1L, 2L, 4L, 8L), "ACGT")
 }

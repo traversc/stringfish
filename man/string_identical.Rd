@@ -4,25 +4,30 @@
 \alias{string_identical}
 \title{string_identical}
 \usage{
-string_identical(x, y)
+string_identical(x, y, mode = c("semantic", "exact"))
 }
 \arguments{
 \item{x}{A character vector}
 
-\item{y}{Another character to compare to x}
+\item{y}{Another character vector to compare to x}
+
+\item{mode}{Either `"semantic"` to compare text after normalizing non-byte
+strings to UTF-8, or `"exact"` to additionally require matching encoding.
+Strings marked as `"bytes"` are always compared exactly.}
 }
 \value{
-TRUE if strings are identical, including encoding
+TRUE if strings are identical under the selected comparison mode
 }
 \description{
-A stricter comparison of string equality
+Compare strings semantically or exactly
 }
 \examples{
 x <- "fa\xE7ile"
 Encoding(x) <- "latin1"
 y <- iconv(x, "latin1", "UTF-8")
 identical(x, y) # TRUE
-string_identical(x, y) # FALSE
+string_identical(x, y) # TRUE
+string_identical(x, y, mode = "exact") # FALSE
 }
 \seealso{
 identical

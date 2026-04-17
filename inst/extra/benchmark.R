@@ -1,5 +1,4 @@
 suppressMessages(library(stringfish, quietly = T))
-suppressMessages(library(qs2, quietly = T))
 suppressMessages(library(dplyr, quietly = T))
 suppressMessages(library(microbenchmark, quietly = T))
 suppressMessages(library(stringi, quietly = T))
@@ -42,27 +41,15 @@ readlines_bench <- microbenchmark(
   times=n, setup = gc(full=TRUE))
 
 enwik8 <- readLines(test_file, encoding = "UTF-8", warn = F)
-qs2::qd_save(enwik8, temp)
-rm(enwik8)
-gc(full=TRUE)
-
-catn("qs2::qd_read")
-qd_read_bench <- microbenchmark(
-  # base_R = system(sprintf('Rscript -e "x <- qs2::qd_read(\\"%s\\")"', temp)),
-  # stringfish = system(sprintf('Rscript -e "x <- qs2::qd_read(\\"%s\\", use_alt_rep=T)"', temp)),
-  base_R = qs2::qd_read(temp),
-  stringfish = qs2::qd_read(temp, use_alt_rep=T),
-  times=n, setup = {gc(full=TRUE)})
-unlink(temp)
-
-enwik8 <- readLines(test_file, encoding = "UTF-8", warn = F)
 enwik8_sf <- sf_readLines(test_file)
-
-# ewc <- convert_to_sf(enwik8)
 
 set.seed(1)
 enwik8_shuffled <- sample(enwik8)
-enwik8_sf_shuffled <- convert_to_sf(enwik8_shuffled) # no sf_sample method yet
+if(packageVersion("stringfish") <= "0.18.0") {
+  enwik8_sf_shuffled <- convert_to_sf(enwik8_shuffled)
+} else {
+  enwik8_sf_shuffled <- convert_to_slice_store(enwik8_shuffled)
+}
 
 catn("writeLines")
 writeLines_bench <- microbenchmark(
@@ -82,24 +69,6 @@ unlink(temp)
 
 stopifnot(string_identical(enwik8, enwik8_sf))
 stopifnot(string_identical(enwik8_shuffled, enwik8_sf_shuffled))
-
-catn("qs2::qd_save")
-qd_save_bench <- microbenchmark(
-  base_R = qs2::qd_save(enwik8, temp),
-  stringfish = qs2::qd_save(enwik8_sf, temp),
-  times=n, setup = {unlink(temp); gc(full=TRUE)})
-
-qs2::qd_save(enwik8, temp)
-x <- tools::md5sum(temp)
-qs2::qd_save(enwik8_sf, temp)
-y <- tools::md5sum(temp)
-stopifnot(identical(x,y))
-x <- qs2::qd_read(temp)
-y <- qs2::qd_read(temp, use_alt_rep=T)
-stopifnot(string_identical(enwik8, x))
-stopifnot(string_identical(enwik8, y))
-rm(x, y)
-gc(full=TRUE)
 
 catn("substr")
 substr_bench <- microbenchmark(
@@ -233,16 +202,30 @@ rm(x, y)
 gc(full=TRUE)
 
 
-# plot code -- run interactively
-if(F) {
+# plot code 
+if(TRUE) {
   library(ggplot2)
-  library(hrbrthemes)
+  theme_stringfish_benchmark <- function(base_size = 11, base_family = "sans") {
+    theme_minimal(base_size = base_size, base_family = base_family) +
+      theme(
+        plot.background = element_rect(fill = "white", color = NA),
+        panel.background = element_rect(fill = "white", color = NA),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_line(color = "#d8dee8", linewidth = 0.35),
+        axis.line.x = element_line(color = "#748091", linewidth = 0.35),
+        axis.ticks.x = element_line(color = "#748091", linewidth = 0.35),
+        axis.ticks.length = unit(0.12, "cm"),
+        axis.text = element_text(color = "#334155"),
+        axis.title = element_text(color = "#0f172a", face = "bold"),
+        legend.background = element_rect(fill = "white", color = NA),
+        legend.key = element_rect(fill = "white", color = NA),
+        legend.text = element_text(color = "#334155"),
+        plot.margin = unit(c(0.55, 0.55, 0.45, 0.45), "lines")
+      )
+  }
   
 df <- rbind(
-  qd_read_bench %>% 
-    as.data.frame %>% mutate(op = "qs2::qd_read"),
-  qd_save_bench %>% 
-    as.data.frame %>% mutate(op = "qs2::qd_save"),
   readlines_bench %>% 
     as.data.frame %>% mutate(op = "readLines"),
   writeLines_bench %>% 
@@ -264,11 +247,11 @@ df <- rbind(
   nchar_bench %>% 
     as.data.frame %>% mutate(op = "nchar"))
 
-df$op <- factor(df$op, levels = 
-    c("nchar", "grepl", "gsub", "substr", "paste", "strsplit", "match", "trimws",  "writeLines", "readLines", "qs2::qd_save",  "qs2::qd_read"))
+df$op <- factor(df$op, levels =
+    c("nchar", "grepl", "gsub", "substr", "paste", "strsplit", "match", "trimws", "writeLines", "readLines"))
 
   dfs <- df %>% 
-    # filter(expr %in% c("base_R", "stringfish", "stringfish_mt")) %>% # comment out this line to include stringi
+    filter(expr %in% c("base_R", "stringfish", "stringfish_mt")) %>% # comment out this line to include stringi
     mutate(expr = as.character(expr)) %>%
     mutate(expr = case_when(expr == "base_R" ~ "Base R",
                             expr == "stringfish" ~ "stringfish (1 thread)", 
@@ -282,7 +265,7 @@ df$op <- factor(df$op, levels =
   g <- ggplot(dfs, aes(x = op, y = speed, fill = expr)) + 
     geom_bar(color = "black", stat = "identity", position = position_dodge(preserve = "single")) + 
     geom_hline(aes(yintercept=1), lty=2, color = "blue") + 
-    theme_ipsum_rc() +
+    theme_stringfish_benchmark() +
     theme(plot.margin = unit(rep(.5,4), "lines"), 
           # legend.position="bottom",
           legend.key.size = unit(1, 'lines'), 
@@ -290,16 +273,15 @@ df$op <- factor(df$op, levels =
           legend.text = element_text(margin = margin(r = 1, unit = "lines")),
           axis.title.x = element_text(size=rel(1.3)),
           axis.text.x = element_text(size=rel(0.9)), 
-          axis.title.y = element_text(size=rel(1.3))) + 
+          axis.title.y = element_text(size=rel(0.9))) + 
     labs(x = NULL, y = "Speed relative to base R", fill = NULL) + 
     scale_y_continuous(trans = "log1p", breaks = c(0,1,2.5,5,10,20,40,80)) + 
     # scale_fill_discrete(labels = c("Base R", "stringfish (1 thread)", "stringfish (4 threads)")) +
     theme(legend.position = "bottom") + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust=1))
   
-  ggsave(g, file = "vignettes/bench_v2.png", width=6.5*1.25, height=3.5*1.25, dpi=600)
+  ggsave(g, file = "vignettes/bench_v3.png", width=6.5*1.25, height=3.5*1.25, dpi=600)
 }
-
 
 
 

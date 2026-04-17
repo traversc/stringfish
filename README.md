@@ -6,24 +6,26 @@ stringfish
 [![CRAN-Downloads-Badge](https://cranlogs.r-pkg.org/badges/stringfish)](https://cran.r-project.org/package=stringfish)
 [![CRAN-Downloads-Total-Badge](https://cranlogs.r-pkg.org/badges/grand-total/stringfish)](https://cran.r-project.org/package=stringfish)
 
-`stringfish` is a framework for performing string and sequence
-operations using the ALTREP system to speed up the computation of common
-string operations.
+`stringfish` is a framework for string and sequence operations using the
+ALTREP system (introduced in R 3.5) as a way to represent R objects
+using custom memory layout.
 
-The ultimate goal of the package is to unify ALTREP string
-implementations under a common framework.
+This package has two primary goals:
 
-The ALTREP system (new as of R 3.5.0) allows package developers to
-represent R objects using their own custom memory layout, completely
-invisible to the user. `stringfish` represents string data as a simple
-C++/STL vector, which is very fast and lightweight.
+- Provide R users a way to speed up common string operations compared to
+  base R (see benchmarks below)
+- Create a common ALTREP framework that can be used by other packages
+  with full interoperability
 
-Using normal R functions to process string data (e.g. `substr`, `gsub`,
-`paste`, etc.) causes “materialization” of ALTREP vectors to normal R
-data, which can be a slow process. Therefore, in order to take full
-advantage of the ALTREP framework, string processing functions need to
-be re-written to be ALTREP aware. This package hopes to fulfill that
-purpose.
+`stringfish` currently provides two ALTREP backends with the same
+semantics: `sf_vec`, a simple vector of string objects, and
+`slice_store`, which stores strings within large contiguous blocks of
+memory. They make different storage tradeoffs, but the same `stringfish`
+operations work across both.
+
+For text data, `stringfish` is intentionally UTF-8-centric outside of
+explicit byte mode, so conversions, comparisons, and ALTREP views stay
+consistent across normal R vectors and both backends.
 
 ## Installation
 
@@ -36,12 +38,12 @@ install.packages("stringfish", type="source", configure.args="--with-simd=AVX2")
 The simplest way to show the utility of the ALTREP framework is through
 a quick benchmark comparing `stringfish` and base R.
 
-<img src="vignettes/bench_v2.png" title="bench_v2" width="576" />
+<img src="vignettes/bench_v3.png" title="bench_v3" width="576" />
 
-Yes you are reading the graph correctly: some functions in `stringfish`
-are more than an order of magnitude faster than vectorized base R
-operations (and even faster with some build in multithreading). On large
-text datasets, this can turn minutes of computation into seconds.
+On favorable workloads, some functions in `stringfish` can be more than
+an order of magnitude faster than vectorized base R operations, and
+built-in multithreading can widen that gap further. On large text
+datasets, this can turn minutes of computation into seconds.
 
 ## Currently implemented functions
 
@@ -64,21 +66,30 @@ functions:
 - `sf_trim` (`trimws`)
 - `sf_split` (`strsplit`)
 - `sf_match` (`match` for strings only)
-- `sf_compare`/`sf_equals` (`==`, ALTREP-aware string equality)
+- `sf_compare`/`sf_equals` (`==`, ALTREP-aware semantic string equality)
+- `sf_concat`/`sfc` (`c`)
 
 Utility functions:
 
-- `sf_vector` – creates a new and empty `stringfish` vector
+- `sf_vector_create` – creates a new empty `sf_vec`-backed stringfish
+  vector
+- `sf_vector` – backwards-compatible alias for `sf_vector_create`
+- `slice_store_create` – creates a new empty `slice_store`-backed
+  stringfish vector
+- `slice_store_create_with_size` – creates a `slice_store`-backed
+  stringfish vector with an explicit initial slice size
 - `sf_assign` – assign strings into a `stringfish` vector in place (like
   `x[i] <- "mystring"`)
-- `sf_convert`/`convert_to_sf` – converts a character vector to a
-  `stringfish` vector
+- `convert_to_sf_vector` – converts a character vector to a `stringfish`
+  vector
+- `convert_to_slice_store` – converts a character vector to a
+  `stringfish` slice store
 - `get_string_type` – determines string type (whether ALTREP or normal)
 - `materialize` – converts any ALTREP object into a normal R object
 - `random_strings` – creates random strings as either a `stringfish` or
   normal R vector
-- `string_identical` – like `identical` for strings but also requires
-  identical encoding (i.e. latin1 and UTF-8 strings will not match)
+- `string_identical` – compares strings either semantically or exactly
+  across encodings
 
 In addition, many R operations in base R and other packages are already
 ALTREP-aware (i.e. they don’t cause materialization). Functions that
@@ -88,12 +99,12 @@ subset or index into string vectors generally do not materialize.
 - `head`
 - `tail`
 - `[` – e.g. `x[20:30]`
-- `dplyr::filter` – e.g. `dplyr::filter(df, sf_starts("a"))`
+- various tidyverse filters and operations
 - Etc.
 
 `stringfish` functions are not intended to exactly replicate their base
 R analogues. One difference is that `subject` parameters are always the
-first argument, which is easier to use with pipes (`%>%`). E.g.,
+first argument, which is easier to use with pipes. E.g.,
 `gsub(pattern, replacement, subject)` becomes
 `sf_gsub(subject, pattern, replacement)`.
 
@@ -101,13 +112,14 @@ first argument, which is easier to use with pipes (`%>%`). E.g.,
 
 `stringfish` as a framework is intended to be easily extensible.
 Stringfish vectors can be worked into `Rcpp` scripts or even into other
-packages (see the `qs2` package for an example).
+packages. The example below creates an `sf_vec`-backed output because it
+is simple and direct, but the same indexing semantics work across both
+backends.
 
 Below is a detailed `Rcpp` script that creates a function to alternate
 upper and lower case of strings.
 
 ``` c
-// [[Rcpp::plugins(cpp11)]]
 // [[Rcpp::depends(stringfish)]]
 #include <Rcpp.h>
 #include "sf_external.h"
@@ -122,13 +134,14 @@ SEXP sf_alternate_case(SEXP x) {
   
   // Create an output stringfish vector
   // Like all R objects, it must be protected from garbage collection
-  SEXP output = PROTECT(sf_vector(len));
+  SEXP output = PROTECT(sf_vector_create(len));
   
   // Obtain a reference to the underlying output data
   sf_vec_data & output_data = sf_vec_data_ref(output);
   
   // You can use range based for loop via an iterator class that returns RStringIndexer::rstring_info e
-  // rstring info is a struct containing const char * ptr (null terminated), int len, and cetype_t enc
+  // rstring info is a struct containing const char * ptr, int len, and an encoding flag
+  // ptr should be treated as a byte pointer plus length, not as a null-terminated C string
   // a NA string is represented by a nullptr
   // Alternatively, access the data via the function r.getCharLenCE(i)
   size_t i = 0;
@@ -138,16 +151,17 @@ SEXP sf_alternate_case(SEXP x) {
       i++; // increment output index
       continue;
     }
-    // create a temporary output string and process the results
+    // Create a temporary output string and process the results.
+    // This example intentionally toggles ASCII letters only.
     std::string temp(e.len, '\0');
     bool case_switch = false;
     for(int j=0; j<e.len; j++) {
-      if((e.ptr[j] >= 65) & (e.ptr[j] <= 90)) { // char j is upper case
+      if((e.ptr[j] >= 65) && (e.ptr[j] <= 90)) { // char j is upper case
         if((case_switch = !case_switch)) { // check if we should convert to lower case
           temp[j] = e.ptr[j] + 32;
           continue;
         }
-      } else if((e.ptr[j] >= 97) & (e.ptr[j] <= 122)) { // char j is lower case
+      } else if((e.ptr[j] >= 97) && (e.ptr[j] <= 122)) { // char j is lower case
         if(!(case_switch = !case_switch)) { // check if we should convert to upper case
           temp[j] = e.ptr[j] - 32;
           continue;
@@ -176,8 +190,3 @@ Example function call:
 sf_alternate_case("hello world") 
 [1] "hElLo wOrLd"
 ```
-
-## To do
-
-- Additional functions
-- ICU library functions

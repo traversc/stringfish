@@ -15,20 +15,18 @@ sf_writeLines(text, file, sep = "\n", na_value = "NA", encode_mode = "UTF-8")
 
 \item{na_value}{What to write in case of a NA string}
 
-\item{encode_mode}{"UTF-8" or "byte". If "UTF-8", all strings are re-encoded as UTF-8.}
+\item{encode_mode}{"UTF-8" or "byte". If "UTF-8", text strings are normalized to UTF-8 while `CE_BYTES` strings are written as raw bytes.}
 }
 \description{
-A function that reads a file line by line
+A function that writes text line by line
 }
 \details{
 A function for writing text data using `std::ofstream`.
 }
 \examples{
-if(getRversion() >= "3.5.0") {
 file <- tempfile()
 sf_writeLines(letters, file)
 sf_readLines(file)
-}
 }
 \seealso{
 writeLines

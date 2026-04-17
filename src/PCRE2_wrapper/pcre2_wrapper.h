@@ -153,10 +153,15 @@
 
 namespace sf {
 
+struct buffer_view {
+  const char * ptr;
+  int len;
+};
+
 struct pcre2_match_wrapper {
   pcre2_code * re;
   pcre2_match_data * match_data;
-  pcre2_match_wrapper(const char * pattern_ptr, bool utf8, bool literal = false);
+  pcre2_match_wrapper(const char * pattern_ptr, int pattern_len, bool utf8, bool literal = false);
   pcre2_match_wrapper();
   pcre2_match_wrapper(const pcre2_match_wrapper& other);
   pcre2_match_wrapper(pcre2_match_wrapper && other);
@@ -164,6 +169,8 @@ struct pcre2_match_wrapper {
   pcre2_match_wrapper & operator=(pcre2_match_wrapper && other);
   ~pcre2_match_wrapper();
   int match(const char * subject_ptr, const int len);
+  int match_get_interval_from(const char * subject_ptr, const int len, size_t start_offset,
+                              uint32_t options, size_t & begin, size_t & end);
   int match_get_interval(const char * subject_ptr, const int len, size_t & begin, size_t & end);
   PCRE2_SIZE * match_ovector();
 };
@@ -172,15 +179,19 @@ struct pcre2_sub_wrapper {
   pcre2_code * re;
   pcre2_match_data * match_data;
   PCRE2_SPTR replacement;
+  PCRE2_SIZE replacement_len;
   std::vector<char> output;
-  pcre2_sub_wrapper(const char * pattern_ptr, const char * replacement_ptr, bool utf8, bool literal = false);
+  PCRE2_SIZE output_len;
+  pcre2_sub_wrapper(const char * pattern_ptr, int pattern_len,
+                    const char * replacement_ptr, int replacement_len,
+                    bool utf8, bool literal = false);
   pcre2_sub_wrapper();
   pcre2_sub_wrapper & operator=(const pcre2_sub_wrapper & other);
   pcre2_sub_wrapper & operator=(pcre2_sub_wrapper && other);
   pcre2_sub_wrapper(const pcre2_sub_wrapper& other);
   pcre2_sub_wrapper(pcre2_sub_wrapper && other);
   ~pcre2_sub_wrapper();
-  const char * gsub(const char * subject_ptr);
+  buffer_view gsub(const char * subject_ptr, int subject_len);
 };
 
 std::pair<int, bool> pcre2_info();

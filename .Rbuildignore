@@ -5,6 +5,8 @@ rebuild.sh
 .*\.tar\.gz
 ^local
 ^benchmark_results
+^context$
+^stringfish\.Rcheck$
 rticle
 .Rhistory
 src/ZSTD/LICENSCE.txt
@@ -12,3 +14,4 @@ aclocal.m4
 Makefile
 ^.vscode
 ^\.github$
+inst/extra/benchmark.R

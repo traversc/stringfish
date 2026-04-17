@@ -31,16 +31,13 @@ The function uses the PCRE2 library, which is also used internally by R. However
 E.g.: capture groups: "\1" in R, but "$1" in PCRE2 (as in Perl). 
 The encoding of the output is determined by the pattern (or forced using encode_mode parameter) and encodings should be compatible. 
 E.g: mixing ASCII and UTF-8 is okay, but not UTF-8 and latin1. 
-Note: the order of paramters is switched compared to the `gsub` base R function, with subject being first. 
-See also: https://www.pcre.org/current/doc/html/pcre2api.html for more documentation on match syntax.
+Note: the order of paramters is switched compared to the `gsub` base R function, with subject being first.
 }
 \examples{
-if(getRversion() >= "3.5.0") {
 x <- "hello world"
 pattern <- "^hello (.+)"
 replacement <- "goodbye $1"
 sf_gsub(x, pattern, replacement)
-}
 }
 \seealso{
 gsub

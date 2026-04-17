@@ -1,14 +1,6 @@
-if (
-  require("stringfish", quietly = TRUE) &&
-  require("qs2",        quietly = TRUE) &&
-  require("dplyr",      quietly = TRUE) &&
-  require("Rcpp",       quietly = TRUE) &&
-  require("stringr",    quietly = TRUE) &&
-  require("rlang",      quietly = TRUE)
-) {
+suppressPackageStartupMessages(library(stringfish))
 
 alternate_case_source <- '
-// [[Rcpp::plugins(cpp11)]]
 // [[Rcpp::depends(stringfish)]]
 #include <Rcpp.h>
 #include "sf_external.h"
@@ -53,55 +45,41 @@ SEXP sf_alternate_case(SEXP x) {
 '
 
 
-altrep_support <- function() {
-  getRversion() >= "3.5"
-}
-
 is_solaris <- function() {
   grepl('SunOS',Sys.info()['sysname'])
 }
 
+can_source_cpp <- !is_solaris()
+
 myfile <- tempfile()
 print(myfile)
 
-# i500_utf8 <- readRDS("/tmp/temp.rds")
-# i500_latin1 <- iconv(i500_utf8, "UTF-8", "latin1")
-
 # For a test set, we are using the 500 most common Icelandic words
 # This is a pretty good test set because all Icelandic words can be encoded as either UTF-8 or latin1. It also contains a mix of ASCII and non-ASCII strings
-# https://www.101languages.net/french/most-common-french-words/
 # https://en.wikipedia.org/wiki/ISO/IEC_8859-1
-# qs2::encode_source(x[1:500])
-i500_utf8 <- qs2::decode_source(c("unjXVBZLQAAAAAAAAANJ.Lm|T)SQ3YIAC'><F{v83IWFDt]4*/oIi6~[`R}I$}pqGVJ;WLP99km8A4v,_6v+,&|My=(t'>5@U2;1QD+}LB,J~V83BA1(vAL^", 
-                                  "n9+YYp&Gt]C(_l@8X~K8A7lk_*?oh7*I?x4*WC[}E0NeD(J(['@Vdd#1}0T,Z]+?s66lC2yo^{0So6&EHO.kixF7iLXhQ,AASd=e1[cIp$&=q.Jh0r[*>;Jl", 
-                                  "'_=z?mMdr`OS[ag~Ow#Vvv,:`63Z]npDs%[@,Jd9?`sQ~`B4T`(/*]m2ZkcGq]{TzUTY>E%*T'Oa8(W>Mt4E7KM{+xtzc)izEA^y%Z!WfGDX&Tnz<IIYKC%Z", 
-                                  "PRAAoz)A|9htmo36Kc.//f.x~r3[ZYSf``;a1c}oX0+K:5rLA;*iKn}_!q42b$a2Z{+lE[U5]0~Qqw655.B[@@`@ni2cw>N9UJAblw>@woH_u;k/aFIs'bqP", 
-                                  "MpclH1U{0T1w4xxl&y}6P+!W;D`z71A7?mr:FsXZdQ@,/;9/BEe[,e91!plP_H=d5iqGIGZe<dekTJIxAr{c!`PSdN6LW*Kg1m3HVgbM.=596bRN&fo7P1?m", 
-                                  "~7Jaj]yCZ7y.>G_bIr7`/;bP@s$&kyv[)S|kR/=L?*k/z1>XjP7s4#mtx*tvLK3Dps&So|%lR{a3xbkRr0FPH3hXOD;IA7A(9W1/A/m&;1B?i50nftGQR)fc", 
-                                  "5J{EoNDdC!uHQ?>SP+k}+:=Ro2je^@nyrdzv50GGb[zlw*XiY$O{lxy)S]`*o=R5ix2J|1!V79;d^]Mr.?+wGP1_?iY{[le$b_Xd^+Lp0t>iOhs#qI]kT{AJ", 
-                                  "D;,Tbd#wm:Ffv<Wi!Yv0s:Mrpsnuvsrq72`hFh&/H^d/N]LyJ#;P@ar.YlI0BgMoppTV>wV,PCDIxsb04xKa_oqbe@j;+:%c`NWmWNa<|d4*X3*X{fg@=bTK", 
-                                  "e1ZvEOTeiM<j~|M4Rb3=xu.UB7ywzp75wZjy%f@D_*;5741JZ]a0<kw5z]zfpC?Q/=<V.401=`vO87xRnd&y&)]#RO^fw!xXoR_*~o)SSMP<kgNS=q]wc`ld", 
-                                  "1A*0]dx%2c?Z:~jL)F6FCKgL7:V(%FmR>>g}>]:&xZ?>KgkCx>MTk97K,%yBjtl?+r_[8YC6h=6y,KAe<[|$_5JB<B;Q[%T)JOIFFop_,J}mHqg&yc&|V;NJ", 
-                                  "N(%q!)WaxqW8(qP.{0p5STxfF/%GsRa`zm7#n8t)ox~,n5V)%(@eNoJ3mM<W.C>|O*cc7awccdo}x<cs(9E>rF!.!SQW*r;DL5Oi5x;]X<PcoNsjK!p9kX:j", 
-                                  "^cAQvbxHiM]S'=p~g;0W5zB|$47Y;DaSmDv`x|i%?kOb=#yQviVWvj2@3RB*K}&9`}FOWbyqe[BAQV`UP4@Mbg!=v])siLslo(Cc|5Z3)6CV:ilItRbV,+!]", 
-                                  ":$dCm%}f'j^$J&|ajl1urW/n1*zG',x|{pig![g:x(oTSsXih5p&Pn/C!FiN,H~[+]`rL:.]0{Ita,9p5aj?e%lKnhV:l@hH|$or'cK}hJdnk}wKx&|5fL/:", 
-                                  "i5;@bfeFyP+ratXZzOA,a/]wN{UbLZNa.MNZO&L6w.jI!K@@1a&OR%yWJU02vm?u|S{asF=#+[3L,|sCHEkIviGnTi=8`c93G6.9G,|?hx;A$:HN~)aVb.6}", 
-                                  "~4qrJ<pxsG,L|Zf2n+E?#|jz)0wJh+'8b!ROYD%[vq?=^r#@K'Hn#T&n*1d;3$uiQn@7(d/|lFC5iQ&7GF5fq~r15A?*wkwq!BC*Q[/E8HtITa5GnwYRoM<+", 
-                                  "y(TXaH'O8.>6SN0_+;,8n_*hZ,[>X1_J`lRS_O6shEh_=w)'_Etb!HXFMtLaA@*K:>LW|rjBv!@6C~npr!Y#NnF.y['xEKdrriPlf7|x[n33ArMP&Zp@Wg`M", 
-                                  "jv}VMV1v(W,{!%h~n=&.5mM`cr%CBREl(TyX2cR>Tf8X?t44rUF{.3s}16_itB#xgaNwtZ)>X1C3S#'#@+p=J*_*2LK00GR$BM(.ikgxZGqj]{JxO1c_DRuL", 
-                                  "d^N<8(LR{WaUlJW,7}o1z1LG#E)cy!cVI`+pahs]}^Lht+~tDjuE;F}2do6S2^+9B]Ktih[uo?*qWbK$zcTgmi@OL.~hQJE|nrql(_(BqUZxqPz?ZYi+lK6~", 
-                                  "kqgAh$}/4@V!82GKAZy3MU6@Qm*thE|oZr)ql]VGSR&+]T+c<C&eI;Rr@Zm,sgWx;}ZF>lIi['`RDsoL0>)P/sWX'G{u0wY>yn@QWL[_)%ZAW.{gK%(l7?)9", 
-                                  "9#J0C]@M'X~^.<l2cx0Fq1)EcH+Cnr8FU!cLj'?a7{?m:Uu=tQxo/goUZ{fskj^=U@YXcH{q}TqpQOmjQ6~l1qb;s0]XrEPfFVb3EOu7DFd.Or/X.tqc+JDk", 
-                                  ":hLovNjO25v5eBW4Ft$hESt&_zIqNic`lk(dPSWrz#q((B(DW@I_1wP5_$*6ZBxr9LgTn#C*P:H3Vn&wLT6D&PDw?u3LO,K&P:&B*B=z?I#Si{1.hD=L+%&s", 
-                                  "{}wn6w8>cd1FJ`<GCzg+eW3[Z[[2DvEL]QgOCslM6;YnyoP$]gr&n^#u1yaP/84i^hv]{TF+~OB^GZ|,;P6{o7Ux.bxvSA$PaNspVRL**z#GW_:xRdaP"))
+test_words_file <- system.file("icelandic_words_500_utf8.txt", package = "stringfish")
+if (!nzchar(test_words_file)) {
+  test_words_file <- file.path("inst", "icelandic_words_500_utf8.txt")
+}
+stopifnot(file.exists(test_words_file))
+i500_utf8 <- readLines(test_words_file, encoding = "UTF-8", warn = FALSE)
 i500_latin1 <- iconv(i500_utf8, "UTF-8", "latin1")
-
-utf8_chars <- i500_utf8 %>% strsplit("") %>% unlist %>% unique
-latin1_chars <- iconv(utf8_chars, from="UTF-8", to="latin1")
 
 catn <- function(...) {
   cat(..., "\n")
 }
+
+split_list_identical <- function(x, y) {
+  stopifnot(length(x) == length(y))
+  all(vapply(seq_along(y), function(i) {
+    string_identical(x[[i]], y[[i]])
+  }, logical(1)))
+}
+
+to_latin1_list <- function(x) {
+  lapply(x, function(z) iconv(z, from = "UTF-8", to = "latin1"))
+}
+
 ntests <- 50
 
 use_tbb <- stringfish:::is_tbb()
@@ -115,53 +93,50 @@ if(use_tbb) {
 print(sessionInfo())
 print(utils::localeToCharset())
 
-if(!altrep_support()) {
-  cat("ALT-REP not supported (R < 3.5)")
-} else {
-  if(!is_solaris()) {
-    R_TESTS <- Sys.getenv("R_TESTS") # startup.Rs
-    if (nzchar(R_TESTS)) {
-      R_TESTS_absolute <- normalizePath(R_TESTS)
-      Sys.setenv(R_TESTS = R_TESTS_absolute)
-    }
-    sourceCpp(code = alternate_case_source)
-    if (nzchar(R_TESTS)) Sys.setenv(R_TESTS = R_TESTS)
+if(can_source_cpp) {
+  R_TESTS <- Sys.getenv("R_TESTS") # startup.Rs
+  if (nzchar(R_TESTS)) {
+    R_TESTS_absolute <- normalizePath(R_TESTS)
+    Sys.setenv(R_TESTS = R_TESTS_absolute)
   }
-  for(.j in 1:4) {
-    cat("iteration", .j, "\n")
-    if(.j %% 2 == 0) {
-      stringfish:::set_is_utf8_locale()
-    } else {
-      stringfish:::unset_is_utf8_locale()
-    }
-    for(nt in nthreads) {
-      cat("number of threads", nt, "\n")
+  Rcpp::sourceCpp(code = alternate_case_source)
+  if (nzchar(R_TESTS)) Sys.setenv(R_TESTS = R_TESTS)
+} else {
+  catn("skipping sourceCpp-backed tests")
+}
+for(.j in 1:3) {
+  cat("iteration", .j, "\n")
+  if(.j %% 2 == 0) {
+    stringfish:::set_is_utf8_locale()
+  } else {
+    stringfish:::unset_is_utf8_locale()
+  }
+  for(nt in nthreads) {
+    cat("number of threads", nt, "\n")
 
-      catn("test altrep serialization (base::serialize)")
-      x <- convert_to_sf(sample(c(i500_utf8, i500_latin1), size = length(i500_utf8) + length(i500_latin1), replace=TRUE))
-      y <- unserialize(serialize(x, NULL))
-      stopifnot(string_identical(x,y))
-      stopifnot(get_string_type(y) == "stringfish vector")
+    catn("test altrep serialization (base::serialize)")
+    x <- convert_to_sf_vector(sample(c(i500_utf8, i500_latin1), size = length(i500_utf8) + length(i500_latin1), replace=TRUE))
+    y <- unserialize(serialize(x, NULL))
+    stopifnot(string_identical(x,y))
+    stopifnot(get_string_type(y) == "stringfish vector")
+    x_slice <- convert_to_slice_store(sample(c(i500_utf8, i500_latin1), size = length(i500_utf8) + length(i500_latin1), replace=TRUE))
+    y_slice <- unserialize(serialize(x_slice, NULL))
+    stopifnot(string_identical(x_slice, y_slice))
+    stopifnot(get_string_type(y_slice) == "stringfish slice store")
 
-      catn("test altrep serialization (qs2::qd_serialize)")
-      x <- convert_to_sf(sample(i500_utf8, size = length(i500_utf8), replace=TRUE))
-      y <- qs2::qd_deserialize(qs2::qd_serialize(x), use_alt_rep = TRUE)
-      stopifnot(string_identical(x,y))
-      stopifnot(get_string_type(y) == "stringfish vector")
-
-      catn("sf_assign")
-      for(. in 1:ntests) {
-        # if(. == 1) {gctorture(TRUE)} else {gctorture(FALSE)}
-        x <- sf_vector(10)
-        y <- character(10)
-        for(i in 1:10) {
-          new_str <- sample(c(i500_utf8,i500_latin1),1)
-          if(.j %% 2 == 1) materialize(x)
-          stringfish:::sf_assign(x, i, new_str)
-          y[i] <- new_str
-        }
-        stopifnot(string_identical(x,y))
+    catn("sf_assign")
+    for(. in 1:ntests) {
+      # if(. == 1) {gctorture(TRUE)} else {gctorture(FALSE)}
+      x <- sf_vector(10)
+      y <- character(10)
+      for(i in 1:10) {
+        new_str <- sample(c(i500_utf8,i500_latin1),1)
+        if(.j %% 2 == 1) materialize(x)
+        stringfish:::sf_assign(x, i, new_str)
+        y[i] <- new_str
       }
+      stopifnot(string_identical(x,y))
+    }
       
       catn("sf_iconv")
       for(. in 1:ntests) {
@@ -171,8 +146,8 @@ if(!altrep_support()) {
         y <- sf_iconv(i500_utf8, "UTF-8", "latin1")
         stopifnot(string_identical(x, i500_utf8))
         stopifnot(string_identical(y, i500_latin1))
-        x <- sf_iconv(convert_to_sf(i500_latin1), "latin1", "UTF-8")
-        y <- sf_iconv(convert_to_sf(i500_utf8), "UTF-8", "latin1")
+        y <- sf_iconv(convert_to_sf_vector(i500_utf8), "UTF-8", "latin1")
+        x <- sf_iconv(y, "latin1", "UTF-8")
         stopifnot(string_identical(x, i500_utf8))
         stopifnot(string_identical(y, i500_latin1))
       }
@@ -180,9 +155,9 @@ if(!altrep_support()) {
       catn("sf_nchar")
       for(. in 1:ntests) {
         # if(. == 1) {gctorture(TRUE)} else {gctorture(FALSE)}
-        x <- convert_to_sf(i500_latin1)
+        x <- sf_iconv(i500_utf8, "UTF-8", "latin1")
         if(.j %% 2 == 1) materialize(x)
-        y <- convert_to_sf(i500_utf8)
+        y <- convert_to_sf_vector(i500_utf8)
         stopifnot( identical(sf_nchar(x, nthreads = nt), nchar(x)) )
         stopifnot( identical(sf_nchar(y, nthreads = nt), nchar(y)) )
         stopifnot( identical(sf_nchar(x, nthreads = nt), nchar(i500_latin1)) )
@@ -272,6 +247,23 @@ if(!altrep_support()) {
         y <- readLines(myfile); Encoding(y) <- "latin1"
         stopifnot(string_identical(x, y))
       }
+
+      catn("sf_writeLines")
+      for(. in 1:ntests) {
+        write_utf8 <- tempfile()
+        on.exit(unlink(write_utf8), add = TRUE)
+        sf_writeLines(i500_utf8, write_utf8, encode_mode = "UTF-8")
+        y <- readLines(write_utf8, warn = FALSE, encoding = "UTF-8")
+        Encoding(y) <- "UTF-8"
+        stopifnot(string_identical(y, i500_utf8))
+
+        write_bytes <- tempfile()
+        on.exit(unlink(write_bytes), add = TRUE)
+        bytes_word <- rawToChar(as.raw(0xE9))
+        Encoding(bytes_word) <- "bytes"
+        sf_writeLines(bytes_word, write_bytes, encode_mode = "UTF-8")
+        stopifnot(identical(readBin(write_bytes, "raw", n = 2L), as.raw(c(0xE9, 0x0A))))
+      }
       
       catn("sf_grepl")
       for(. in 1:ntests) {
@@ -318,74 +310,51 @@ if(!altrep_support()) {
       
       catn("sf_split")
       for(. in 1:ntests) {
-        # if(. == 1) {gctorture(TRUE)} else {gctorture(FALSE)}
-        # catn("n = ", .)
-        # print("sf_split_1")
-        # empty split is a special case
-        split <- ""
-        x <- sf_split(i500_utf8, split, nthreads = nt)
-        y <- stringr::str_split(i500_utf8, split)
-        r <- sapply(1:length(y), function(i) {
-          string_identical(x[[i]], y[[i]])
-        })
-        stopifnot(all(r))
-        
-        # print("sf_split_2")
-        # empty subject
+        x <- sf_split(i500_utf8, "", nthreads = nt)
+        stopifnot(split_list_identical(x, strsplit(i500_utf8, "", perl = TRUE)))
+
         x <- sf_split(rep("", 1e3), "a", nthreads=nt)
         stopifnot(all(x == ""))
-        
-        # print("sf_split_3")
-        # empty subject, empty split
+
         x <- sf_split(rep("", 1e3), "", nthreads=nt)
         stopifnot(all(x == ""))
-        
-        # print("sf_split_4")
-        # split not in subject
+
         x <- sf_split(rep("abcde", 1e3), "f", nthreads=nt)
         stopifnot(all(x == "abcde"))
-        
-        # print("sf_split_5")
-        # single character split, including UTF-8
-        split <- sf_paste(sample(utf8_chars,1))
-        x <- sf_split(i500_utf8, split, nthreads = nt)
-        y <- stringr::str_split(i500_utf8, split)
-        r <- sapply(1:length(y), function(i) {
-          string_identical(x[[i]], y[[i]])
-        })
-        stopifnot(all(r))
-        
-        # print("sf_split_6")
-        # split with regex
-        split <- sf_paste(sample(utf8_chars,1), ".")
-        x <- sf_split(i500_utf8, split, nthreads = nt)
-        y <- stringr::str_split(i500_utf8, split)
-        r <- sapply(1:length(y), function(i) {
-          string_identical(x[[i]], y[[i]])
-        })
-        stopifnot(all(r))
-        
-        # print("sf_split_7")
-        split <- sf_paste(sample(utf8_chars,1), ".")
-        split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
-        x <- sf_split(i500_latin1, split_latin1, nthreads = nt)
-        y <- stringr::str_split(i500_latin1, split_latin1)
+
+        utf8_subject <- c("café", "éclair", "plain", "é", "été")
+        utf8_expected <- list(c("caf", ""), c("", "clair"), "plain", c("", ""), c("", "t", ""))
+        x <- sf_split(utf8_subject, "é", nthreads = nt)
+        stopifnot(split_list_identical(x, utf8_expected))
+
+        utf8_regex_subject <- c("héj", "méow", "plain", "éx")
+        utf8_regex_expected <- list(c("h", ""), c("m", "w"), "plain", c("", ""))
+        x <- sf_split(utf8_regex_subject, "é.", nthreads = nt)
+        stopifnot(split_list_identical(x, utf8_regex_expected))
+
+        latin1_subject <- iconv(utf8_regex_subject, from = "UTF-8", to = "latin1")
+        latin1_expected <- to_latin1_list(utf8_regex_expected)
+        latin1_pattern <- iconv("é.", from = "UTF-8", to = "latin1")
+        x <- sf_split(latin1_subject, latin1_pattern, nthreads = nt)
         x <- lapply(x, sf_iconv, from = "UTF-8", to = "latin1")
-        y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
-        r <- sapply(1:length(y), function(i) {
-          string_identical(x[[i]], y[[i]])
+        stopifnot(split_list_identical(x, latin1_expected))
+
+        x <- sf_split(latin1_subject, latin1_pattern, encode_mode = "byte", nthreads = nt)
+        x <- lapply(x, function(z) {
+          z <- materialize(z)
+          Encoding(z) <- "latin1"
+          z
         })
-        stopifnot(all(r))
-        
-        # print("sf_split_8")
-        split_latin1 <- sf_iconv(split, from = "UTF-8", to = "latin1")
-        x <- sf_split(i500_latin1, split_latin1, encode_mode = "byte", nthreads = nt)
-        y <- stringr::str_split(i500_latin1, split_latin1)
-        y <- lapply(y, iconv, from = "UTF-8", to = "latin1")
-        r <- sapply(1:length(y), function(i) {
-          string_identical(x[[i]], y[[i]])
-        })
-        stopifnot(all(r))
+        stopifnot(split_list_identical(x, latin1_expected))
+
+        zero_width <- materialize(sf_split("abc", "(?<=a)", nthreads = nt)[[1L]])
+        stopifnot(identical(zero_width, strsplit("abc", "(?<=a)", perl = TRUE)[[1L]]))
+
+        zero_width_start <- materialize(sf_split("abc", "^", nthreads = nt)[[1L]])
+        stopifnot(identical(zero_width_start, c("", "abc")))
+
+        zero_width_end <- materialize(sf_split("abc", "$", nthreads = nt)[[1L]])
+        stopifnot(identical(zero_width_end, c("abc", "")))
       }
       
       catn("sf_toupper and sf_tolower")
@@ -408,7 +377,7 @@ if(!altrep_support()) {
         # stopifnot(string_identical(x2, toupper(i500_utf8)))
       }
       
-      if(!is_solaris()) {
+      if(can_source_cpp) {
         catn("Rcpp test with sf_alternate_case")
         for(. in 1:ntests) {
           x <- c("hello world", "HELLO WORLD")
@@ -422,8 +391,9 @@ if(!altrep_support()) {
           if(.j %% 2 == 1) materialize(x)
           stopifnot(string_identical(x, i500_utf8))
           
-          x <- sf_trim(sf_paste("\t", i500_latin1, " \n"), encode_mode = "byte")
-          if(.j %% 2 == 1) materialize(x)
+          x <- sf_trim(sf_iconv(sf_paste("\t", i500_utf8, " \n"), from = "UTF-8", to = "latin1"), encode_mode = "byte")
+          x <- materialize(x)
+          Encoding(x) <- "latin1"
           stopifnot(string_identical(x, i500_latin1))
         }
       }
@@ -460,7 +430,7 @@ if(!altrep_support()) {
         y <- c(i500_latin1, NA_character_) == c(i500_latin1_shuffled, NA_character_)
         stopifnot(identical(x,y))
       }
-      
+
       catn("sf_concat")
       for(. in 1:ntests) {
         # if(. == 1) {gctorture(TRUE)} else {gctorture(FALSE)}
@@ -468,8 +438,8 @@ if(!altrep_support()) {
         i500_utf8_shuffled[sample(length(i500_utf8), size = 100)] <- ""
         x <- sfc(sfc(i500_utf8, NA_character_), sfc(i500_utf8_shuffled, NA_character_), character(0))
         if(.j %% 2 == 1) materialize(x)
-        y <- sfc(sfc(sf_convert(i500_utf8), NA_character_), sfc(sf_convert(i500_utf8_shuffled), NA_character_), character(0))
-        z <- c(c(sf_convert(i500_utf8), NA_character_), c(sf_convert(i500_utf8_shuffled), NA_character_), character(0))
+        y <- sfc(sfc(convert_to_sf_vector(i500_utf8), NA_character_), sfc(convert_to_sf_vector(i500_utf8_shuffled), NA_character_), character(0))
+        z <- c(c(convert_to_sf_vector(i500_utf8), NA_character_), c(convert_to_sf_vector(i500_utf8_shuffled), NA_character_), character(0))
         z2 <- c(c(i500_utf8, NA_character_), c(i500_utf8_shuffled, NA_character_), character(0))
         stopifnot(string_identical(x,y))
         stopifnot(string_identical(x,z))
@@ -480,7 +450,4 @@ if(!altrep_support()) {
       print(gc())
     }
   }
-}
 print("end")
-
-}

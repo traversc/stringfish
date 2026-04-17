@@ -23,10 +23,8 @@ A logical vector
 Returns a logical vector testing equality of strings from two string vectors
 }
 \details{
-Note: the function tests for both string and encoding equality
+Note: the function tests semantic string equality. Non-byte text is normalized to a UTF-8 working representation, while `CE_BYTES` strings are compared byte-for-byte.
 }
 \examples{
-if(getRversion() >= "3.5.0") {
 sf_compare(letters, "a")
-}
 }
