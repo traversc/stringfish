@@ -31,6 +31,10 @@ compile:
 	find . -iname "*.o" -exec rm {} \;
 	find . -iname "*.so" -exec rm {} \;
 
+
+reconf:
+	autoreconf -fi
+
 build:
 	autoconf
 	chmod 755 cleanup

@@ -2,6 +2,7 @@ suppressPackageStartupMessages(library(stringfish))
 
 alternate_case_source <- '
 // [[Rcpp::depends(stringfish)]]
+// [[Rcpp::plugins(cpp17)]]
 #include <Rcpp.h>
 #include "sf_external.h"
 using namespace Rcpp;

@@ -61,6 +61,17 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
+      # Temporary workaround for R-devel only. Remove once the upstream Rcpp issue is resolved.
+      - name: Install development Rcpp for R-devel (temporary workaround https://github.com/RcppCore/Rcpp/issues/1473)
+        if: matrix.config.r == 'devel'
+        shell: Rscript {0}
+        run: |
+          install.packages(
+            "https://github.com/RcppCore/Rcpp/archive/refs/heads/master.tar.gz",
+            repos = NULL,
+            type = "source"
+          )
+
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true

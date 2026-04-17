@@ -1,3 +1,9 @@
+# Request C++17 explicitly only on R versions where it is not already the default.
+R_NEEDS_EXPLICIT_CXX17 := $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "cat(as.integer(getRversion() < '4.3.0'))")
+ifeq ($(R_NEEDS_EXPLICIT_CXX17),1)
+CXX_STD = CXX17
+endif
+
 PKG_CPPFLAGS = -DRCPP_USE_UNWIND_PROTECT -DRCPP_NO_RTTI -DPCRE2_CODE_UNIT_WIDTH=8 -DHAVE_CONFIG_H -DPCRE2_BUNDLED -I. -IPCRE2
 PKG_CXXFLAGS = -DRCPP_PARALLEL_USE_TBB=1 $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "RcppParallel::CxxFlags()")
 PKG_LIBS     = -lpthread -L. -lSFPCRE2 $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "RcppParallel::RcppParallelLibs()")

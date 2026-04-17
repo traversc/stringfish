@@ -1,7 +1,24 @@
-AC_INIT([stringfish],[0.13.2 traversc@gmail.com])
+AC_INIT([stringfish],[0.19.0],[traversc@gmail.com])
 AC_PATH_PROG([PKGCONF],[pkg-config],[],[$PATH:/usr/local/bin:ext/bin:ext:/sw/bin:/opt/bin:/opt/local/bin])
 
 echo "stringfish configure script"
+########################################################
+AC_LANG(C++)
+: ${R_HOME=`R RHOME`}
+PATH_TO_CPP_COMPILER=`"${R_HOME}/bin/R" CMD config CXX`
+AC_PROG_CXX([$PATH_TO_CPP_COMPILER])
+echo "C++ compiler: $PATH_TO_CPP_COMPILER"
+
+R_VERSION_STRING=`"${R_HOME}/bin/Rscript" -e "cat(as.character(getRversion()))"`
+R_NEEDS_EXPLICIT_CXX17=`"${R_HOME}/bin/Rscript" -e "cat(as.integer(getRversion() < '4.3.0'))"`
+if test "x$R_NEEDS_EXPLICIT_CXX17" = "x1"; then
+  echo "R ${R_VERSION_STRING} detected -- explicitly requesting C++17"
+  CXX_STD_LINE="CXX_STD = CXX17"
+else
+  echo "R ${R_VERSION_STRING} detected -- using R default C++ standard"
+  CXX_STD_LINE="# CXX17 is the default for R >= 4.3.0"
+fi
+
 ########################################################
 ### Predefined compile strings for different cases
 
@@ -115,7 +132,7 @@ elif test "xx$PKGCONF" != "xx"; then
     COMPILE_PCRE2="true"
   fi
 else
-  echo "pkg-confg not detected -- compiling from source"
+  echo "pkg-config not detected -- compiling from source"
   COMPILE_PCRE2="true"
 fi
 
@@ -141,5 +158,6 @@ AC_SUBST([ADD_LIBS], $ADD_LIBS)
 AC_SUBST([INCLUDE_PATHS], $INCLUDE_PATHS)
 AC_SUBST([LIBPCRE2], $LIBPCRE2)
 AC_SUBST([PCRE2_BUNDLED], $PCRE2_BUNDLED)
+AC_SUBST([CXX_STD_LINE], $CXX_STD_LINE)
 AC_CONFIG_FILES([src/Makevars])
 AC_OUTPUT
