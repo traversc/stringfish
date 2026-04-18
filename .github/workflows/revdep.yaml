@@ -1,0 +1,86 @@
+name: revdep
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: revdep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  revdep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: false
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            r-lib/revdepcheck
+          needs: check
+
+      - name: Run revdep checks
+        shell: Rscript {0}
+        run: |
+          options(repos = c(CRAN = "https://cloud.r-project.org"))
+          revdepcheck::revdep_check(
+            num_workers = 4,
+            timeout = as.difftime(20, units = "mins"),
+            bioc = TRUE,
+            cran = TRUE
+          )
+
+      - name: Summarize revdep results
+        if: always()
+        shell: Rscript {0}
+        run: |
+          options(repos = c(CRAN = "https://cloud.r-project.org"))
+          try(revdepcheck::revdep_report(bioc = TRUE, cran = TRUE), silent = TRUE)
+      - name: Print revdep results
+        if: always()
+        shell: bash
+        run: |
+          for path in revdep/README.md revdep/problems.md revdep/failures.md; do
+            echo "===== ${path} ====="
+            if [ -f "${path}" ]; then
+              cat "${path}"
+            else
+              echo "<missing>"
+            fi
+            echo
+          done
+
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            for path in revdep/README.md revdep/problems.md revdep/failures.md; do
+              {
+                echo "## ${path}"
+                echo
+                if [ -f "${path}" ]; then
+                  echo '```markdown'
+                  cat "${path}"
+                  echo '```'
+                else
+                  echo "_Missing._"
+                fi
+                echo
+              } >> "${GITHUB_STEP_SUMMARY}"
+            done
+          fi
+
+      - name: Upload revdep results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revdep-results
+          path: revdep/
+          if-no-files-found: warn

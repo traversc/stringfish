@@ -38,6 +38,10 @@ convert_to_sf_vector <- function(x, length.out = length(x)) {
   .Call(`_stringfish_convert_to_sf_vector`, x, length.out)
 }
 
+convert_to_sf <- function(x) {
+  convert_to_sf_vector(x)
+}
+
 convert_to_slice_store <- function(x, length.out = length(x)) {
   if(!is.character(x)) {
     stop("x must be a character vector")

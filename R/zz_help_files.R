@@ -135,7 +135,9 @@ NULL
 #' convert_to_sf_vector
 #' 
 #' Converts a character vector to an `sf_vec`-backed stringfish vector
+#' `convert_to_sf()` is a compatibility alias for `convert_to_sf_vector()`.
 #' @usage convert_to_sf_vector(x, length.out = length(x))
+#' @aliases convert_to_sf
 #' @param x A character vector
 #' @param length.out Optional output length used to recycle `x`
 #' @return The converted character vector

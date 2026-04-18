@@ -68,6 +68,11 @@ inline SEXP convert_to_sf_vector(SEXP x, size_t length_out) {
   return fun(x, length_out);
 }
 
+inline SEXP convert_to_sf(SEXP x) {
+  static auto fun = sfext_detail::get_callable<SEXP(*)(SEXP)>("convert_to_sf");
+  return fun(x);
+}
+
 inline SEXP convert_to_slice_store(SEXP x, size_t length_out) {
   static auto fun = sfext_detail::get_callable<SEXP(*)(SEXP, size_t)>("convert_to_slice_store");
   return fun(x, length_out);

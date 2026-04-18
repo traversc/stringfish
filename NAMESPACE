@@ -8,6 +8,7 @@ export(
 "sf_vector_create",
 "slice_store_create",
 "slice_store_create_with_size",
+"convert_to_sf",
 "convert_to_sf_vector",
 "convert_to_slice_store",
 "sf_assign",

@@ -73,6 +73,10 @@ inline SEXP convert_to_sf_vector(SEXP x, size_t length_out) {
   return ret;
 }
 
+inline SEXP convert_to_sf(SEXP x) {
+  return convert_to_sf_vector(x, checked_character_input(x, "x"));
+}
+
 inline SEXP convert_to_slice_store(SEXP x, size_t length_out) {
   const size_t x_len = checked_character_input(x, "x");
   if(length_out > 0 && x_len < 1) {

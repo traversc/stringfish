@@ -84,6 +84,9 @@ SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads
 // [[Rcpp::export(rng = false, signature = {x, length_out = length(x)})]]
 SEXP convert_to_sf_vector(SEXP x, size_t length_out);
 
+// [[Rcpp::export(rng = false)]]
+SEXP convert_to_sf(SEXP x);
+
 // [[Rcpp::export(rng = false, signature = {x, length_out = length(x)})]]
 SEXP convert_to_slice_store(SEXP x, size_t length_out);
 
@@ -172,6 +175,7 @@ void sf_export_functions(DllInfo* /* dll */) {
 
   // Converters and string operations
   register_fn("sf_iconv", (DL_FUNC) &sf_iconv);
+  register_fn("convert_to_sf", (DL_FUNC) &convert_to_sf);
   register_fn("convert_to_sf_vector", (DL_FUNC) &convert_to_sf_vector);
   register_fn("convert_to_slice_store", (DL_FUNC) &convert_to_slice_store);
   register_fn("sf_nchar", (DL_FUNC) &sf_nchar);
