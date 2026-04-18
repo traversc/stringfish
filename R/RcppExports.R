@@ -61,6 +61,10 @@ convert_to_sf_vector <- function(x, length_out = length(x)) {
     .Call(`_stringfish_convert_to_sf_vector`, x, length_out)
 }
 
+convert_to_sf <- function(x) {
+    .Call(`_stringfish_convert_to_sf`, x)
+}
+
 convert_to_slice_store <- function(x, length_out = length(x)) {
     .Call(`_stringfish_convert_to_slice_store`, x, length_out)
 }

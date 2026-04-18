@@ -157,6 +157,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// convert_to_sf
+SEXP convert_to_sf(SEXP x);
+RcppExport SEXP _stringfish_convert_to_sf(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(convert_to_sf(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // convert_to_slice_store
 SEXP convert_to_slice_store(SEXP x, size_t length_out);
 RcppExport SEXP _stringfish_convert_to_slice_store(SEXP xSEXP, SEXP length_outSEXP) {
@@ -368,6 +378,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_stringfish_sf_assign", (DL_FUNC) &_stringfish_sf_assign, 3},
     {"_stringfish_sf_iconv", (DL_FUNC) &_stringfish_sf_iconv, 4},
     {"_stringfish_convert_to_sf_vector", (DL_FUNC) &_stringfish_convert_to_sf_vector, 2},
+    {"_stringfish_convert_to_sf", (DL_FUNC) &_stringfish_convert_to_sf, 1},
     {"_stringfish_convert_to_slice_store", (DL_FUNC) &_stringfish_convert_to_slice_store, 2},
     {"_stringfish_sf_nchar", (DL_FUNC) &_stringfish_sf_nchar, 3},
     {"_stringfish_sf_substr", (DL_FUNC) &_stringfish_sf_substr, 4},

@@ -24,6 +24,6 @@ Suggests:
     knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 7.3.3
-Copyright: Copyright for the bundled 'PCRE2' library is held by University of Cambridge, Zoltan Herczeg and Tilera Coporation (Stack-less Just-In-Time compiler); Copyright for the bundled 'xxHash' code is held by Yann Collet. 
+Copyright: Copyright for the bundled 'PCRE2' library is held by University of Cambridge, Zoltan Herczeg and Tilera Corporation (Stack-less Just-In-Time compiler); Copyright for the bundled 'xxHash' code is held by Yann Collet. 
 URL: https://github.com/traversc/stringfish
 BugReports: https://github.com/traversc/stringfish/issues
