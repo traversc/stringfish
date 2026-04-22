@@ -10,14 +10,11 @@
 #undef FALSE
 #endif
 #if RCPP_PARALLEL_USE_TBB
-#include <tbb/concurrent_unordered_map.h>
-#include <tbb/task_arena.h>
 #include <tbb/enumerable_thread_specific.h>
 #endif
 #include <R_ext/Rdynload.h>
 #include <R_ext/Riconv.h>
 #include <atomic>
-#include <unordered_map>
 #include <fstream>
 #include <optional>
 #include <algorithm>

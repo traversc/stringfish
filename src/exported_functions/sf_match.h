@@ -1,10 +1,15 @@
+#ifndef ANKERL_UNORDERED_DENSE_DISABLE_PMR
+#define ANKERL_UNORDERED_DENSE_DISABLE_PMR
+#endif
+#include "../../inst/include/ankerl/unordered_dense.h"
+
 namespace sfexport {
 struct byte_span {
   const char * ptr;
   int len;
   byte_span() : ptr(nullptr), len(0) {}
   byte_span(const char * ptr, int len) : ptr(ptr), len(len) {}
-  bool operator==(const byte_span & other) const {
+  bool operator==(const byte_span & other) const noexcept {
     if(ptr == nullptr || other.ptr == nullptr) {
       return ptr == other.ptr;
     }
@@ -13,7 +18,9 @@ struct byte_span {
 };
 
 struct byte_span_hash {
-  size_t operator()(const byte_span & s) const {
+  using is_avalanching = void;
+
+  std::uint64_t operator()(const byte_span & s) const noexcept {
     if(s.ptr == nullptr) {
       return 0;
     }
@@ -21,9 +28,18 @@ struct byte_span_hash {
   }
 };
 
+using byte_span_map = ankerl::unordered_dense::map<byte_span, int, byte_span_hash>;
+
 static constexpr int R_INT_MAX = 2147483647;
-inline int sf_match_value(const std::unordered_map<byte_span, int, byte_span_hash> & raw_map,
-                          const std::unordered_map<byte_span, int, byte_span_hash> & text_map,
+inline bool same_bytes(const sfenc::rstring_info & lhs, const sfenc::rstring_info & rhs) noexcept {
+  if(lhs.ptr == rhs.ptr) {
+    return lhs.len == rhs.len;
+  }
+  return lhs.len == rhs.len && (lhs.len == 0 || std::memcmp(lhs.ptr, rhs.ptr, lhs.len) == 0);
+}
+
+inline int sf_match_value(const byte_span_map & raw_map,
+                          const byte_span_map & text_map,
                           const sfenc::rstring_info & q,
                           sfenc::iconv_text_normalizer & norm, std::string & utf8_owned) {
   if(q.ptr == nullptr) {
@@ -40,9 +56,15 @@ inline int sf_match_value(const std::unordered_map<byte_span, int, byte_span_has
     if(!norm.normalize(view, utf8_owned)) {
       return best == R_INT_MAX ? NA_INTEGER : (best + 1);
     }
-    auto text_it = text_map.find(byte_span(view.ptr, view.len));
-    if(text_it != text_map.end()) {
-      best = std::min(best, text_it->second);
+    if(!same_bytes(q, view)) {
+      auto norm_raw_it = raw_map.find(byte_span(view.ptr, view.len));
+      if(norm_raw_it != raw_map.end()) {
+        best = std::min(best, norm_raw_it->second);
+      }
+      auto text_it = text_map.find(byte_span(view.ptr, view.len));
+      if(text_it != text_map.end()) {
+        best = std::min(best, text_it->second);
+      }
     }
   }
   return best == R_INT_MAX ? NA_INTEGER : (best + 1);
@@ -50,14 +72,14 @@ inline int sf_match_value(const std::unordered_map<byte_span, int, byte_span_has
 
 #if RCPP_PARALLEL_USE_TBB
 struct sf_match_worker : public RcppParallel::Worker {
-  const std::unordered_map<byte_span, int, byte_span_hash> * raw_map;
-  const std::unordered_map<byte_span, int, byte_span_hash> * text_map;
+  const byte_span_map * raw_map;
+  const byte_span_map * text_map;
   RStringIndexer * searchit;
   int * output;
   std::atomic<size_t> * failures;
 
-  sf_match_worker(const std::unordered_map<byte_span, int, byte_span_hash> * raw_map,
-                  const std::unordered_map<byte_span, int, byte_span_hash> * text_map,
+  sf_match_worker(const byte_span_map * raw_map,
+                  const byte_span_map * text_map,
                   RStringIndexer * searchit, int * output, std::atomic<size_t> * failures) :
     raw_map(raw_map), text_map(text_map), searchit(searchit), output(output), failures(failures) {}
 
@@ -82,8 +104,10 @@ IntegerVector sf_match(SEXP x, SEXP table, const int nthreads) {
   size_t xlen = xr.size();
   IntegerVector ret(xlen);
   int * retp = INTEGER(ret);
-  std::unordered_map<sfexport::byte_span, int, sfexport::byte_span_hash> raw_map;
-  std::unordered_map<sfexport::byte_span, int, sfexport::byte_span_hash> text_map;
+  sfexport::byte_span_map raw_map;
+  sfexport::byte_span_map text_map;
+  raw_map.reserve(len);
+  text_map.reserve(len);
   std::vector<std::string> table_text_owned(len);
   sfenc::iconv_text_normalizer table_norm;
   for(size_t i=0; i<len; ++i) {
@@ -95,7 +119,9 @@ IntegerVector sf_match(SEXP x, SEXP table, const int nthreads) {
     if(q.enc != cetype_t_ext::CE_BYTES) {
       sfenc::rstring_info view = q;
       if(table_norm.normalize(view, table_text_owned[i])) {
-        text_map.emplace(sfexport::byte_span(view.ptr, view.len), static_cast<int>(i));
+        if(!sfexport::same_bytes(q, view)) {
+          text_map.emplace(sfexport::byte_span(view.ptr, view.len), static_cast<int>(i));
+        }
       }
     }
   }
