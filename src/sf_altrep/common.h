@@ -48,9 +48,10 @@ inline SEXP sf_altrep_sexp_guard(const char * op, Fun fun) {
   try {
     return fun();
   } catch(const std::exception & e) {
-    Rf_error("stringfish ALTREP %s: %s", op, e.what());
+    // Bypass Rcpp's optional Rf_error macro mask at this ALTREP boundary.
+    (Rf_error)("stringfish ALTREP %s: %s", op, e.what());
   } catch(...) {
-    Rf_error("stringfish ALTREP %s: unknown C++ exception", op);
+    (Rf_error)("stringfish ALTREP %s: unknown C++ exception", op);
   }
 }
 
