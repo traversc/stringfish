@@ -49,21 +49,7 @@ private:
   }
 
 public:
-  struct rstring_info {
-    const char * ptr;
-    int len;
-    cetype_t_ext enc;
-    rstring_info(const char * p, const int l, const cetype_t_ext e) : ptr(p), len(l), enc(e) {}
-    rstring_info() : ptr(nullptr), len(0), enc(cetype_t_ext::CE_NA) {}
-    rstring_info(const rstring_info & other) : ptr(other.ptr), len(other.len), enc(other.enc) {}
-    bool operator==(const rstring_info & other) const {
-      if((ptr == nullptr) && (other.ptr == nullptr)) return true;
-      if((ptr == nullptr) || (other.ptr == nullptr)) return false;
-      if((ptr == other.ptr) && (len == other.len) && (enc == other.enc)) return true;
-      if((len != other.len) || (enc != other.enc)) return false;
-      return memcmp(ptr, other.ptr, len) == 0;
-    }
-  };
+  using rstring_info = ::rstring_info;
 
   class iterator {
   private:
@@ -126,14 +112,14 @@ public:
       return (*sfp)[i].encoding == cetype_t_ext::CE_ASCII;
     }
     if(ssp != nullptr) {
-      const string_record & rec = ssp->records[i];
+      const rstring_info & rec = ssp->records[i];
       if(rec.is_NA()) {
         return false;
       }
-      if(rec.encoding == cetype_t_ext::CE_ASCII) {
+      if(rec.enc == cetype_t_ext::CE_ASCII) {
         return true;
       }
-      if(rec.encoding == cetype_t_ext::CE_ASCII_OR_UTF8) {
+      if(rec.enc == cetype_t_ext::CE_ASCII_OR_UTF8) {
         return checkAscii(rec.ptr, static_cast<size_t>(rec.len));
       }
       return false;
@@ -157,11 +143,11 @@ public:
       }
       return rstring_info((*sfp)[i].data(), static_cast<int>((*sfp)[i].sdata.size()), st);
     }
-    const string_record & rec = ssp->records[i];
+    const rstring_info & rec = ssp->records[i];
     if(rec.is_NA()) {
       return rstring_info(nullptr, 0, cetype_t_ext::CE_NA);
     }
-    return rstring_info(rec.ptr, static_cast<int>(rec.len), rec.encoding);
+    return rstring_info(rec.ptr, rec.len, rec.enc);
   }
 
   inline const SEXP * getDirectPtr() const {

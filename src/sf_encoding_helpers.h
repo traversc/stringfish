@@ -300,14 +300,14 @@ inline SEXP make_char(const sfstring & x) {
   return Rf_mkCharLenCE(x.data(), static_cast<int>(x.sdata.size()), to_base_encoding(x.encoding));
 }
 
-inline SEXP make_char(const string_record & x) {
-  if(x.encoding == cetype_t_ext::CE_NA) {
+inline SEXP make_char(const rstring_info & x) {
+  if(x.enc == cetype_t_ext::CE_NA) {
     return NA_STRING;
   }
   if(!check_r_string_len(x.len)) {
     throw std::runtime_error("string size exceeds R string size");
   }
-  return Rf_mkCharLenCE(x.ptr, static_cast<int>(x.len), to_base_encoding(x.encoding));
+  return Rf_mkCharLenCE(x.ptr, x.len, to_base_encoding(x.enc));
 }
 
 inline void warn_failed_normalization(const std::string & operation, size_t failures) {

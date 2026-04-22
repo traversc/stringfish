@@ -239,13 +239,13 @@ struct slice_st {
         }
 
         for(size_t i = 0; i < n; ++i) {
-          const uint8_t encoding = static_cast<uint8_t>(data1.records[i].encoding);
+          const uint8_t encoding = static_cast<uint8_t>(data1.records[i].enc);
           std::memcpy(current_offset, &encoding, sizeof(uint8_t));
           current_offset += sizeof(uint8_t);
         }
 
         for(size_t i = 0; i < n; ++i) {
-          const string_record & rec = data1.records[i];
+          const rstring_info & rec = data1.records[i];
           if(rec.len > 0) {
             std::memcpy(current_offset, rec.ptr, static_cast<size_t>(rec.len));
             current_offset += static_cast<size_t>(rec.len);

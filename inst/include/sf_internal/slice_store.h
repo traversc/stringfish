@@ -8,7 +8,7 @@
 // slice_store_shard is for the purposes of a multi-threaded constructor (caller defines the multi-threading framework)
 //   slice_store_shard shares a records vector with other shards, but has its own slice store
 //   After writing slices to each shard and filling the combined records vector, caller can combine shards with
-//   constructor template<typename Shards> slice_store_data(std::vector<string_record> && source_records, Shards & shards)
+//   constructor template<typename Shards> slice_store_data(std::vector<rstring_info> && source_records, Shards & shards)
 
 // slice_store_data
 //
@@ -54,7 +54,7 @@ struct slice_store_shard {
   static constexpr size_t vector_len_scale = 4;
 
   std::vector<std::unique_ptr<char[]>> slices;
-  std::vector<string_record> * records;
+  std::vector<rstring_info> * records;
   size_t allocated_bytes;
   uint32_t current_slice_used;
   uint32_t current_slice_capacity;
@@ -107,7 +107,7 @@ struct slice_store_shard {
     current_slice_used(0),
     current_slice_capacity(0) {}
 
-  explicit slice_store_shard(std::vector<string_record> & records) :
+  explicit slice_store_shard(std::vector<rstring_info> & records) :
     slices(),
     records(&records),
     allocated_bytes(0),
@@ -129,17 +129,17 @@ struct slice_store_shard {
     if(!check_r_string_len(len)) {
       throw std::runtime_error("stored string length exceeds R string size");
     }
-    const uint32_t stored_len = static_cast<uint32_t>(len);
+    const int stored_len = static_cast<int>(len);
     if(enc == cetype_t_ext::CE_NA) {
-      (*records)[idx] = string_record{nullptr, 0, cetype_t_ext::CE_NA};
+      (*records)[idx] = rstring_info{nullptr, 0, cetype_t_ext::CE_NA};
       return nullptr;
     }
     if(stored_len == 0) {
-      (*records)[idx] = string_record{empty_data(), 0, enc};
+      (*records)[idx] = rstring_info{empty_data(), 0, enc};
       return const_cast<char*>(empty_data());
     }
-    char * dest = allocate_bytes(stored_len);
-    (*records)[idx] = string_record{dest, stored_len, enc};
+    char * dest = allocate_bytes(static_cast<uint32_t>(stored_len));
+    (*records)[idx] = rstring_info{dest, stored_len, enc};
     return dest;
   }
 
@@ -192,12 +192,12 @@ struct slice_store_data {
       if(!check_r_string_len(rec.len)) {
         throw std::runtime_error("string size exceeds R string size");
       }
-      return sfstring(rec.ptr, static_cast<int>(rec.len), rec.encoding);
+      return sfstring(rec.ptr, rec.len, rec.enc);
     }
   };
 
   std::vector<std::unique_ptr<char[]>> slices;
-  std::vector<string_record> records;
+  std::vector<rstring_info> records;
   size_t allocated_bytes;
   size_t dead_bytes;
   uint32_t current_slice_used;
@@ -209,12 +209,12 @@ struct slice_store_data {
     return &empty;
   }
 
-  static string_record na_record() noexcept {
-    return string_record{nullptr, 0, cetype_t_ext::CE_NA};
+  static rstring_info na_record() noexcept {
+    return rstring_info{nullptr, 0, cetype_t_ext::CE_NA};
   }
 
-  static string_record empty_record(cetype_t_ext enc) noexcept {
-    return string_record{empty_data(), 0, enc};
+  static rstring_info empty_record(cetype_t_ext enc) noexcept {
+    return rstring_info{empty_data(), 0, enc};
   }
 
   static size_t normalize_initial_slice_size(size_t value) {
@@ -311,12 +311,12 @@ struct slice_store_data {
     records.resize(other.records.size(), na_record());
     for(size_t i = 0; i < other.records.size(); ++i) {
       const auto & rec = other.records[i];
-      assign_trusted(i, rec.ptr, static_cast<size_t>(rec.len), rec.encoding);
+      assign_trusted(i, rec.ptr, static_cast<size_t>(rec.len), rec.enc);
     }
   }
 
   template<typename Shards>
-  slice_store_data(std::vector<string_record> && source_records, Shards & shards) :
+  slice_store_data(std::vector<rstring_info> && source_records, Shards & shards) :
     slices(),
     records(std::move(source_records)),
     allocated_bytes(0),
@@ -412,7 +412,7 @@ struct slice_store_data {
     if(!check_r_string_len(rec.len)) {
       throw std::runtime_error("string size exceeds R string size");
     }
-    return sfstring(rec.ptr, static_cast<int>(rec.len), rec.encoding);
+    return sfstring(rec.ptr, rec.len, rec.enc);
   }
 
   void compact() {
@@ -424,7 +424,7 @@ struct slice_store_data {
         if(rec.is_NA()) {
           rec = na_record();
         } else if(rec.len == 0) {
-          rec = empty_record(rec.encoding);
+          rec = empty_record(rec.enc);
         } else {
           rec = na_record();
         }
@@ -446,7 +446,7 @@ struct slice_store_data {
     }
     const size_t live_bytes = allocated_bytes - dead_bytes;
 
-    std::vector<string_record> compacted_records(records);
+    std::vector<rstring_info> compacted_records(records);
     std::vector<std::unique_ptr<char[]>> compacted_slices;
     uint32_t last_block_size = 0;
     const size_t max_block_bytes = static_cast<size_t>(std::numeric_limits<uint32_t>::max());
@@ -465,7 +465,7 @@ struct slice_store_data {
           continue;
         }
         std::memcpy(write_ptr, rec.ptr, static_cast<size_t>(rec.len));
-        compacted_records[i] = string_record{write_ptr, rec.len, rec.encoding};
+        compacted_records[i] = rstring_info{write_ptr, rec.len, rec.enc};
         write_ptr += rec.len;
       }
       if(static_cast<size_t>(write_ptr - block_start) != block_size) {
@@ -509,7 +509,7 @@ struct slice_store_data {
     if(!check_r_string_len(len)) {
       throw std::runtime_error("stored string length exceeds R string size");
     }
-    const uint32_t stored_len = static_cast<uint32_t>(len);
+    const int stored_len = static_cast<int>(len);
     if(enc == cetype_t_ext::CE_NA || ptr == nullptr) {
       records.emplace_back(na_record());
       return;
@@ -518,9 +518,9 @@ struct slice_store_data {
       records.emplace_back(empty_record(enc));
       return;
     }
-    char * dest = allocate_bytes(stored_len);
+    char * dest = allocate_bytes(static_cast<uint32_t>(stored_len));
     std::memcpy(dest, ptr, static_cast<size_t>(stored_len));
-    records.emplace_back(string_record{dest, stored_len, enc});
+    records.emplace_back(rstring_info{dest, stored_len, enc});
   }
 
   void append_trusted(const sfstring & value) {
@@ -544,12 +544,12 @@ struct slice_store_data {
     if(!check_r_string_len(len)) {
       throw std::runtime_error("stored string length exceeds R string size");
     }
-    const uint32_t stored_len = static_cast<uint32_t>(len);
+    const int stored_len = static_cast<int>(len);
     if(idx >= records.size()) {
       throw std::runtime_error("slice_store_data assignment out of bounds");
     }
 
-    string_record current = records[idx];
+    rstring_info current = records[idx];
     if(enc == cetype_t_ext::CE_NA) {
       records[idx] = na_record();
       return nullptr;
@@ -560,7 +560,7 @@ struct slice_store_data {
     }
     if(!current.is_NA()) {
       if(current.len >= stored_len) {
-        records[idx] = string_record{current.ptr, stored_len, enc};
+        records[idx] = rstring_info{current.ptr, stored_len, enc};
         return const_cast<char*>(current.ptr);
       }
       if(should_compact()) {
@@ -569,8 +569,8 @@ struct slice_store_data {
       }
       dead_bytes += static_cast<size_t>(current.len);
     }
-    char * dest = allocate_bytes(stored_len);
-    records[idx] = string_record{dest, stored_len, enc};
+    char * dest = allocate_bytes(static_cast<uint32_t>(stored_len));
+    records[idx] = rstring_info{dest, stored_len, enc};
     return dest;
   }
 

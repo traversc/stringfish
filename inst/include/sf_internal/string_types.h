@@ -90,14 +90,25 @@ public:
 
 using sf_vec_data = std::vector<sfstring>; // underlying data type for sf_vec ALTREP class
 
-// internal record for slice_store
-struct string_record {
+// Shared internal string view used by slice_store and RStringIndexer.
+struct rstring_info {
   const char * ptr = nullptr;
-  uint32_t len = 0;
-  cetype_t_ext encoding = cetype_t_ext::CE_NA;
+  int len = 0;
+  cetype_t_ext enc = cetype_t_ext::CE_NA;
+
+  rstring_info() = default;
+  rstring_info(const char * p, int l, cetype_t_ext e) : ptr(p), len(l), enc(e) {}
 
   inline bool is_NA() const noexcept {
-    return encoding == cetype_t_ext::CE_NA;
+    return enc == cetype_t_ext::CE_NA;
+  }
+
+  inline bool operator==(const rstring_info & other) const {
+    if((ptr == nullptr) && (other.ptr == nullptr)) return true;
+    if((ptr == nullptr) || (other.ptr == nullptr)) return false;
+    if((ptr == other.ptr) && (len == other.len) && (enc == other.enc)) return true;
+    if((len != other.len) || (enc != other.enc)) return false;
+    return std::memcmp(ptr, other.ptr, static_cast<size_t>(len)) == 0;
   }
 };
 

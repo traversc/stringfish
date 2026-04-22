@@ -117,7 +117,7 @@ SEXP sf_gsub(SEXP subject, SEXP pattern, SEXP replacement, const std::string enc
   size_t len = cr.size();
   if(nthreads > 1) {
 #if RCPP_PARALLEL_USE_TBB
-    std::vector<string_record> records(len);
+    std::vector<rstring_info> records(len);
     tbb::enumerable_thread_specific<slice_store_shard> shards([&records] {
       return slice_store_shard(records);
     });
