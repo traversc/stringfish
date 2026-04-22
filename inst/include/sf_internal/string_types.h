@@ -2,52 +2,83 @@
 #define STRINGFISH_SF_INTERNAL_STRING_TYPES_H
 
 #include "base.h"
+#include "../simple_array/small_array.h"
+
+static_assert(sizeof(std::string) > (sizeof(char *) + sizeof(size_t)),
+              "std::string is unexpectedly small for sfstring storage sizing");
+
+inline constexpr size_t sfstring_small_array_stack_size =
+  sizeof(std::string) - sizeof(char *) - sizeof(size_t);
+
+using sfstring_storage = trqwe::small_array<
+  char,
+  std::allocator<char>,
+  size_t,
+  std::integral_constant<size_t, sfstring_small_array_stack_size>
+>;
+
+static_assert(sizeof(sfstring_storage) == sizeof(std::string),
+              "sfstring small_array storage should match std::string object size");
 
 struct sfstring {
-  std::string sdata;
+  sfstring_storage sdata;
   cetype_t_ext encoding;
+private:
+  static sfstring_storage make_storage(const char * ptr, size_t len) {
+    return sfstring_storage(ptr, len);
+  }
+  static sfstring_storage make_storage(const std::string & x) {
+    return make_storage(x.data(), x.size());
+  }
+public:
   sfstring(const char * ptr, int len, cetype_t_ext enc) :
-    sdata(ptr, static_cast<size_t>(len)),
+    sdata(make_storage(ptr, static_cast<size_t>(len))),
     encoding(enc) {}
-  sfstring(std::string x, cetype_t_ext enc) : sdata(std::move(x)), encoding(enc) {
+  sfstring(std::string x, cetype_t_ext enc) : sdata(make_storage(x)), encoding(enc) {
     if(!check_r_string_len(sdata.size())) {
       throw std::runtime_error("string size exceeds R string size");
     }
   }
-  sfstring(const char * ptr, cetype_t_ext enc) : sdata(ptr), encoding(enc) {
+  sfstring(const char * ptr, cetype_t_ext enc) : sdata(make_storage(ptr, std::strlen(ptr))), encoding(enc) {
     if(!check_r_string_len(sdata.size())) {
       throw std::runtime_error("string size exceeds R string size");
     }
   }
-  sfstring(std::string x, cetype_t enc) : sdata(std::move(x)), encoding(reinterpret_input_encoding(sdata.data(), sdata.size(), enc)) {
+  sfstring(std::string x, cetype_t enc) :
+    sdata(make_storage(x)),
+    encoding(reinterpret_input_encoding(sdata.data(), sdata.size(), enc)) {
     if(!check_r_string_len(sdata.size())) {
       throw std::runtime_error("string size exceeds R string size");
     }
   }
-  sfstring(const char * ptr, cetype_t enc) : sdata(ptr), encoding(reinterpret_input_encoding(sdata.data(), sdata.size(), enc)) {
+  sfstring(const char * ptr, cetype_t enc) :
+    sdata(make_storage(ptr, std::strlen(ptr))),
+    encoding(reinterpret_input_encoding(sdata.data(), sdata.size(), enc)) {
     if(!check_r_string_len(sdata.size())) {
       throw std::runtime_error("string size exceeds R string size");
     }
   }
   sfstring(const char * ptr, int len, cetype_t enc) :
-    sdata(ptr, static_cast<size_t>(len)),
+    sdata(make_storage(ptr, static_cast<size_t>(len))),
     encoding(reinterpret_input_encoding(sdata.data(), sdata.size(), enc)) {}
-  sfstring(size_t size) {
+  sfstring(size_t size) : sdata(size), encoding(cetype_t_ext::CE_ASCII) {
     if(!check_r_string_len(size)) {
       throw std::runtime_error("string size exceeds R string size");
     }
-    sdata = std::string();
-    sdata.resize(size);
   }
-  sfstring(SEXP x) {
+  sfstring(size_t size, cetype_t_ext enc) : sdata(size), encoding(enc) {
+    if(!check_r_string_len(size)) {
+      throw std::runtime_error("string size exceeds R string size");
+    }
+  }
+  sfstring(SEXP x) : sdata(), encoding(cetype_t_ext::CE_NA) {
     if(x == NA_STRING) {
-      encoding = cetype_t_ext::CE_NA;
       return;
     }
-    sdata = std::string(CHAR(x), LENGTH(x));
+    sdata = make_storage(CHAR(x), static_cast<size_t>(LENGTH(x)));
     encoding = reinterpret_input_encoding(x);
   }
-  sfstring() : sdata(""), encoding(cetype_t_ext::CE_ASCII) {}
+  sfstring() : sdata(), encoding(cetype_t_ext::CE_ASCII) {}
   sfstring(const sfstring & other) : sdata(other.sdata), encoding(other.encoding) {}
   inline const char * data() const noexcept {
     return sdata.data();

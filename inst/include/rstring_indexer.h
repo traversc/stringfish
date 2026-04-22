@@ -155,7 +155,7 @@ public:
       if(st == cetype_t_ext::CE_NA) {
         return rstring_info(nullptr, 0, cetype_t_ext::CE_NA);
       }
-      return rstring_info((*sfp)[i].sdata.c_str(), static_cast<int>((*sfp)[i].sdata.size()), st);
+      return rstring_info((*sfp)[i].data(), static_cast<int>((*sfp)[i].sdata.size()), st);
     }
     const string_record & rec = ssp->records[i];
     if(rec.is_NA()) {

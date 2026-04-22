@@ -297,7 +297,7 @@ inline SEXP make_char(const sfstring & x) {
   if(!check_r_string_len(x.sdata.size())) {
     throw std::runtime_error("string size exceeds R string size");
   }
-  return Rf_mkCharLenCE(x.sdata.c_str(), static_cast<int>(x.sdata.size()), to_base_encoding(x.encoding));
+  return Rf_mkCharLenCE(x.data(), static_cast<int>(x.sdata.size()), to_base_encoding(x.encoding));
 }
 
 inline SEXP make_char(const string_record & x) {

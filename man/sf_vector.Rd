@@ -18,7 +18,7 @@ Creates a new empty stringfish vector
 \details{
 This is a backwards-compatible alias for `sf_vector_create(len)`.
 It creates a new stringfish vector, an alt-rep character vector backed by a C++ "std::vector" as the internal memory representation.
-The vector type is "sfstring", which is a simple C++ class containing a "std::string" and a single byte (uint8_t) representing the encoding.
+The vector type is "sfstring", which is a simple C++ class containing owned string bytes and a single byte (uint8_t) representing the encoding.
 }
 \examples{
 x <- sf_vector(10)
