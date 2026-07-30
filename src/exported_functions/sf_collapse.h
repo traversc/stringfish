@@ -19,8 +19,8 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
     if(!collapse_ref.get_rstring_info(norm, collapse_text)) {
       SEXP ret = PROTECT(Rf_allocVector(STRSXP, 1));
       SET_STRING_ELT(ret, 0, NA_STRING);
-      UNPROTECT(1);
       sfenc::warn_failed_normalization("sf_collapse", norm.failures);
+      UNPROTECT(1);
       return ret;
     }
   }
@@ -31,8 +31,8 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
     if(q.ptr == nullptr) {
       SEXP ret = PROTECT(Rf_allocVector(STRSXP, 1));
       SET_STRING_ELT(ret, 0, NA_STRING);
-      UNPROTECT(1);
       sfenc::warn_failed_normalization("sf_collapse", norm.failures);
+      UNPROTECT(1);
       return ret;
     }
     if(q.enc == cetype_t_ext::CE_BYTES) {
@@ -51,8 +51,8 @@ SEXP sf_collapse(SEXP x, SEXP collapse) {
     if(!norm.normalize(view, utf8_owned)) {
       SEXP ret = PROTECT(Rf_allocVector(STRSXP, 1));
       SET_STRING_ELT(ret, 0, NA_STRING);
-      UNPROTECT(1);
       sfenc::warn_failed_normalization("sf_collapse", norm.failures);
+      UNPROTECT(1);
       return ret;
     }
     temp.append(view.ptr, view.len);
