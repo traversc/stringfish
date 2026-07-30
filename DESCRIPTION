@@ -1,7 +1,7 @@
 Package: stringfish
 Title: Alt String Implementation
-Version: 0.19.0
-Date: 2026-04-18
+Version: 0.19.1
+Date: 2026-07-29
 Authors@R: c(
     person("Travers", "Ching", email = "traversc@gmail.com", role = c("aut", "cre", "cph")),
     person("Phillip", "Hazel", role = c("ctb"), comment = "Bundled PCRE2 code"),
@@ -18,7 +18,7 @@ Encoding: UTF-8
 Depends: R (>= 3.6.0)
 SystemRequirements: GNU make, C++17
 LinkingTo: 
-    Rcpp (>= 0.12.18.3), RcppParallel (>= 5.1.4)
+    Rcpp (>= 0.12.18.3), RcppParallel (>= 6.1.1)
 Imports: 
     Rcpp, RcppParallel
 Suggests:

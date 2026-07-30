@@ -48,7 +48,7 @@ IntegerVector sf_nchar(SEXP x, const std::string type, const int nthreads) {
   IntegerVector ret(len);
   int * optr = INTEGER(ret);
 
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::atomic<size_t> failures(0);
     sfexport::sf_nchar_worker w(&rsi, optr, type == "chars", &failures);

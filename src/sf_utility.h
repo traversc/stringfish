@@ -49,6 +49,13 @@ bool is_tbb() {
   return false;
 }
 
+// TBB does not support being used after fork(); code paths reachable from a
+// forked child (e.g. parallel::mclapply) must fall back to a serial
+// implementation. See https://github.com/RcppCore/RcppParallel/issues/243
+bool should_use_parallel(int nthreads) {
+  return nthreads > 1 && !RcppParallel::isProcessForkedChild();
+}
+
 void check_simd() {
 #if defined (__AVX2__)
   Rcpp::Rcerr << "AVX2" << std::endl;

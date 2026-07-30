@@ -126,7 +126,7 @@ IntegerVector sf_match(SEXP x, SEXP table, const int nthreads) {
     }
   }
   
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::atomic<size_t> failures(0);
     sfexport::sf_match_worker w(&raw_map, &text_map, &xr, retp, &failures);

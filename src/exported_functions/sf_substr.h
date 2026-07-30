@@ -139,7 +139,7 @@ SEXP sf_substr(SEXP x, IntegerVector start, IntegerVector stop, const int nthrea
   if(start_size != len && start_size != 1) throw std::runtime_error("length of start must be 1 or the same as x");
   if(stop_size != len && stop_size != 1) throw std::runtime_error("length of stop must be 1 or the same as x");
 
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::vector<rstring_info> records(len);
     tbb::enumerable_thread_specific<slice_store_shard> shards([&records] {

@@ -1,3 +1,7 @@
+Version 0.19.1 (2026-07-29)
+   * Depend on RcppParallel (>= 6.1.1)
+   * Fall back to a serial implementation in forked child processes (e.g. `parallel::mclapply`), since TBB does not support being used after `fork()` (https://github.com/RcppCore/RcppParallel/issues/243)
+
 Version 0.19.0 (2026-04-18)
    * Add slice-store-backed string vectors and conversion helpers: `slice_store_create()`, `slice_store_create_with_size()`, and `convert_to_slice_store()`
    * Add `sf_vector_create()` as the primary `sf_vec` constructor; keep `sf_vector()` as a backwards-compatible alias

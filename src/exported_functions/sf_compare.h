@@ -80,7 +80,7 @@ LogicalVector sf_compare(SEXP x, SEXP y, const int nthreads) {
   LogicalVector ret(outlen);
   int * out = INTEGER(ret);
 
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::atomic<size_t> failures(0);
     sfexport::sf_compare_worker w(xr, yr, xlen, ylen, out, &failures);

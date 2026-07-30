@@ -182,7 +182,7 @@ SEXP sf_split(SEXP subject, SEXP split, const std::string encode_mode, const boo
   size_t len = cr.size();
   SEXP ret = PROTECT(Rf_allocVector(VECSXP, len));
 
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::vector<slice_store_data*> refs(len);
     for(size_t i=0; i<len; ++i) {

@@ -125,7 +125,7 @@ SEXP c_sf_paste(List dots, SEXP sep, const int nthreads) {
     }
   }
 
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::vector<rstring_info> records(maxlen);
     tbb::enumerable_thread_specific<slice_store_shard> shards([&records] {

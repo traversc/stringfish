@@ -88,7 +88,7 @@ LogicalVector sf_grepl(SEXP subject, SEXP pattern, const std::string encode_mode
   LogicalVector ret(len);
   int * outptr = LOGICAL(ret);
 
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::atomic<size_t> failures(0);
     sfexport::sf_grepl_worker w(encode_mode, pattern_is_na, has_text_pm, pattern_ref.enc, byte_pm, text_pm, &cr, outptr, &failures);

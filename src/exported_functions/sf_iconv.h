@@ -48,7 +48,7 @@ SEXP sf_iconv(SEXP x, const std::string from, const std::string to, int nthreads
   iconv_wrapper iw(to.c_str(), from.c_str());
   RStringIndexer rsi(x);
   size_t len = rsi.size();
-  if(nthreads > 1) {
+  if(should_use_parallel(nthreads)) {
 #if RCPP_PARALLEL_USE_TBB
     std::vector<rstring_info> records(len);
     tbb::enumerable_thread_specific<slice_store_shard> shards([&records] {
