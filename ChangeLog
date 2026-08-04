@@ -1,4 +1,4 @@
-Version 0.19.1 (2026-07-29)
+Version 0.19.2 (2026-08-04)
    * Depend on RcppParallel (>= 6.1.1)
    * Fall back to a serial implementation in forked child processes (e.g. `parallel::mclapply`), since TBB does not support being used after `fork()` (https://github.com/RcppCore/RcppParallel/issues/243)
    * Fix garbage-collection protection in `sf_collapse()` when reporting failed string normalization
